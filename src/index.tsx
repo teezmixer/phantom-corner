@@ -1,3 +1,5 @@
+import React from 'react';
+
 import screenshot20260614At93936Pm1 from "./screenshot-2026-06-14-at-9-39-36-PM-1.png";
 
 const panelBlocks = [
