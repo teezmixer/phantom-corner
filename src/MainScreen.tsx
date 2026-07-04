@@ -85,7 +85,7 @@ const textLabels = [
 
 export const MainScreen = (): React.JSX.Element => {
   return (
-    <main className="bg-[#ffffff] border border-solid border-[#0000001a] w-full min-w-[1440px] min-h-[900px] relative overflow-hidden">
+    <main className="w-screen h-screen relative overflow-hidden">
       <img
         className="absolute top-0 left-0 w-[1440px] h-[900px] aspect-[1.86]"
         alt="Background scene"
