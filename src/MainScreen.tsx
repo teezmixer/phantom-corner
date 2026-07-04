@@ -1,6 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import screenshot20260614At93936Pm1 from "./screenshot-2026-06-14-at-9-39-36-PM-1.png";
+
+const DESIGN_WIDTH = 1440;
+const DESIGN_HEIGHT = 900;
+
+function useFitScale() {
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const updateScale = () => {
+      setScale(
+        Math.min(
+          window.innerWidth / DESIGN_WIDTH,
+          window.innerHeight / DESIGN_HEIGHT
+        )
+      );
+    };
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
+
+  return scale;
+}
 
 const panelBlocks = [
   {
@@ -84,35 +107,47 @@ const textLabels = [
 ];
 
 export const MainScreen = (): React.JSX.Element => {
+  const scale = useFitScale();
+
   return (
     <main className="w-screen h-screen relative overflow-hidden">
-      <img
-        className="absolute top-0 left-0 w-[1440px] h-[900px] aspect-[1.86]"
-        alt="Background scene"
-        src={screenshot20260614At93936Pm1}
-      />
-      <section
-        aria-label="Widget panels"
-        className="absolute top-[43px] left-[39px] w-[1355px] h-[808px]"
+      <div
+        className="absolute top-1/2 left-1/2"
+        style={{
+          width: DESIGN_WIDTH,
+          height: DESIGN_HEIGHT,
+          transform: `translate(-50%, -50%) scale(${scale})`,
+          transformOrigin: "center",
+        }}
       >
-        {panelBlocks.map((panel) => (
-          <div
-            key={panel.label}
-            className={panel.className}
-            aria-hidden="true"
-          />
-        ))}
-      </section>
-      <section
-        aria-label="Widget labels"
-        className="absolute top-[62px] left-[75px] w-[1327px] h-[782px]"
-      >
-        {textLabels.map((label) => (
-          <div key={label.text} className={label.className}>
-            {label.text}
-          </div>
-        ))}
-      </section>
+        <img
+          className="absolute top-0 left-0 w-[1440px] h-[900px] aspect-[1.86]"
+          alt="Background scene"
+          src={screenshot20260614At93936Pm1}
+        />
+        <section
+          aria-label="Widget panels"
+          className="absolute top-[43px] left-[39px] w-[1355px] h-[808px]"
+        >
+          {panelBlocks.map((panel) => (
+            <div
+              key={panel.label}
+              className={panel.className}
+              aria-hidden="true"
+            />
+          ))}
+        </section>
+        <section
+          aria-label="Widget labels"
+          className="absolute top-[62px] left-[75px] w-[1327px] h-[782px]"
+        >
+          {textLabels.map((label) => (
+            <div key={label.text} className={label.className}>
+              {label.text}
+            </div>
+          ))}
+        </section>
+      </div>
     </main>
   );
 };
