@@ -18,8 +18,24 @@ main {
   background-color: #000;
 }
 
+@font-face {
+  font-family: "Optima Nova LT Black";
+  src: url("./fonts/Optima Nova LT Black/Optima nova LT Black Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Optima Nova LT Black";
+  src: url("./fonts/Optima Nova LT Black/Optima nova LT Black Italic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
 :root {
-  --body-primary-font-family: "Optima Nova TL Black", Optima, Candara, Calibri, "Segoe UI", sans-serif;
+  --body-primary-font-family: "Optima Nova LT Black", Optima, Candara, Calibri, "Segoe UI", sans-serif;
   --body-primary-font-weight: 400;
   --body-primary-font-size: 16px;
   --body-primary-letter-spacing: 0px;

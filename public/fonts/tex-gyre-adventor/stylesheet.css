@@ -1,0 +1,52 @@
+@font-face {
+    font-family: 'TeXGyreAdventor';
+    src: url('TeXGyreAdventor-Bold.eot');
+    src: local('TeXGyreAdventor-Bold'),
+        url('TeXGyreAdventor-Bold.eot?#iefix') format('embedded-opentype'),
+        url('TeXGyreAdventor-Bold.woff2') format('woff2'),
+        url('TeXGyreAdventor-Bold.woff') format('woff'),
+        url('TeXGyreAdventor-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'TeXGyreAdventor';
+    src: url('TeXGyreAdventor-BoldItalic.eot');
+    src: local('TeXGyreAdventor-BoldItalic'),
+        url('TeXGyreAdventor-BoldItalic.eot?#iefix') format('embedded-opentype'),
+        url('TeXGyreAdventor-BoldItalic.woff2') format('woff2'),
+        url('TeXGyreAdventor-BoldItalic.woff') format('woff'),
+        url('TeXGyreAdventor-BoldItalic.ttf') format('truetype');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'TeXGyreAdventor';
+    src: url('TeXGyreAdventor-Italic.eot');
+    src: local('TeXGyreAdventor-Italic'),
+        url('TeXGyreAdventor-Italic.eot?#iefix') format('embedded-opentype'),
+        url('TeXGyreAdventor-Italic.woff2') format('woff2'),
+        url('TeXGyreAdventor-Italic.woff') format('woff'),
+        url('TeXGyreAdventor-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'TeXGyreAdventor';
+    src: url('TeXGyreAdventor-Regular.eot');
+    src: local('TeXGyreAdventor-Regular'),
+        url('TeXGyreAdventor-Regular.eot?#iefix') format('embedded-opentype'),
+        url('TeXGyreAdventor-Regular.woff2') format('woff2'),
+        url('TeXGyreAdventor-Regular.woff') format('woff'),
+        url('TeXGyreAdventor-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+

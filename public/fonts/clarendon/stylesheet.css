@@ -1,0 +1,39 @@
+@font-face {
+    font-family: 'Clarendon LT Std';
+    src: url('ClarendonLTStd.eot');
+    src: local('Clarendon LT Std Roman'), local('ClarendonLTStd'),
+        url('ClarendonLTStd.eot?#iefix') format('embedded-opentype'),
+        url('ClarendonLTStd.woff2') format('woff2'),
+        url('ClarendonLTStd.woff') format('woff'),
+        url('ClarendonLTStd.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Clarendon LT Std';
+    src: url('ClarendonLTStd-Bold.eot');
+    src: local('Clarendon LT Std Bold'), local('ClarendonLTStd-Bold'),
+        url('ClarendonLTStd-Bold.eot?#iefix') format('embedded-opentype'),
+        url('ClarendonLTStd-Bold.woff2') format('woff2'),
+        url('ClarendonLTStd-Bold.woff') format('woff'),
+        url('ClarendonLTStd-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Clarendon LT Std';
+    src: url('ClarendonLTStd-Light.eot');
+    src: local('Clarendon LT Std Light'), local('ClarendonLTStd-Light'),
+        url('ClarendonLTStd-Light.eot?#iefix') format('embedded-opentype'),
+        url('ClarendonLTStd-Light.woff2') format('woff2'),
+        url('ClarendonLTStd-Light.woff') format('woff'),
+        url('ClarendonLTStd-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
