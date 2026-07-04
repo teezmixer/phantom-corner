@@ -2,10 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root {
+*, *::before, *::after {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
   width: 100%;
   height: 100%;
   overflow: hidden;
+}
+
+main {
+  background-size: cover;
+  background-position: center;
 }
