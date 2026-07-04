@@ -11,7 +11,7 @@ function useFitScale() {
   useEffect(() => {
     const updateScale = () => {
       setScale(
-        Math.min(
+        Math.max(
           window.innerWidth / DESIGN_WIDTH,
           window.innerHeight / DESIGN_HEIGHT
         )
