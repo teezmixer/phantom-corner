@@ -83,7 +83,7 @@ const textLabels = [
   },
 ];
 
-export const MainScreen = (): JSX.Element => {
+export const MainScreen = (): React.JSX.Element => {
   return (
     <main className="bg-[#ffffff] border border-solid border-[#0000001a] w-full min-w-[1440px] min-h-[900px] relative overflow-hidden">
       <img
