@@ -27,6 +27,20 @@ module.exports = {
         "display-title": "var(--display-title-font-family)",
         "hud-small": "var(--hud-small-font-family)",
         "hud-timer": "var(--hud-timer-font-family)",
+        expose: "var(--font-expose)",
+        doctorpunk: "var(--font-doctorpunk)",
+        helvetica: "var(--font-helvetica)",
+      },
+      keyframes: {
+        marquee: { "0%": { transform: "translateX(0)" }, "100%": { transform: "translateX(-50%)" } },
+        "gate-in": {
+          "0%": { opacity: "0", transform: "translateY(16px) skewX(-6deg)" },
+          "100%": { opacity: "1", transform: "none" },
+        },
+      },
+      animation: {
+        marquee: "marquee 18s linear infinite",
+        "gate-in": "gate-in 420ms cubic-bezier(.2,.9,.3,1) both",
       },
     },
   },

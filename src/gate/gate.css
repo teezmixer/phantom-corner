@@ -1,0 +1,14 @@
+@font-face{font-family:"Expose";src:url("../fonts/gate/Expose-Regular.otf") format("opentype");font-display:swap}
+@font-face{font-family:"Doctor Punk";src:url("../fonts/gate/DoctorPunk.otf") format("opentype");font-display:swap}
+@font-face{font-family:"Helvetica Now Display";src:url("../fonts/gate/HelveticaNowDisplay-Bold.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Helvetica Now Display";src:url("../fonts/gate/HelveticaNowDisplay-ExtBdIta.woff2") format("woff2");font-weight:800;font-style:italic;font-display:swap}
+
+:root {
+  --black: rgb(0,0,0);
+  --white: rgb(255,255,255);
+  --redbright: rgb(221,5,7);
+  --greymid: rgb(97,96,101);
+  --font-expose: "Expose", Impact, sans-serif;
+  --font-doctorpunk: "Doctor Punk", Impact, sans-serif;
+  --font-helvetica: "Helvetica Now Display", "Helvetica Neue", Arial, sans-serif;
+}
