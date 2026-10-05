@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import MainScreen from './MainScreen';
 import GateRoute from './gate/GateRoute';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(
@@ -13,6 +15,8 @@ root.render(
     <GateRoute>
       <MainScreen />
     </GateRoute>
+    <Analytics />
+    <SpeedInsights />
   </React.StrictMode>
 );
 
