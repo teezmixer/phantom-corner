@@ -1,9 +1,68 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-// Static "open this on a computer" gate. No state, no logic, no width detection.
+// Alternating font/size/tilt per letter, matching the hand-lettered button style.
+const LETTER_STYLES = [
+  "font-doctorpunk text-[36px] [transform:rotate(-5deg)]",
+  "font-expose text-[30px] [transform:rotate(4deg)_scaleY(1.15)]",
+  "font-doctorpunk text-[34px] [transform:rotate(-3deg)]",
+  "font-expose text-[32px] [transform:rotate(6deg)]",
+  "font-expose text-[34px] [transform:rotate(-4deg)_scaleY(1.1)]",
+  "font-doctorpunk text-[32px] [transform:rotate(5deg)]",
+];
+
+function Lettering({ text }: { text: string }): React.JSX.Element {
+  return (
+    <>
+      {text.split("").map((ch, i) =>
+        ch === " " ? (
+          <span key={i} className="inline-block w-3" />
+        ) : (
+          <span key={i} className={`inline-block ${LETTER_STYLES[i % LETTER_STYLES.length]}`}>{ch}</span>
+        )
+      )}
+    </>
+  );
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // Fallback for in-app browsers without the async clipboard API
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
+// "Open this on a computer" gate. Only state is the copy-link button feedback; no width detection.
 // Show/hide is handled outside: see GateRoute.tsx and isPhoneBrowser.ts.
 // Colors and fonts come from CSS variables via tailwind.config.js (see styles.css).
 export default function MobileGate(): React.JSX.Element {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  const onCopy = async () => {
+    if (await copyToClipboard(window.location.href)) {
+      setCopied(true);
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <main className="relative flex h-full min-h-[100dvh] w-full flex-col justify-between overflow-hidden bg-black px-6 pb-4 pt-3 text-white">
       {/* Background pattern: dense overlapping nested stars in black, white and grey, no gaps (SVG, flat) */}
@@ -144,11 +203,9 @@ export default function MobileGate(): React.JSX.Element {
 
       {/* Button: static "Copy link", black tilted slab with a white inner frame and mixed-font white lettering */}
       <div className="relative z-10 flex justify-center motion-safe:animate-gate-in [animation-delay:400ms]">
-        <button type="button" className="-rotate-2 bg-white p-1 text-white shadow-[6px_6px_0_var(--black)] [clip-path:polygon(0_0,100%_6%,97%_100%,3%_94%)]">
+        <button type="button" onClick={onCopy} aria-label={copied ? "Link copied" : "Copy link"} className="-rotate-2 bg-white p-1 text-white shadow-[6px_6px_0_var(--black)] [clip-path:polygon(0_0,100%_6%,97%_100%,3%_94%)]">
           <span className="block bg-black px-10 py-2 [clip-path:polygon(1%_3%,99%_9%,96%_97%,4%_91%)]">
-            <span className="inline-block font-doctorpunk text-[36px] [transform:rotate(-5deg)]">C</span><span className="inline-block font-expose text-[30px] [transform:rotate(4deg)_scaleY(1.15)]">O</span><span className="inline-block font-doctorpunk text-[34px] [transform:rotate(-3deg)]">P</span><span className="inline-block font-expose text-[32px] [transform:rotate(6deg)]">Y</span>
-            <span className="inline-block w-3"></span>
-            <span className="inline-block font-expose text-[34px] [transform:rotate(-4deg)_scaleY(1.1)]">L</span><span className="inline-block font-doctorpunk text-[32px] [transform:rotate(5deg)]">I</span><span className="inline-block font-doctorpunk text-[36px] [transform:rotate(-6deg)]">N</span><span className="inline-block font-expose text-[30px] [transform:rotate(3deg)_scaleY(1.15)]">K</span>
+            <Lettering text={copied ? "COPIED" : "COPY LINK"} />
           </span>
         </button>
       </div>
