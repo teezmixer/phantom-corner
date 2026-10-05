@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 
 import screenshot20260614At93936Pm1 from "./screenshot-2026-06-14-at-9-39-36-PM-1.png";
 
@@ -148,6 +149,7 @@ export const MainScreen = (): React.JSX.Element => {
           ))}
         </section>
       </div>
+      <Analytics />
     </main>
   );
 };
