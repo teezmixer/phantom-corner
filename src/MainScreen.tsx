@@ -6,6 +6,8 @@ import screenshot20260614At93936Pm1 from "./screenshot-2026-06-14-at-9-39-36-PM-
 // The HUD is designed on a 1440x900 reference screen, then scaled to the real screen.
 const REF_WIDTH = 1440;
 const REF_HEIGHT = 900;
+// Widgets are exported at 3x, so past 3x they would be upscaled and go soft.
+const MAX_HUD_SCALE = 3;
 
 // How much to grow/shrink the HUD so it always fits inside the user's screen.
 function useHudScale() {
@@ -14,7 +16,11 @@ function useHudScale() {
   useEffect(() => {
     const updateScale = () => {
       setScale(
-        Math.min(window.innerWidth / REF_WIDTH, window.innerHeight / REF_HEIGHT)
+        Math.min(
+          MAX_HUD_SCALE,
+          window.innerWidth / REF_WIDTH,
+          window.innerHeight / REF_HEIGHT
+        )
       );
     };
     updateScale();
@@ -104,7 +110,7 @@ export const MainScreen = (): React.JSX.Element => {
       </CornerGroup>
 
       <CornerGroup corner="br" scale={scale} label="Bottom right widgets">
-        <Placeholder label="music player" className="bottom-[260px] right-[39px] w-[213px] h-[50px]" />
+        <Placeholder label="music player" className="bottom-[275px] right-[39px] w-[213px] h-[50px]" />
         <LocationWidget
           spaceId="leblanc"
           className="absolute bottom-[49px] right-[39px] w-[484px] h-[218px]"
