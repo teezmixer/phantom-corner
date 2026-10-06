@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
+import LocationWidget from "./LocationWidget";
 import screenshot20260614At93936Pm1 from "./screenshot-2026-06-14-at-9-39-36-PM-1.png";
 
 const DESIGN_WIDTH = 1440;
@@ -44,11 +45,6 @@ const panelBlocks = [
     label: "todo list",
   },
   {
-    className:
-      "absolute top-[734px] left-[1091px] w-[264px] h-[67px] bg-[#d9d9d9]",
-    label: "Location",
-  },
-  {
     className: "absolute top-[779px] left-0 w-[233px] h-[29px] bg-[#d9d9d9]",
     label: "buttons menu",
   },
@@ -73,11 +69,6 @@ const textLabels = [
     className:
       "absolute top-[761px] left-0 w-[212px] font-body-primary font-[number:var(--body-primary-font-weight)] text-[#000000] text-[length:var(--body-primary-font-size)] tracking-[var(--body-primary-letter-spacing)] leading-[var(--body-primary-line-height)] whitespace-nowrap [font-style:var(--body-primary-font-style)]",
     text: "buttons menu",
-  },
-  {
-    className:
-      "absolute top-[724px] left-[1124px] w-[187px] font-body-primary font-[number:var(--body-primary-font-weight)] text-[#000000] text-[length:var(--body-primary-font-size)] tracking-[var(--body-primary-letter-spacing)] leading-[var(--body-primary-line-height)] whitespace-nowrap [font-style:var(--body-primary-font-style)]",
-    text: "Location",
   },
   {
     className:
@@ -147,6 +138,10 @@ export const MainScreen = (): React.JSX.Element => {
             </div>
           ))}
         </section>
+        <LocationWidget
+          spaceId="leblanc"
+          className="absolute top-[777px] left-[1130px] w-[264px] h-[67px]"
+        />
       </div>
     </main>
   );
