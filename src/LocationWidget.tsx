@@ -28,7 +28,7 @@ export const LocationWidget = ({
 
   return (
     <div
-      className={`flex items-center justify-center bg-white ${className}`}
+      className={`flex items-center justify-center ${className}`}
       aria-label={`Current location: ${location.name}`}
     >
       {location.image ? (

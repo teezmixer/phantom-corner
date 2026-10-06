@@ -12,7 +12,7 @@ function useFitScale() {
   useEffect(() => {
     const updateScale = () => {
       setScale(
-        Math.max(
+        Math.min(
           window.innerWidth / DESIGN_WIDTH,
           window.innerHeight / DESIGN_HEIGHT
         )
@@ -140,7 +140,7 @@ export const MainScreen = (): React.JSX.Element => {
         </section>
         <LocationWidget
           spaceId="leblanc"
-          className="absolute top-[777px] left-[1130px] w-[264px] h-[67px]"
+          className="absolute top-[633px] left-[917px] w-[484px] h-[218px]"
         />
       </div>
     </main>
