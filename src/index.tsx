@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
+import '@/styles/index.css';
 import MainScreen from '@/app/MainScreen';
 import GateRoute from './screens/Gate/GateRoute';
 import { Analytics } from '@vercel/analytics/react';

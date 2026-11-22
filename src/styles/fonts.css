@@ -1,0 +1,16 @@
+/* Self-hosted faces (BUILT). Gate faces live in screens/Gate/gate.css. */
+@font-face {
+  font-family: "Optima Nova LT Black";
+  src: url("../fonts/Optima Nova LT Black/Optima nova LT Black Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Optima Nova LT Black";
+  src: url("../fonts/Optima Nova LT Black/Optima nova LT Black Italic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
