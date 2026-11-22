@@ -1,9 +1,8 @@
 @import "./styles/tokens.css";
 @import "./gate/gate.css";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "./styles/theme.css";
 
 *, *::before, *::after {
   margin: 0;
