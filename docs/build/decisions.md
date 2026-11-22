@@ -69,3 +69,9 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 
 ### D-17 Placeholder grey
 - The BUILT HUD placeholders used `#d9d9d9`, which is not a token. Replaced with `--greylight` (rgb 207 207 207), the nearest token. `DECISION: token-missing-placeholder-grey`.
+
+### D-18 Corner radius token
+- No radius token exists in the export. shadcn needs `--radius`. **Placeholder:** `0px` in `src/styles/shadcn.css` (`DECISION: token-missing-radius`).
+
+### D-19 shadcn role mapping
+- shadcn roles mapped onto tokens in `src/styles/shadcn.css`: background/card black, foreground white, primary redbright, accent and ring accentteal (spec §3.7 "red selection, teal accent", §4.12 teal focus ring), muted greydark/greylight, border greymid, destructive redmid. Ares may remap any role.

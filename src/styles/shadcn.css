@@ -1,0 +1,53 @@
+/*
+ * shadcn/ui variable contract, mapped onto Phantom Corner tokens (tokens.css).
+ * Cult UI and shadcn components read these, so they inherit the project palette and fonts.
+ * Mapping follows spec §3.7 "red selection, teal accent" and §4.12 "teal focus ring".
+ * Do NOT paste shadcn's default oklch palette here — every value must be a token.
+ */
+:root {
+  --background: var(--black);
+  --foreground: var(--white);
+  --card: var(--black);
+  --card-foreground: var(--white);
+  --popover: var(--black);
+  --popover-foreground: var(--white);
+  --primary: var(--redbright);
+  --primary-foreground: var(--white);
+  --secondary: var(--greydark);
+  --secondary-foreground: var(--white);
+  --muted: var(--greydark);
+  --muted-foreground: var(--greylight);
+  --accent: var(--accentteal);
+  --accent-foreground: var(--black);
+  --destructive: var(--redmid);
+  --border: var(--greymid);
+  --input: var(--greymid);
+  --ring: var(--accentteal);
+  /* DECISION: token-missing-radius (D-18) — no radius token exists; 0 until Ares sets one. */
+  --radius: 0px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+}
