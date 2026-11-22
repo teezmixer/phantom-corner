@@ -19,6 +19,15 @@ export type TimerEvent =
 
 export const MINUTE = 60_000;
 export const DEFAULT_DURATION_MS = 25 * MINUTE;
+/** Custom session length bounds in minutes. PROVISIONAL: the spec author's range (§3.6), not Ares's decision. */
+export const MIN_CUSTOM_MINUTES = 5;
+export const MAX_CUSTOM_MINUTES = 120;
+
+/** A typed-in length in minutes → a whole number of minutes inside the allowed range. Junk becomes the default. */
+export function clampCustomMinutes(input: number): number {
+  if (!Number.isFinite(input)) return DEFAULT_DURATION_MS / MINUTE;
+  return Math.min(MAX_CUSTOM_MINUTES, Math.max(MIN_CUSTOM_MINUTES, Math.round(input)));
+}
 
 export const initialTimer: TimerState = { status: "idle", durationMs: DEFAULT_DURATION_MS };
 

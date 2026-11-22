@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Pause, Play, Stop } from "@phosphor-icons/react";
 import { TimerDisplay, TimerIcon, TimerRoot } from "@/components/ui/timer";
 import { useNow } from "@/hooks/useNow";
-import { formatClock, MINUTE, remainingMs, type TimerEvent } from "@/domain/timer";
+import { clampCustomMinutes, formatClock, MAX_CUSTOM_MINUTES, MIN_CUSTOM_MINUTES, MINUTE, remainingMs, type TimerEvent } from "@/domain/timer";
 import { useStore } from "@/state/StoreProvider";
 import { Slab } from "../Slab";
 
@@ -13,6 +13,8 @@ export function TimerWidget() {
   const { state, dispatch } = useStore();
   const now = useNow(250);
   const timer = state.timer;
+  const minutes = Math.round(timer.durationMs / MINUTE);
+  const [custom, setCustom] = useState(!(DURATIONS as readonly number[]).includes(minutes));
   const send = (event: TimerEvent) => dispatch({ type: "TIMER", event, now: Date.now() });
 
   // One TICK once the end passes; the reducer turns it into a completed session.
@@ -32,11 +34,31 @@ export function TimerWidget() {
             <select
               aria-label="Session length"
               className="border border-white bg-black px-1 text-sm"
-              value={timer.durationMs / MINUTE}
-              onChange={(e) => send({ type: "SET_DURATION", durationMs: Number(e.target.value) * MINUTE })}
+              value={custom ? "custom" : minutes}
+              onChange={(e) => {
+                if (e.target.value === "custom") { setCustom(true); return; }
+                setCustom(false);
+                send({ type: "SET_DURATION", durationMs: Number(e.target.value) * MINUTE });
+              }}
             >
               {DURATIONS.map((m) => <option key={m} value={m}>{m} min</option>)}
+              <option value="custom">Custom</option>
             </select>
+            {custom && (
+              <input
+                type="number"
+                aria-label="Custom session length in minutes"
+                min={MIN_CUSTOM_MINUTES}
+                max={MAX_CUSTOM_MINUTES}
+                defaultValue={minutes}
+                onBlur={(e) => {
+                  const clamped = clampCustomMinutes(e.target.valueAsNumber);
+                  e.target.value = String(clamped);
+                  send({ type: "SET_DURATION", durationMs: clamped * MINUTE });
+                }}
+                className="w-12 border border-white bg-black px-1 text-sm"
+              />
+            )}
             <IconButton label="Start" onClick={() => send({ type: "START", now: Date.now() })}><Play weight="fill" /></IconButton>
           </>
         )}

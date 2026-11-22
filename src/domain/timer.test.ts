@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_DURATION_MS, MINUTE, formatClock, initialTimer, remainingMs, transition, type TimerState } from "./timer";
+import { DEFAULT_DURATION_MS, MINUTE, clampCustomMinutes, formatClock, initialTimer, remainingMs, transition, type TimerState } from "./timer";
 
 const T0 = 1_000_000;
 
@@ -66,4 +66,10 @@ describe("remainingMs and formatClock", () => {
     [0, "00:00"],
     [-500, "00:00"],
   ])("formats %i ms as %s", (ms, text) => expect(formatClock(ms)).toBe(text));
+});
+
+describe("clampCustomMinutes", () => {
+  it.each([
+    [25, 25], [5, 5], [120, 120], [4, 5], [0, 5], [-10, 5], [121, 120], [9999, 120], [17.6, 18], [Number.NaN, 25], [Infinity, 25],
+  ])("%s → %s", (input, out) => expect(clampCustomMinutes(input)).toBe(out));
 });
