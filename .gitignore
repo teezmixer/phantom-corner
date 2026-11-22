@@ -11,3 +11,8 @@ node_modules
 npm-debug.log*
 .vercel
 .env*
+
+# vite
+/dist
+/playwright-report
+/test-results
