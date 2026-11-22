@@ -1,14 +1,15 @@
+import { PLACEHOLDER_PLAYLIST } from "@/content/tracks";
 import type { LocationManifest } from "@/content/types";
 
 // Lines are DRAFTS in voice (decision D-10) except Ares's VERBATIM lines. Place name and register: content/places.ts.
-// No sign art: Ares's drawn Leblanc sign is paused (decision D-21). Playlist is empty until track ids are chosen (decision D-09); the TV shows its "unavailable" state.
+// No sign art: Ares's drawn Leblanc sign is paused (decision D-21). Playlist is the shared PROVISIONAL one (content/tracks.ts, decision D-26) until per-location music is chosen.
 const manifest: LocationManifest = {
   id: "leblanc",
   canonIndex: 0,
   character: "Sojiro & Morgana",
   speaker: "sojiro",
   scene: {},
-  playlist: [],
+  playlist: PLACEHOLDER_PLAYLIST,
   ambience: [
     { id: "leblanc-rain", label: "Rain on glass", synth: "rain" },
     { id: "leblanc-murmur", label: "Caf\u00e9 murmur", synth: "murmur" },
