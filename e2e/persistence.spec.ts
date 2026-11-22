@@ -228,6 +228,7 @@ test("a second tab shows the takeover screen and taking over moves the session",
 test("demo mode never takes the session lock or writes saved progress", async ({ page, context }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Press to enter" })).toBeVisible();
+  await page.getByRole("button", { name: "Sound off" }).click(); // a change, so the real session has something saved
   await waitForSaved(page, () => true);
   const before = await stored(page);
   const demo = await context.newPage();

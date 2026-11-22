@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, test } from "./fixtures";
+import { expect, stubExternal, test } from "./fixtures";
 
 const KEY = "pc:v1";
 const stored = (page: Page) => page.evaluate((k) => window.localStorage.getItem(k), KEY);
@@ -141,6 +141,24 @@ test.describe("analytics switch", () => {
     await enter(page);
     await page.waitForTimeout(800);
     expect(urls).toEqual([]);
+    expect(await page.evaluate(() => document.querySelector('script[src*="_vercel"]'))).toBeNull(); // the scripts are not even in the page
+  });
+
+  test("the opt-out holds from the very first load and survives Delete my data", async ({ page }) => {
+    await page.goto("/");
+    await enter(page);
+    await openSettings(page);
+    await settingsDialog(page).getByRole("checkbox", { name: "Anonymous visit statistics" }).uncheck();
+    await waitForSaved(page, (raw) => raw.includes('"analytics":false'));
+    await settingsDialog(page).getByRole("button", { name: "Delete my data" }).click();
+    await settingsDialog(page).getByRole("button", { name: "Press again to delete everything" }).click();
+    await expect(page.getByRole("button", { name: "Press to enter" })).toBeVisible(); // reloaded to a first visit
+    expect(await page.evaluate(() => window.localStorage.getItem("pc:v1"))).toBeNull(); // everything is gone…
+    expect(await page.evaluate(() => window.localStorage.getItem("pc-optout"))).toBe("1"); // …except the one choice that must outlive it
+    expect(await page.evaluate(() => document.querySelector('script[src*="_vercel"]'))).toBeNull(); // no analytics, even right after a delete
+    await enter(page);
+    await page.waitForTimeout(600);
+    expect(await page.evaluate(() => document.querySelector('script[src*="_vercel"]'))).toBeNull();
   });
 });
 
@@ -157,7 +175,7 @@ test.describe("export and delete", () => {
     const data = JSON.parse((await import("node:fs")).readFileSync(path, "utf8"));
     expect(data).toMatchObject({ schema: 3, mission: { text: "Export me" } });
     expect(data).not.toHaveProperty("banners");
-    await expect(settingsDialog(page).getByRole("status")).toHaveText("Saved as a file.");
+    await expect(settingsDialog(page).getByText("Saved as a file.")).toBeVisible();
   });
 
   test("Delete needs a second press, then removes everything including backups and returns to the splash", async ({ page }) => {
@@ -173,15 +191,89 @@ test.describe("export and delete", () => {
     expect(await page.evaluate(() => window.localStorage.getItem("pc:v1:backup:2026-01-01T00:00:00.000Z"))).toBe("{old}"); // one press changes nothing
     await settingsDialog(page).getByRole("button", { name: "Press again to delete everything" }).click();
     await expect(page.getByRole("button", { name: "Press to enter" })).toBeVisible();
+    await page.waitForTimeout(800); // longer than the save debounce: nothing may write the old save back
     expect(await page.evaluate(() => window.localStorage.getItem("pc:v1:backup:2026-01-01T00:00:00.000Z"))).toBeNull();
-    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => window.localStorage.getItem("pc:v1"))).toBeNull(); // really gone, not rewritten
     await page.reload();
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => window.localStorage.getItem("pc:v1"))).toBeNull(); // looking at the splash saves nothing
     await enter(page);
     await expect(page.getByText("Forget me")).toHaveCount(0); // a clean start
+    await page.waitForTimeout(400);
+    await expect(page.getByText("Ah, you're back.")).toHaveCount(0); // it is a first visit again, not a return
+  });
+
+  test("Delete in demo mode never touches the real saved progress", async ({ page, context }) => {
+    await page.goto("/");
+    await enter(page);
+    await page.getByLabel("Today's mission").fill("Real progress");
+    await page.getByRole("button", { name: "Set" }).click();
+    await waitForSaved(page, (raw) => raw.includes("Real progress"));
+    const before = await stored(page);
+    const demo = await context.newPage();
+    await stubExternal(demo);
+    await demo.goto("/?demo=true");
+    await demo.keyboard.press("m");
+    await demo.getByRole("button", { name: /SETTINGS/ }).click();
+    await demo.getByRole("button", { name: "Delete my data" }).click();
+    await demo.getByRole("button", { name: "Press again to delete everything" }).click();
+    await expect(demo.getByRole("button", { name: "Press to enter" })).toBeVisible(); // the demo reset itself
+    await demo.waitForTimeout(600);
+    expect(await stored(page)).toBe(before); // the real save is exactly as it was
+    await demo.close();
+  });
+
+  test("a visit that only looks at the splash saves nothing", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(700);
+    expect(await stored(page)).toBeNull();
+  });
+});
+
+test.describe("a session still ends when the timer cannot be seen", () => {
+  test("hiding the timer widget in Settings (or the whole HUD) does not stop a running session from completing", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("/");
+    await page.clock.resume();
+    await enter(page);
+    await openSettings(page);
+    await settingsDialog(page).getByRole("checkbox", { name: "Timer" }).uncheck();
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("h"); // hide the whole HUD too
+    await page.keyboard.press(" "); // Space starts a session nobody can see
+    await page.clock.fastForward("25:05");
+    await expect(page.getByRole("dialog", { name: "Time." })).toBeVisible();
   });
 });
 
 test.describe("banner", () => {
+  test("banners are visible above an open screen, not hidden behind it", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("/?demo=true");
+    await page.clock.resume();
+    await page.clock.fastForward("17:30"); // the demo session ends: Knowledge banners queue and the choice screen opens
+    await expect(page.getByRole("dialog", { name: "Time." })).toBeVisible();
+    const banner = page.locator("div[role=status] p", { hasText: /Knowledge/ });
+    await expect(banner).toBeVisible();
+    const onTop = await banner.evaluate((el) => {
+      // The banner ignores the pointer on purpose, which also hides it from elementFromPoint: make it hit-testable for this check only.
+      for (let n: HTMLElement | null = el as HTMLElement; n && n !== document.body; n = n.parentElement) n.style.pointerEvents = "auto";
+      const r = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return !!hit && el.contains(hit);
+    });
+    expect(onTop).toBe(true); // nothing (the dialog's scrim) covers it
+  });
+
+  test("a visit whose saved data was lost gets the notice, not a 'you're back' greeting", async ({ page }) => {
+    await page.addInitScript(([k]) => { if (!window.sessionStorage.getItem("seeded")) { window.localStorage.setItem(k as string, "{nope"); window.sessionStorage.setItem("seeded", "1"); } }, [KEY]);
+    await page.goto("/");
+    await expect(page.getByRole("status").filter({ hasText: "scrambled" })).toBeVisible();
+    await enter(page);
+    await page.waitForTimeout(500);
+    await expect(page.getByText("Ah, you're back.")).toHaveCount(0);
+  });
+
   test("a returning user is greeted in Sojiro's words, a first-time user is not", async ({ page }) => {
     await page.goto("/");
     await enter(page);
@@ -244,7 +336,30 @@ test.describe("mission deadline", () => {
     await expect(page.getByTestId("mission-countdown")).toContainText(/due in 2 h/);
     await page.clock.fastForward("03:00:00");
     await expect(page.getByTestId("mission-countdown")).toHaveText(/overdue by 4[56] min/, { timeout: 40_000 }); // the clock keeps running while the test waits
-    await expect(page.getByTestId("mission-countdown")).toHaveClass(/text-redbright/);
+    await expect(page.getByTestId("mission-countdown")).toHaveClass(/bg-redbright/);
+  });
+
+  test("changing only the deadline keeps a finished mission finished", async ({ page }) => {
+    await page.goto("/");
+    await enter(page);
+    await page.getByLabel("Today's mission").fill("Keep going");
+    await page.getByRole("button", { name: "Set" }).click();
+    await page.getByRole("checkbox", { name: "Mission done" }).click();
+    await expect(page.getByRole("checkbox", { name: "Mission done" })).toBeChecked();
+    await page.getByRole("button", { name: "Edit mission" }).click();
+    await page.getByLabel(/mission deadline/i).fill("2030-01-01T10:00");
+    await page.getByRole("button", { name: "Set" }).click();
+    await expect(page.getByRole("checkbox", { name: "Mission done" })).toBeChecked(); // adding a deadline does not un-complete it
+  });
+
+  test("an absurd deadline is ignored rather than stored", async ({ page }) => {
+    await page.goto("/");
+    await enter(page);
+    await page.getByLabel("Today's mission").fill("Typo");
+    await page.getByLabel(/mission deadline/i).fill("2999-01-01T10:00");
+    await page.getByRole("button", { name: "Set" }).click();
+    await expect(page.getByText("Typo")).toBeVisible();
+    await expect(page.getByTestId("mission-countdown")).toHaveCount(0);
   });
 
   test("a mission without a deadline shows no countdown, and marking it done hides it", async ({ page }) => {
@@ -254,7 +369,7 @@ test.describe("mission deadline", () => {
     await page.getByRole("button", { name: "Set" }).click();
     await expect(page.getByTestId("mission-countdown")).toHaveCount(0);
     await page.getByRole("button", { name: "Edit mission" }).click();
-    await page.getByLabel("Mission deadline").fill("2099-01-01T10:00");
+    await page.getByLabel("Mission deadline").fill("2030-01-01T10:00");
     await page.getByRole("button", { name: "Set" }).click();
     await expect(page.getByTestId("mission-countdown")).toBeVisible();
     await page.getByRole("checkbox", { name: "Mission done" }).click();
