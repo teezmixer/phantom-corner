@@ -13,6 +13,11 @@ export const MIGRATIONS: readonly Migration[] = [
       settings: { ...settings, muted: typeof settings.muted === "boolean" ? settings.muted : false, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {} },
     };
   },
+  // 2 → 3 (M5 HUD): widget toggles, HUD size, motion, analytics and the collapsed todo, all at their defaults.
+  (data) => {
+    const settings = (typeof data.settings === "object" && data.settings !== null ? data.settings : {}) as Record<string, unknown>;
+    return { ...data, settings: { ...settings, hidden: [], hudSize: 1, motion: "system", analytics: true, todoCollapsed: false } };
+  },
 ];
 
 /** Stored data written by a NEWER build of the app. It must never be overwritten by an older one. */

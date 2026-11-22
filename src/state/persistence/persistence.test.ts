@@ -64,7 +64,7 @@ describe("load path", () => {
   });
 });
 
-describe("the real 1 → 2 migration (existing users keep their progress)", () => {
+describe("the real migrations 1 → 2 → 3 (existing users keep their progress)", () => {
   // Exactly what M3 wrote to localStorage.
   const v1 = {
     schema: 1, clientId: "old-client", name: "Ren", settings: { muted: true },
@@ -75,13 +75,25 @@ describe("the real 1 → 2 migration (existing users keep their progress)", () =
     unreadThreads: ["ann"], stamps: { settings: ISO, mission: ISO, todos: ISO },
   };
 
-  it("loads a schema-1 save as schema 2 without treating it as unreadable, keeping everything", () => {
+  const PREFS = { hidden: [], hudSize: 1, motion: "system", analytics: true, todoCollapsed: false };
+
+  it("loads a schema-2 save (exactly what M4 wrote) as schema 3, keeping volumes and everything else", () => {
+    const v2 = { ...v1, schema: 2, settings: { muted: true, volumes: { music: 0.2, ambience: 0.9, ui: 0.1 }, ambienceMix: { "leblanc-rain": 0.4 } } };
+    const r = load(JSON.stringify(v2));
+    expect(r.recovered).toBe(false);
+    expect(r.adapter.dump().backups).toEqual([]);
+    expect(r.persisted.schema).toBe(3);
+    expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.2, ambience: 0.9, ui: 0.1 }, ambienceMix: { "leblanc-rain": 0.4 }, ...PREFS });
+    expect(r.persisted).toMatchObject({ name: "Ren", locationId: "ryuji", unreadThreads: ["ann"] });
+  });
+
+  it("loads a schema-1 save as schema 3 without treating it as unreadable, keeping everything", () => {
     const r = load(JSON.stringify(v1));
     expect(r.recovered).toBe(false);
     expect(r.adapter.dump().backups).toEqual([]);
-    expect(r.persisted).toMatchObject({ schema: 2, clientId: "old-client", name: "Ren", locationId: "ryuji", visited: ["leblanc", "ryuji"], unreadThreads: ["ann"] });
+    expect(r.persisted).toMatchObject({ schema: 3, clientId: "old-client", name: "Ren", locationId: "ryuji", visited: ["leblanc", "ryuji"], unreadThreads: ["ann"] });
     expect(r.persisted.events).toHaveLength(2);
-    expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {} });
+    expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {}, ...PREFS });
   });
 
   it("upgrades a schema-1 save whose settings are missing or damaged instead of throwing it away", () => {
@@ -106,6 +118,29 @@ describe("the real 1 → 2 migration (existing users keep their progress)", () =
     expect(isPersisted({ ...ok, settings: { ...ok.settings, volumes: { music: -1, ambience: 0.3, ui: 0.7 } } })).toBe(false);
     expect(isPersisted({ ...ok, settings: { ...ok.settings, ambienceMix: { rain: 2 } } })).toBe(false);
     expect(isPersisted({ ...ok, settings: { ...ok.settings, ambienceMix: { rain: 0.4 } } })).toBe(true);
+  });
+
+  it("rejects impossible preferences", () => {
+    const ok = fresh();
+    const bad = (patch: object) => isPersisted({ ...ok, settings: { ...ok.settings, ...patch } });
+    expect(bad({ hudSize: 2 })).toBe(false);
+    expect(bad({ hudSize: 1.15 })).toBe(true);
+    expect(bad({ motion: "loud" })).toBe(false);
+    expect(bad({ analytics: "yes" })).toBe(false);
+    expect(bad({ hidden: ["music"] })).toBe(false); // the TV can never be hidden
+    expect(bad({ hidden: ["buttonBar"] })).toBe(false); // nor the button bar
+    expect(bad({ hidden: ["nope"] })).toBe(false);
+    expect(bad({ hidden: ["timer", "todo"] })).toBe(true);
+    expect(isPersisted({ ...ok, mission: { text: "x", setAt: ISO, done: false, deadline: "not a date" } })).toBe(false);
+    expect(isPersisted({ ...ok, mission: { text: "x", setAt: ISO, done: false, deadline: ISO } })).toBe(true);
+  });
+
+  it("round-trips the preferences and the mission deadline through the app state", () => {
+    const state: AppState = { ...initialState, mission: "x", missionDeadline: ISO, hiddenWidgets: ["timer", "level"], hudSize: 1.3, motion: "reduced", analytics: false, todoCollapsed: true };
+    const stored = toPersisted(state, fresh(), ISO);
+    expect(stored.mission).toEqual({ text: "x", setAt: ISO, done: false, deadline: ISO });
+    const back = stateFromPersisted(stored, NOW, { recovered: false, storageBlocked: false });
+    expect(back).toMatchObject({ missionDeadline: ISO, hiddenWidgets: ["timer", "level"], hudSize: 1.3, motion: "reduced", analytics: false, todoCollapsed: true });
   });
 
   it("round-trips volumes and the ambience mix through the app state", () => {

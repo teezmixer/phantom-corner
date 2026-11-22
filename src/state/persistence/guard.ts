@@ -1,5 +1,6 @@
 import { MAX_EVENTS } from "@/domain/limits";
 import { MAX_CUSTOM_MINUTES, MINUTE } from "@/domain/timer";
+import { HUD_SIZES, TOGGLEABLE_WIDGETS } from "@/hud/slots";
 import type { Persisted } from "./schema";
 
 type Rec = Record<string, unknown>;
@@ -20,6 +21,16 @@ function isVolumes(v: unknown): boolean {
 }
 function isMix(v: unknown): boolean {
   return isRec(v) && Object.keys(v).length <= 200 && Object.values(v).every(isUnit);
+}
+
+function isPreferences(s: Rec): boolean {
+  return (
+    Array.isArray(s.hidden) && s.hidden.length <= 20 && s.hidden.every((id) => (TOGGLEABLE_WIDGETS as readonly unknown[]).includes(id)) &&
+    (HUD_SIZES as readonly unknown[]).includes(s.hudSize) &&
+    (s.motion === "system" || s.motion === "reduced") &&
+    isBool(s.analytics) &&
+    isBool(s.todoCollapsed)
+  );
 }
 
 function isTimer(v: unknown): boolean {
@@ -51,13 +62,13 @@ export function isEvent(v: unknown): boolean {
 
 /** Hand-written shape check (spec §4.2): data from storage is untrusted, so every field is verified. */
 export function isPersisted(v: unknown): v is Persisted {
-  if (!isRec(v) || v.schema !== 2) return false;
+  if (!isRec(v) || v.schema !== 3) return false;
   const { settings, mission, stamps } = v;
   return (
     isStr(v.clientId) &&
     (v.name === null || isStr(v.name)) &&
-    isRec(settings) && isBool(settings.muted) && isVolumes(settings.volumes) && isMix(settings.ambienceMix) &&
-    (mission === null || (isRec(mission) && isStr(mission.text) && isStr(mission.setAt) && isBool(mission.done))) &&
+    isRec(settings) && isBool(settings.muted) && isVolumes(settings.volumes) && isMix(settings.ambienceMix) && isPreferences(settings) &&
+    (mission === null || (isRec(mission) && isStr(mission.text) && isStr(mission.setAt) && isBool(mission.done) && (mission.deadline === undefined || (isStr(mission.deadline) && !Number.isNaN(Date.parse(mission.deadline)))))) &&
     Array.isArray(v.todos) && v.todos.length <= MAX_STORED_ITEMS && v.todos.every((t) => isRec(t) && isNum(t.id) && isStr(t.text) && isBool(t.done)) &&
     isNum(v.nextTodoId) && Number.isInteger(v.nextTodoId) && v.nextTodoId >= 1 &&
     isTimer(v.timer) &&

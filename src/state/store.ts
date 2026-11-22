@@ -6,7 +6,8 @@ import { LOCATIONS, HOME_LOCATION_ID } from "@/content/registry";
 import { THREADS } from "@/content/threads";
 import { MAP_UNLOCK_LEVEL } from "@/content/progression";
 import { clampText, MAX_TODOS } from "@/domain/limits";
-import { DEFAULT_VOLUMES, type Volumes } from "./persistence/schema";
+import { HUD_SIZES, type HudSize, type WidgetId, TOGGLEABLE_WIDGETS } from "@/hud/slots";
+import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MotionSetting, type Volumes } from "./persistence/schema";
 import { initialTimer, remainingMs, transition, type TimerEvent, type TimerState } from "@/domain/timer";
 import { knowledgeFor, levelForKnowledge, unlockedIds, type ProgressEvent } from "@/domain/progress";
 
@@ -28,6 +29,8 @@ export interface AppState {
   visited: string[];
   mission: string;
   missionDone: boolean;
+  /** ISO time the mission is due, or null. */
+  missionDeadline: string | null;
   todos: Todo[];
   nextTodoId: number;
   timer: TimerState;
@@ -40,6 +43,13 @@ export interface AppState {
   volumes: Volumes;
   /** Per-ambience-layer level, 0–1, keyed by layer id; a missing layer plays at full (the bus volume still applies). */
   ambienceMix: Record<string, number>;
+  /** Widgets hidden in Settings (never the TV or the button bar). */
+  hiddenWidgets: WidgetId[];
+  hudSize: HudSize;
+  motion: MotionSetting;
+  /** Anonymous analytics switch (provisional default on, D-14). */
+  analytics: boolean;
+  todoCollapsed: boolean;
   /** Dev panel: treat every location as unlocked. */
   devUnlockAll: boolean;
   /** Demo mode never touches saved progress. */
@@ -62,6 +72,7 @@ export const initialState: AppState = {
   visited: [HOME_LOCATION_ID],
   mission: "",
   missionDone: false,
+  missionDeadline: null,
   todos: [],
   nextTodoId: 1,
   timer: initialTimer,
@@ -73,6 +84,11 @@ export const initialState: AppState = {
   muted: false,
   volumes: { ...DEFAULT_VOLUMES },
   ambienceMix: {},
+  hiddenWidgets: [...DEFAULT_PREFERENCES.hidden],
+  hudSize: DEFAULT_PREFERENCES.hudSize,
+  motion: DEFAULT_PREFERENCES.motion,
+  analytics: DEFAULT_PREFERENCES.analytics,
+  todoCollapsed: DEFAULT_PREFERENCES.todoCollapsed,
   devUnlockAll: false,
   demo: false,
   recovered: false,
@@ -85,6 +101,12 @@ export type Action =
   | { type: "CLOSE_LAYER" }
   | { type: "SET_MISSION"; text: string }
   | { type: "TOGGLE_MISSION_DONE" }
+  | { type: "SET_DEADLINE"; iso: string | null }
+  | { type: "TOGGLE_WIDGET"; id: WidgetId }
+  | { type: "SET_HUD_SIZE"; size: number }
+  | { type: "SET_MOTION"; motion: MotionSetting }
+  | { type: "SET_ANALYTICS"; on: boolean }
+  | { type: "SET_TODO_COLLAPSED"; collapsed: boolean }
   | { type: "ADD_TODO"; text: string }
   | { type: "TOGGLE_TODO"; id: number }
   | { type: "DELETE_TODO"; id: number }
@@ -132,8 +154,24 @@ export function reducer(state: AppState, action: Action): AppState {
     case "SET_MISSION": {
       const text = clampText(action.text);
       const first = text !== "" && !state.events.some((e) => e.kind === "mission_first_set");
-      return { ...state, mission: text, missionDone: false, events: first ? [...state.events, { kind: "mission_first_set" }] : state.events };
+      // Clearing the mission also clears its deadline; changing it keeps the deadline.
+      return { ...state, mission: text, missionDone: false, missionDeadline: text === "" ? null : state.missionDeadline, events: first ? [...state.events, { kind: "mission_first_set" }] : state.events };
     }
+    case "SET_DEADLINE":
+      return state.mission ? { ...state, missionDeadline: action.iso && !Number.isNaN(Date.parse(action.iso)) ? action.iso : null } : state;
+    case "TOGGLE_WIDGET": {
+      if (!(TOGGLEABLE_WIDGETS as readonly WidgetId[]).includes(action.id)) return state; // the TV and button bar are never hidden
+      const hidden = state.hiddenWidgets.includes(action.id) ? state.hiddenWidgets.filter((w) => w !== action.id) : [...state.hiddenWidgets, action.id];
+      return { ...state, hiddenWidgets: hidden };
+    }
+    case "SET_HUD_SIZE":
+      return (HUD_SIZES as readonly number[]).includes(action.size) ? { ...state, hudSize: action.size as HudSize } : state;
+    case "SET_MOTION":
+      return { ...state, motion: action.motion };
+    case "SET_ANALYTICS":
+      return { ...state, analytics: action.on };
+    case "SET_TODO_COLLAPSED":
+      return { ...state, todoCollapsed: action.collapsed };
     case "TOGGLE_MISSION_DONE":
       return state.mission ? { ...state, missionDone: !state.missionDone } : state;
     case "ADD_TODO": {

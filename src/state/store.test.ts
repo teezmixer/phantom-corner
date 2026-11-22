@@ -155,6 +155,33 @@ describe("store reducer", () => {
     expect(s.ambienceMix).toEqual({ "leblanc-rain": 0.4, "leblanc-murmur": 0 });
   });
 
+  it("toggles widgets in Settings, but never the TV or the button bar", () => {
+    let s = run([{ type: "TOGGLE_WIDGET", id: "timer" }, { type: "TOGGLE_WIDGET", id: "level" }]);
+    expect(s.hiddenWidgets).toEqual(["timer", "level"]);
+    s = reducer(s, { type: "TOGGLE_WIDGET", id: "timer" }); // toggled back on
+    expect(s.hiddenWidgets).toEqual(["level"]);
+    expect(reducer(s, { type: "TOGGLE_WIDGET", id: "music" })).toBe(s);
+    expect(reducer(s, { type: "TOGGLE_WIDGET", id: "buttonBar" })).toBe(s);
+  });
+
+  it("only accepts the HUD size steps, and stores motion, analytics and the collapsed todo", () => {
+    expect(run([{ type: "SET_HUD_SIZE", size: 1.3 }]).hudSize).toBe(1.3);
+    expect(run([{ type: "SET_HUD_SIZE", size: 7 }]).hudSize).toBe(1);
+    expect(run([{ type: "SET_MOTION", motion: "reduced" }]).motion).toBe("reduced");
+    expect(run([{ type: "SET_ANALYTICS", on: false }]).analytics).toBe(false);
+    expect(run([{ type: "SET_TODO_COLLAPSED", collapsed: true }]).todoCollapsed).toBe(true);
+  });
+
+  it("keeps a mission deadline only while there is a mission; invalid dates clear it", () => {
+    expect(run([{ type: "SET_DEADLINE", iso: "2026-11-22T20:00:00.000Z" }]).missionDeadline).toBeNull(); // no mission yet
+    let s = run([{ type: "SET_MISSION", text: "Read" }, { type: "SET_DEADLINE", iso: "2026-11-22T20:00:00.000Z" }]);
+    expect(s.missionDeadline).toBe("2026-11-22T20:00:00.000Z");
+    s = reducer(s, { type: "SET_MISSION", text: "Read more" }); // editing keeps the deadline
+    expect(s.missionDeadline).toBe("2026-11-22T20:00:00.000Z");
+    expect(reducer(s, { type: "SET_DEADLINE", iso: "garbage" }).missionDeadline).toBeNull();
+    expect(reducer(s, { type: "SET_MISSION", text: "" }).missionDeadline).toBeNull(); // clearing the mission clears it
+  });
+
   it("keeps demo mode on reset", () => {
     expect(reducer({ ...initialState, demo: true, entered: true }, { type: "RESET" })).toMatchObject({ demo: true, layer: "splash", entered: false });
   });
