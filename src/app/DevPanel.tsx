@@ -19,7 +19,7 @@ export function DevPanel() {
   const [open, setOpen] = useState(true);
   return (
     <aside aria-label="Developer tools" className="fixed left-1/2 top-2 z-[60] -translate-x-1/2 border-2 border-accentteal bg-black p-2 font-body-primary text-white">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex items-center gap-1 text-xs text-accentteal"><Wrench size={14} />DEV</button>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex items-center gap-1 text-xs text-accentteal"><Wrench size={14} />DEV — nothing here is saved</button>
       {open && (
         <div className="mt-2 flex max-w-[90vw] flex-wrap items-center gap-2">
           <button type="button" className={btn} onClick={() => dispatch({ type: "DEV_GRANT", knowledge: 50 })}>+50 Knowledge</button>
