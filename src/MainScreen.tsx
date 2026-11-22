@@ -69,6 +69,7 @@ const CornerGroup = ({
 );
 
 // Grey stand-in until the real widget exists. Delete it when the widget ships.
+// DECISION: token-missing-placeholder-grey (D-17) — nearest token to the old #d9d9d9.
 const Placeholder = ({
   label,
   className,
@@ -77,7 +78,7 @@ const Placeholder = ({
   className: string;
 }): React.JSX.Element => (
   <div
-    className={`absolute flex items-center justify-center bg-[#d9d9d9] font-body-primary text-black ${className}`}
+    className={`absolute flex items-center justify-center bg-greylight font-body-primary text-black ${className}`}
   >
     {label}
   </div>
