@@ -4,6 +4,7 @@ import { TabLockScreen } from "@/screens/TabLock/TabLockScreen";
 import { localStorageAdapter } from "@/state/persistence/adapter";
 import { STORAGE_KEY } from "@/state/persistence/schema";
 import { StoreProvider } from "@/state/StoreProvider";
+import { AudioProvider } from "@/audio/AudioProvider";
 import { App } from "./App";
 import { bootstrap, type Bootstrap } from "./bootstrap";
 import type { UrlMode } from "./initialState";
@@ -35,7 +36,9 @@ function Session({ mode }: { mode: UrlMode }) {
   const persistence = useMemo(() => (boot.persistence ? { ...boot.persistence, enabled: true } : undefined), [boot]);
   return (
     <StoreProvider initial={boot.initial} persistence={persistence}>
-      <App dev={mode.dev} />
+      <AudioProvider>
+        <App dev={mode.dev} />
+      </AudioProvider>
     </StoreProvider>
   );
 }

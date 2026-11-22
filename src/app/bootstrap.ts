@@ -24,7 +24,7 @@ export function bootstrap(mode: UrlMode, now: number, adapter: StorageAdapter, m
   let initial: AppState;
   let safeToWrite = loaded.safeToWrite;
   try {
-    initial = stateFromPersisted(loaded.persisted, now, { recovered: loaded.recovered, storageBlocked: adapter.blocked || !loaded.safeToWrite });
+    initial = stateFromPersisted(loaded.persisted, now, { recovered: loaded.recovered, storageBlocked: adapter.blocked || !loaded.safeToWrite, firstVisit: loaded.firstVisit });
   } catch {
     // Data that passed the guard but still cannot be turned into a session: treat it like unreadable data — keep a verified
     // copy, start fresh, and never overwrite the original unless the copy is safe.

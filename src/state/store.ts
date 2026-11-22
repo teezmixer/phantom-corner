@@ -20,6 +20,8 @@ export interface AppState {
   layer: Layer;
   /** True once the user has pressed through the splash. */
   entered: boolean;
+  /** True only on the very first visit (nothing was stored). Drives the doorbell; never persisted. */
+  firstVisit: boolean;
   name: string;
   locationId: string;
   travelTo: string | null;
@@ -53,6 +55,7 @@ export const BREAK_MS = 5 * 60_000;
 export const initialState: AppState = {
   layer: "splash",
   entered: false,
+  firstVisit: false,
   name: "",
   locationId: HOME_LOCATION_ID,
   travelTo: null,

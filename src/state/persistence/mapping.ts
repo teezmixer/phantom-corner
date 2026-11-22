@@ -29,7 +29,7 @@ export function repairTodos(todos: readonly Todo[], nextTodoId: number): { todos
   return { todos: repaired, nextTodoId: next };
 }
 
-export function stateFromPersisted(p: Persisted, now: number, flags: { recovered: boolean; storageBlocked: boolean }): AppState {
+export function stateFromPersisted(p: Persisted, now: number, flags: { recovered: boolean; storageBlocked: boolean; firstVisit?: boolean }): AppState {
   let timer = p.timer;
   // A single impossible event is dropped; the rest of the history is kept.
   let events = p.events.filter(isEvent);
@@ -53,6 +53,7 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     visited: p.visited,
     events,
     unreadThreads: p.unreadThreads,
+    firstVisit: flags.firstVisit ?? false,
     recovered: flags.recovered,
     storageBlocked: flags.storageBlocked,
   };
