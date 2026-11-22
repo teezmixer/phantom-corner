@@ -49,3 +49,14 @@ export function knowledgeFor(events: readonly ProgressEvent[], rules: typeof KNO
 export function unlockedIds(level: number, locations: readonly { id: string; unlockLevel: number }[]): string[] {
   return locations.filter((l) => l.unlockLevel <= level).map((l) => l.id);
 }
+
+/** Where a user is within their current level: Knowledge into the level, needed for the next, and 0–100 percent. */
+export function levelProgress(knowledge: number, thresholds: readonly number[] = LEVEL_THRESHOLDS): { into: number; span: number; percent: number; maxed: boolean } {
+  const level = levelForKnowledge(knowledge, thresholds);
+  const start = thresholds[level - 1] ?? 0;
+  const next = thresholds[level];
+  if (next === undefined) return { into: 0, span: 0, percent: 100, maxed: true };
+  const into = Math.max(0, knowledge - start);
+  const span = next - start;
+  return { into, span, percent: Math.min(100, Math.round((into / span) * 100)), maxed: false };
+}

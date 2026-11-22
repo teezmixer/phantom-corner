@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { knowledgeFor, levelForKnowledge, unlockedIds, type ProgressEvent } from "./progress";
+import { knowledgeFor, levelForKnowledge, levelProgress, unlockedIds, type ProgressEvent } from "./progress";
 
 const T = [0, 10, 35, 125];
 
@@ -64,5 +64,16 @@ describe("unlockedIds", () => {
     expect(unlockedIds(1, locs)).toEqual(["a"]);
     expect(unlockedIds(3, locs)).toEqual(["a", "b"]);
     expect(unlockedIds(9, locs)).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("levelProgress", () => {
+  it("reports progress through the current level", () => {
+    expect(levelProgress(0, T)).toEqual({ into: 0, span: 10, percent: 0, maxed: false });
+    expect(levelProgress(5, T)).toEqual({ into: 5, span: 10, percent: 50, maxed: false });
+    expect(levelProgress(10, T)).toEqual({ into: 0, span: 25, percent: 0, maxed: false });
+  });
+  it("is full at the maximum level", () => {
+    expect(levelProgress(9999, T)).toEqual({ into: 0, span: 0, percent: 100, maxed: true });
   });
 });
