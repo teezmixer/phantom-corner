@@ -4,13 +4,14 @@ import { expect, test, ytCalls } from "./fixtures";
 /** Probe the Web Audio API: count contexts, oscillator pitches and noise sources, so tests can tell what the app made. */
 async function probeAudio(page: Page) {
   await page.addInitScript(() => {
-    const w = window as unknown as { __audio: { contexts: number; freqs: number[]; sources: number }; AudioContext: typeof AudioContext };
-    w.__audio = { contexts: 0, freqs: [], sources: 0 };
+    const w = window as unknown as { __audio: { contexts: number; freqs: number[]; sources: number; stops: number; states: string[]; list: AudioContext[] }; AudioContext: typeof AudioContext };
+    w.__audio = { contexts: 0, freqs: [], sources: 0, stops: 0, states: [], list: [] };
     const Original = w.AudioContext;
     w.AudioContext = class extends Original {
       constructor(...args: ConstructorParameters<typeof AudioContext>) {
         super(...args);
         w.__audio.contexts++;
+        w.__audio.list.push(this);
       }
       createOscillator() {
         const osc = super.createOscillator();
@@ -20,12 +21,15 @@ async function probeAudio(page: Page) {
       }
       createBufferSource() {
         w.__audio.sources++;
-        return super.createBufferSource();
+        const src = super.createBufferSource();
+        const stop = src.stop.bind(src);
+        src.stop = (when?: number) => { w.__audio.stops++; return stop(when); };
+        return src;
       }
     } as unknown as typeof AudioContext;
   });
 }
-const audio = (page: Page) => page.evaluate(() => (window as unknown as { __audio: { contexts: number; freqs: number[]; sources: number } }).__audio);
+const audio = (page: Page) => page.evaluate(() => { const a = (window as unknown as { __audio: { contexts: number; freqs: number[]; sources: number; stops: number; list: AudioContext[] } }).__audio; return { contexts: a.contexts, freqs: a.freqs, sources: a.sources, stops: a.stops, states: a.list.map((c) => c.state) }; });
 const enter = (page: Page) => page.getByRole("button", { name: "Press to enter" }).click();
 const caption = (page: Page) => page.getByRole("region", { name: "TV" }).getByRole("status");
 
@@ -117,7 +121,20 @@ test.describe("TV", () => {
     expect(covered).toBe(false);
   });
 
-  test("Knowledge is never tied to music: listening for 30 minutes earns nothing", async ({ page }) => {
+  test("Knowledge comes from sessions, never from music: a session earns the same with the TV playing", async ({ page }) => {
+    await page.clock.install();
+    await page.goto("/");
+    await page.clock.resume();
+    await enter(page);
+    await page.getByRole("button", { name: "Play" }).click();
+    await page.getByRole("button", { name: "Start" }).click();
+    await page.clock.fastForward("25:05");
+    await expect(page.getByRole("dialog", { name: "Time." })).toBeVisible();
+    // 25 focused minutes + 5 completion bonus = 30, exactly as without music
+    await expect(page.getByRole("group", { name: "Level and Knowledge" })).toContainText(/Knowledge\s*30/);
+  });
+
+  test("listening alone for 30 minutes earns nothing", async ({ page }) => {
     await page.clock.install();
     await page.goto("/");
     await page.clock.resume();
@@ -154,6 +171,7 @@ test.describe("sound", () => {
     expect((await audio(page)).contexts).toBe(0);
     await enter(page);
     await expect.poll(async () => (await audio(page)).contexts).toBe(1);
+    await expect.poll(async () => (await audio(page)).states).toEqual(["running"]); // audio can actually come out
   });
 
   test("the doorbell rings on a first-ever arrival but not on a return visit", async ({ page }) => {
@@ -175,6 +193,7 @@ test.describe("sound", () => {
     await expect.poll(async () => (await audio(page)).sources).toBe(2); // LeBlanc: rain + murmur
     await page.getByLabel("Jump to location").selectOption("ryuji");
     await expect.poll(async () => (await audio(page)).sources).toBe(4); // Ryuji's two layers replace them
+    await expect.poll(async () => (await audio(page)).stops).toBeGreaterThanOrEqual(2); // …and LeBlanc's two were stopped, not left running
   });
 
   test("the session-complete fanfare plays when a session finishes, and the start sound when it begins", async ({ page }) => {
@@ -190,16 +209,109 @@ test.describe("sound", () => {
     await expect.poll(async () => (await audio(page)).freqs).toContain(1046.5); // the fanfare's last note
   });
 
-  test("mute on the splash is remembered and silences interface sounds", async ({ page }) => {
-    await probeAudio(page);
+  test("mute on the splash is remembered across a reload", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Sound off" }).click(); // mutes (label shows the action available)
+    await page.getByRole("button", { name: "Sound off" }).click(); // the label is the action available: it mutes
     await expect(page.getByRole("button", { name: "Sound on" })).toBeVisible();
     await page.waitForTimeout(500);
     await page.reload();
     await expect(page.getByRole("button", { name: "Sound on" })).toBeVisible(); // still muted after a reload
+  });
+
+  test("a muted first visit makes no sound at all: no doorbell, no interface sounds", async ({ page }) => {
+    await probeAudio(page);
+    await page.goto("/"); // a genuine first visit, so the doorbell WOULD ring if mute were ignored
+    await page.getByRole("button", { name: "Sound off" }).click();
     await enter(page);
+    await page.keyboard.press("m"); // menu open sound would play too
+    await page.waitForTimeout(600);
+    expect((await audio(page)).freqs).toEqual([]); // no oscillator was ever scheduled
+  });
+
+  test("control: the same first visit, unmuted, does ring the doorbell", async ({ page }) => {
+    await probeAudio(page);
+    await page.goto("/");
+    await enter(page);
+    await expect.poll(async () => (await audio(page)).freqs).toContain(880);
+  });
+});
+
+test.describe("TV rules (review of M4)", () => {
+  test("the player's inner area is a full 200×200 and its corners are not clipped or covered", async ({ page }) => {
+    await page.goto("/");
+    await enter(page);
+    const info = await page.getByTestId("tv-player").evaluate((box) => {
+      const frame = box.querySelector("[data-yt-player]")!.getBoundingClientRect();
+      const inner = { w: box.clientWidth, h: box.clientHeight };
+      const b = box.getBoundingClientRect();
+      const corners = [[frame.left + 1, frame.top + 1], [frame.right - 1, frame.top + 1], [frame.left + 1, frame.bottom - 1], [frame.right - 1, frame.bottom - 1]];
+      const hits = corners.map(([x, y]) => { const el = document.elementFromPoint(x!, y!); return !!el && box.contains(el); });
+      return { inner, frameFits: frame.bottom <= b.bottom - 1 && frame.right <= b.right - 1, hits, frame: { w: frame.width, h: frame.height } };
+    });
+    expect(info.inner.w).toBeGreaterThanOrEqual(200);
+    expect(info.inner.h).toBeGreaterThanOrEqual(200);
+    expect(info.frame).toEqual({ w: 200, h: 200 });
+    expect(info.frameFits).toBe(true); // the bottom edge (YouTube's watermark) is not cut off
+    expect(info.hits).toEqual([true, true, true, true]);
+  });
+
+  test("the player keeps YouTube's default chrome and the privacy-enhanced host", async ({ page }) => {
+    await page.goto("/");
+    await enter(page);
+    await page.locator("[data-yt-player]").waitFor();
+    const opts = await page.evaluate(() => (window as unknown as { __yt: { options: { width: number; height: number; host: string; playerVars: Record<string, unknown> }[] } }).__yt.options);
+    expect(opts).toHaveLength(1);
+    expect(opts[0]).toMatchObject({ width: 200, height: 200, host: "https://www.youtube-nocookie.com" });
+    expect(opts[0]!.playerVars).not.toHaveProperty("controls"); // default chrome stays (spec §4.8)
+  });
+
+  test("demo mode does not contact YouTube until the first gesture", async ({ page }) => {
+    const requests: string[] = [];
+    page.on("request", (r) => { if (r.url().includes("youtube.com")) requests.push(r.url()); });
+    await page.goto("/?demo=true");
     await page.waitForTimeout(500);
-    expect((await audio(page)).freqs).not.toContain(880); // no doorbell while muted
+    expect(requests).toEqual([]);
+    await page.mouse.click(5, 5);
+    await expect.poll(() => requests.length).toBeGreaterThan(0);
+  });
+
+  test("on a short window the TV never covers the todo widget (the sign gives way)", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 500 });
+    await page.goto("/");
+    await enter(page);
+    const rects = await page.evaluate(() => {
+      const r = (el: Element | null) => { const b = el!.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom }; };
+      return { tv: r(document.querySelector('section[aria-label="TV"]')), todo: r(document.querySelector('[data-widget="todo"]')) };
+    });
+    const overlap = rects.tv.l < rects.todo.r && rects.tv.r > rects.todo.l && rects.tv.t < rects.todo.b && rects.tv.b > rects.todo.t;
+    expect(overlap).toBe(false);
+    expect(rects.tv.b - rects.tv.t).toBeGreaterThanOrEqual(200);
+  });
+
+  test("no screen is covered by the TV's caption or mixer, at the smallest supported window", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 600 });
+    await page.goto("/?demo=true&at=menu");
+    await page.mouse.click(5, 5); // a gesture, so the TV exists
+    const rects = await page.evaluate(() => {
+      const panel = document.querySelector('[role="dialog"] > div')!.getBoundingClientRect();
+      const tv = document.querySelector('section[aria-label="TV"]')!.getBoundingClientRect();
+      const mixer = document.querySelector('[role="group"][aria-label="Mixer"]');
+      const caption = document.querySelector('section[aria-label="TV"] [role="status"]')!.getBoundingClientRect();
+      return { panelRight: panel.right, tvLeft: tv.left, mixerOpen: !!mixer, captionW: caption.width, captionH: caption.height };
+    });
+    expect(rects.panelRight).toBeLessThanOrEqual(rects.tvLeft); // the dialog ends before the TV begins
+    expect(rects.mixerOpen).toBe(false);
+    expect(rects.captionW * rects.captionH).toBeLessThanOrEqual(2); // screen-reader-only while a screen is open
+  });
+
+  test("Escape closes the mixer and returns focus to its button", async ({ page }) => {
+    await page.goto("/");
+    await enter(page);
+    const button = page.getByRole("button", { name: "Mixer" });
+    await button.click();
+    await expect(page.getByRole("group", { name: "Mixer" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("group", { name: "Mixer" })).toHaveCount(0);
+    await expect(button).toBeFocused();
   });
 });

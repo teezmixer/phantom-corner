@@ -7,7 +7,7 @@ import { expect, test as base, type Page } from "@playwright/test";
  */
 export const YOUTUBE_STUB = `
 (function () {
-  var yt = (window.__yt = { instances: [], calls: [], noPlay: false, playDelay: 30 });
+  var yt = (window.__yt = { instances: [], calls: [], options: [], noPlay: false, playDelay: 30 });
   function Player(el, opts) {
     var self = this;
     var frame = document.createElement("div");
@@ -17,6 +17,7 @@ export const YOUTUBE_STUB = `
     frame.style.background = "#222";
     el.replaceWith(frame);
     yt.instances.push(self);
+    yt.options.push({ width: opts.width, height: opts.height, host: opts.host, playerVars: opts.playerVars });
     function rec() { yt.calls.push([].slice.call(arguments)); }
     function emit(state) { opts.events.onStateChange({ data: state }); }
     self._emit = emit;
