@@ -1,0 +1,8 @@
+# 0005 — Local-first persistence: one key, a guard, backups, debounced saves
+
+- **Date:** 2026-11-22
+- **Status:** accepted (spec §4.7 PROPOSED; storage-corruption handling DECIDED)
+- **Context:** Progress is a study history; losing it would break trust. Browser storage can be missing, blocked, full, corrupt, or written by a newer build of the app.
+- **Decision:** Everything durable lives under one key (`pc:v1`) as a versioned object (`schema: 1`). Load = read → `JSON.parse` in a try → migrate (array of step functions) → hand-written type guard (`state/persistence/guard.ts`). Any failure copies the raw string to `pc:v1:backup:<ISO time>`, starts fresh and sets `recovered` so the splash can say so. Saves are debounced ~250 ms and flushed on `visibilitychange` and `pagehide`. `StorageAdapter` has a localStorage version (every access wrapped; blocked storage keeps the visit working from memory and sets `blocked`) and a memory version for demo mode and tests. Knowledge, level and unlocks are never stored — they are folded from the event log.
+- **Rejected:** a validation library like zod (one more dependency for ~40 lines of guard, and the spec asks for hand-written guards); storing derived values like level (they could disagree with the log); several keys (partial writes could leave them inconsistent); IndexedDB (async load complicates first paint for no size benefit).
+- **Consequences:** a session that ended while the tab was closed is detected at load (`stateFromPersisted`) and recorded as completed. Adding a field means adding a migration. Data from a newer app is backed up, not read. Timer end is stored as a timestamp, so resume after reload needs no correction.
