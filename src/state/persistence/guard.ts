@@ -9,6 +9,8 @@ const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFin
 const isBool = (v: unknown): v is boolean => typeof v === "boolean";
 const isStrArray = (v: unknown): v is string[] => Array.isArray(v) && v.every(isStr);
 
+/** Hard ceiling on small lists in storage; todos above MAX_TODOS are cut on load, anything absurdly larger is refused. */
+const MAX_STORED_ITEMS = 5000;
 const MAX_DURATION = MAX_CUSTOM_MINUTES * MINUTE;
 const DAY = 24 * 60 * MINUTE;
 
@@ -27,7 +29,8 @@ function isTimer(v: unknown): boolean {
   }
 }
 
-function isEvent(v: unknown): boolean {
+/** One event is valid. Exported so the loader can DROP a bad event and keep the rest instead of resetting everything. */
+export function isEvent(v: unknown): boolean {
   if (!isRec(v)) return false;
   if (v.kind === "mission_first_set") return true;
   if (v.kind === "dev_grant") return isNum(v.knowledge) && v.knowledge >= 0 && v.knowledge <= 1_000_000;
@@ -47,13 +50,15 @@ export function isPersisted(v: unknown): v is Persisted {
     (v.name === null || isStr(v.name)) &&
     isRec(settings) && isBool(settings.muted) &&
     (mission === null || (isRec(mission) && isStr(mission.text) && isStr(mission.setAt) && isBool(mission.done))) &&
-    Array.isArray(v.todos) && v.todos.every((t) => isRec(t) && isNum(t.id) && isStr(t.text) && isBool(t.done)) &&
+    Array.isArray(v.todos) && v.todos.length <= MAX_STORED_ITEMS && v.todos.every((t) => isRec(t) && isNum(t.id) && isStr(t.text) && isBool(t.done)) &&
     isNum(v.nextTodoId) && Number.isInteger(v.nextTodoId) && v.nextTodoId >= 1 &&
     isTimer(v.timer) &&
     isStr(v.locationId) &&
-    isStrArray(v.visited) &&
-    Array.isArray(v.events) && v.events.length <= MAX_EVENTS && v.events.every(isEvent) &&
-    isStrArray(v.unreadThreads) &&
+    isStrArray(v.visited) && v.visited.length <= MAX_STORED_ITEMS &&
+    // Events are only checked to be a bounded array here: a single impossible event is dropped on load (mapping),
+    // so one bad record never costs the user their whole history.
+    Array.isArray(v.events) && v.events.length <= MAX_EVENTS &&
+    isStrArray(v.unreadThreads) && v.unreadThreads.length <= MAX_STORED_ITEMS &&
     isRec(stamps) && isStr(stamps.settings) && isStr(stamps.mission) && isStr(stamps.todos)
   );
 }

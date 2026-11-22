@@ -55,7 +55,6 @@ describe("load path", () => {
     ["no schema version", JSON.stringify({ hello: "world" })],
     ["wrong shape for schema 1", JSON.stringify({ ...fresh(), todos: "nope" })],
     ["a bad timer", JSON.stringify({ ...fresh(), timer: { status: "running", durationMs: 1 } })],
-    ["a bad event", JSON.stringify({ ...fresh(), events: [{ kind: "session", plannedMs: 1 }] })],
   ])("backs up %s and starts fresh with recovered set", (_name, raw) => {
     const r = load(raw);
     expect(r.recovered).toBe(true);
@@ -230,16 +229,54 @@ describe("values the guard must refuse", () => {
     ["a timer longer than the maximum", { ...ok, timer: { status: "idle", durationMs: 999 * 60_000 } }],
     ["paused time left above the duration", { ...ok, timer: { status: "paused", durationMs: 60_000 * 25, remainingMs: 60_000 * 26 } }],
     ["negative paused time", { ...ok, timer: { status: "paused", durationMs: 60_000 * 25, remainingMs: -1 } }],
-    ["focused time above the planned time", { ...ok, events: [{ kind: "session", plannedMs: 60_000, focusedMs: 600_000, outcome: "completed" }] }],
-    ["negative focused time", { ...ok, events: [{ kind: "session", plannedMs: 60_000, focusedMs: -5, outcome: "stopped" }] }],
-    ["a zero-length planned session", { ...ok, events: [{ kind: "session", plannedMs: 0, focusedMs: 0, outcome: "stopped" }] }],
-    ["a negative dev grant", { ...ok, events: [{ kind: "dev_grant", knowledge: -50 }] }],
     ["a non-integer next todo id", { ...ok, nextTodoId: 1.5 }],
     ["a next todo id below 1", { ...ok, nextTodoId: 0 }],
   ];
   it.each(bad)("rejects %s", (_name, data) => expect(isPersisted(data)).toBe(false));
+  it("refuses absurdly large lists instead of trying to process them", () => {
+    const huge = Array.from({ length: 5001 }, (_, i) => ({ id: i + 1, text: "t", done: false }));
+    expect(isPersisted({ ...ok, todos: huge, nextTodoId: 5002 })).toBe(false);
+    expect(isPersisted({ ...ok, visited: Array.from({ length: 5001 }, () => "leblanc") })).toBe(false);
+    expect(isPersisted({ ...ok, unreadThreads: Array.from({ length: 5001 }, () => "ann") })).toBe(false);
+  });
   it("still accepts a normal log", () => {
     expect(isPersisted({ ...ok, events: [{ kind: "mission_first_set" }, { kind: "session", plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed" }] })).toBe(true);
+  });
+});
+
+describe("one bad event does not cost the user their history", () => {
+  const good = { kind: "session", plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed" } as const;
+  const badEvents = [
+    { kind: "session", plannedMs: 60_000, focusedMs: 600_000, outcome: "completed" }, // focused above planned
+    { kind: "session", plannedMs: 60_000, focusedMs: -5, outcome: "stopped" }, // negative
+    { kind: "session", plannedMs: 0, focusedMs: 0, outcome: "stopped" }, // zero-length
+    { kind: "dev_grant", knowledge: -50 }, // negative grant
+    { kind: "nonsense" },
+    42,
+  ];
+
+  it("drops only the impossible events and keeps the rest", () => {
+    const stored = { ...fresh(), events: [good, ...badEvents, { kind: "mission_first_set" }] };
+    const r = load(JSON.stringify(stored));
+    expect(r.recovered).toBe(false); // not treated as unreadable data
+    const state = stateFromPersisted(r.persisted, NOW, { recovered: false, storageBlocked: false });
+    expect(state.events).toEqual([good, { kind: "mission_first_set" }]);
+  });
+});
+
+describe("a huge stored list cannot crash the app", () => {
+  it("cuts a long (but accepted) todo list instead of overflowing the stack", () => {
+    const todos = Array.from({ length: 4000 }, (_, i) => ({ id: i + 1, text: `t${i}`, done: false }));
+    const r = repairTodos(todos, 4001);
+    expect(r.todos).toHaveLength(200);
+    expect(r.nextTodoId).toBeGreaterThan(200);
+  });
+
+  it("an absurd list is refused at load (backed up, fresh start) rather than processed", () => {
+    const todos = Array.from({ length: 300_000 }, (_, i) => ({ id: i + 1, text: "t", done: false }));
+    const r = load(JSON.stringify({ ...fresh(), todos, nextTodoId: 300_001 }));
+    expect(r.recovered).toBe(true);
+    expect(r.adapter.dump().backups).toHaveLength(1);
   });
 });
 

@@ -4,7 +4,7 @@ import type { AppState } from "@/state/store";
 import type { StorageAdapter } from "@/state/persistence/adapter";
 import { loadPersisted } from "@/state/persistence/load";
 import { stateFromPersisted } from "@/state/persistence/mapping";
-import type { Persisted } from "@/state/persistence/schema";
+import { freshPersisted, type Persisted } from "@/state/persistence/schema";
 import { buildInitialState, type UrlMode } from "./initialState";
 
 export interface Bootstrap {
@@ -21,9 +21,20 @@ export function bootstrap(mode: UrlMode, now: number, adapter: StorageAdapter, m
     locationId: HOME_LOCATION_ID,
     visited: [HOME_LOCATION_ID],
   });
+  let initial: AppState;
+  let safeToWrite = loaded.safeToWrite;
+  try {
+    initial = stateFromPersisted(loaded.persisted, now, { recovered: loaded.recovered, storageBlocked: adapter.blocked || !loaded.safeToWrite });
+  } catch {
+    // Data that passed the guard but still cannot be turned into a session: treat it like unreadable data — keep a verified
+    // copy, start fresh, and never overwrite the original unless the copy is safe.
+    const raw = adapter.read();
+    safeToWrite = raw !== null && adapter.backup(raw);
+    initial = stateFromPersisted(freshPersisted(makeClientId(), new Date(now).toISOString(), { timer: initialTimer, locationId: HOME_LOCATION_ID, visited: [HOME_LOCATION_ID] }), now, { recovered: true, storageBlocked: !safeToWrite });
+  }
   return {
-    initial: stateFromPersisted(loaded.persisted, now, { recovered: loaded.recovered, storageBlocked: adapter.blocked || !loaded.safeToWrite }),
+    initial,
     // Dev mode reads saved progress but never writes it (its grants and resets are throwaway); unsafe data is left alone.
-    persistence: loaded.safeToWrite && !mode.dev ? { adapter, base: loaded.persisted } : null,
+    persistence: safeToWrite && !mode.dev ? { adapter, base: loaded.persisted } : null,
   };
 }

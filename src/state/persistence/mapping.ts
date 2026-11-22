@@ -1,4 +1,5 @@
 import { clampText, MAX_TODOS } from "@/domain/limits";
+import { isEvent } from "./guard";
 import { initialState, type AppState, type Todo } from "../store";
 import type { Persisted } from "./schema";
 
@@ -13,9 +14,11 @@ import type { Persisted } from "./schema";
  */
 export function repairTodos(todos: readonly Todo[], nextTodoId: number): { todos: Todo[]; nextTodoId: number } {
   const seen = new Set<number>();
-  let next = Math.max(nextTodoId, ...todos.map((t) => t.id + 1), 1);
+  // Cut first, then fold: spreading a huge array into Math.max overflows the call stack.
+  const kept = todos.slice(0, MAX_TODOS);
+  let next = kept.reduce((max, t) => Math.max(max, t.id + 1), Math.max(nextTodoId, 1));
   const repaired: Todo[] = [];
-  for (const t of todos.slice(0, MAX_TODOS)) {
+  for (const t of kept) {
     const text = clampText(t.text);
     if (!text) continue;
     let id = t.id;
@@ -28,7 +31,8 @@ export function repairTodos(todos: readonly Todo[], nextTodoId: number): { todos
 
 export function stateFromPersisted(p: Persisted, now: number, flags: { recovered: boolean; storageBlocked: boolean }): AppState {
   let timer = p.timer;
-  let events = p.events;
+  // A single impossible event is dropped; the rest of the history is kept.
+  let events = p.events.filter(isEvent);
   // An end time further away than the whole session (a corrupt value, or the clock moved) is pulled back to a full session.
   if (timer.status === "running") timer = { ...timer, endsAt: Math.min(timer.endsAt, now + timer.durationMs) };
   if (timer.status === "running" && now >= timer.endsAt) {
