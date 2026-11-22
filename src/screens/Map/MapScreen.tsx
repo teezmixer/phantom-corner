@@ -12,7 +12,7 @@ export function MapScreen() {
   return (
     <Overlay title="Map">
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {LOCATIONS.map((loc) => {
+        {LOCATIONS.map((loc, index) => {
           const unlocked = derived.unlocked.includes(loc.id);
           const current = state.locationId === loc.id;
           const Icon = current ? MapPinSimpleArea : unlocked ? MapPin : Lock;
@@ -28,7 +28,7 @@ export function MapScreen() {
               >
                 <Icon size={24} weight={unlocked ? "fill" : "regular"} aria-hidden="true" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-display-label text-lg">{unlocked ? loc.name : "???"}</span>
+                  <span className={`block truncate text-lg ${unlocked ? "font-display-label" : "font-body-primary"}`}>{unlocked ? loc.name : `Place ${index + 1}`}</span>
                   <span className="block text-xs text-greylight">
                     {current ? "You are here" : unlocked ? loc.register : `Locked · reach level ${loc.unlockLevel}`}
                   </span>
