@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useSessionLock } from "@/hooks/useSessionLock";
 import { TabLockScreen } from "@/screens/TabLock/TabLockScreen";
 import { localStorageAdapter } from "@/state/persistence/adapter";
 import { STORAGE_KEY } from "@/state/persistence/schema";
 import { StoreProvider } from "@/state/StoreProvider";
 import { App } from "./App";
-import { bootstrap } from "./bootstrap";
+import { bootstrap, type Bootstrap } from "./bootstrap";
 import type { UrlMode } from "./initialState";
 
 /**
@@ -20,8 +20,18 @@ export function Root({ mode }: { mode: UrlMode }) {
   return <Session mode={mode} />;
 }
 
+/**
+ * Loaded once per page load. React StrictMode (dev) runs initialisers twice, which would back unreadable data up
+ * twice; caching here keeps it to one read, after the lock is held.
+ */
+let booted: Bootstrap | undefined;
+function bootOnce(mode: UrlMode): Bootstrap {
+  booted ??= bootstrap(mode, Date.now(), localStorageAdapter(STORAGE_KEY), () => crypto.randomUUID());
+  return booted;
+}
+
 function Session({ mode }: { mode: UrlMode }) {
-  const [boot] = useState(() => bootstrap(mode, Date.now(), localStorageAdapter(STORAGE_KEY), () => crypto.randomUUID()));
+  const boot = bootOnce(mode);
   const persistence = useMemo(() => (boot.persistence ? { ...boot.persistence, enabled: true } : undefined), [boot]);
   return (
     <StoreProvider initial={boot.initial} persistence={persistence}>
