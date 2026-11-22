@@ -97,6 +97,8 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, layer: "main", entered: true };
     case "CLOSE_LAYER":
       // Closing a screen returns to where the user was: the splash before entering, the room after.
+      // The info pages hang off Settings once the user is in the room.
+      if (state.entered && (state.layer === "about" || state.layer === "credits" || state.layer === "privacy")) return { ...state, layer: "settings" };
       return { ...state, layer: state.entered ? "main" : "splash" };
     case "SET_MISSION": {
       const text = action.text.trim();
@@ -141,7 +143,9 @@ export function reducer(state: AppState, action: Action): AppState {
     case "END_BREAK":
       return { ...state, layer: "choice", breakEndsAt: null };
     case "START_TRAVEL":
-      return { ...state, layer: "travel", travelTo: action.to };
+      // Travelling is allowed mid-session and never stops a running timer (provisional rule, decision D-22).
+      // A finished timer is acknowledged so it does not sit at 00:00 with no controls.
+      return { ...state, layer: "travel", travelTo: action.to, timer: transition(state.timer, { type: "ACKNOWLEDGE" }) };
     case "ARRIVE":
       if (!state.travelTo) return { ...state, layer: "main" };
       return {
@@ -170,7 +174,8 @@ export function reducer(state: AppState, action: Action): AppState {
     case "LOAD":
       return action.state;
     case "RESET":
-      return { ...initialState, layer: "splash" };
+      // Demo mode stays demo, so a reset can never turn into writing real progress later (M3 persistence).
+      return { ...initialState, layer: "splash", demo: state.demo };
   }
 }
 

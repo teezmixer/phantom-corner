@@ -46,6 +46,9 @@ export function TimerWidget() {
             <IconButton label="Stop" onClick={() => send({ type: "STOP" })}><Stop weight="fill" /></IconButton>
           </>
         )}
+        {timer.status === "complete" && (
+          <IconButton label="Start" onClick={() => dispatch({ type: "START_SESSION", now: Date.now() })}><Play weight="fill" /></IconButton>
+        )}
         {timer.status === "paused" && (
           <>
             <IconButton label="Resume" onClick={() => send({ type: "RESUME", now: Date.now() })}><Play weight="fill" /></IconButton>

@@ -91,6 +91,34 @@ describe("store reducer", () => {
     expect(reducer(onBreak, { type: "END_BREAK" })).toMatchObject({ layer: "choice", breakEndsAt: null });
   });
 
+  it("never leaves a finished timer stuck: travelling or closing the map keeps it usable", () => {
+    const done = run([
+      { type: "TIMER", event: { type: "START", now: T0 }, now: T0 },
+      { type: "TIMER", event: { type: "TICK", now: T0 + 25 * 60_000 }, now: T0 + 25 * 60_000 },
+    ]);
+    // "Go somewhere else" → travel: the finished timer is acknowledged
+    const travelling = reducer(done, { type: "START_TRAVEL", to: "ryuji" });
+    expect(travelling.timer.status).toBe("idle");
+    // …and a timer left at "complete" (map closed instead) can still start a new session
+    const again = reducer(reducer(done, { type: "SET_LAYER", layer: "main" }), { type: "START_SESSION", now: T0 + 30 * 60_000 });
+    expect(again.timer.status).toBe("running");
+  });
+
+  it("keeps a running timer running while travelling", () => {
+    const running = run([{ type: "TIMER", event: { type: "START", now: T0 }, now: T0 }]);
+    expect(reducer(running, { type: "START_TRAVEL", to: "ryuji" }).timer).toBe(running.timer);
+  });
+
+  it("closes the info pages back to Settings once in the room, and to the splash before", () => {
+    const entered = run([]);
+    expect(reducer({ ...entered, layer: "credits" }, { type: "CLOSE_LAYER" }).layer).toBe("settings");
+    expect(reducer({ ...initialState, layer: "about" }, { type: "CLOSE_LAYER" }).layer).toBe("splash");
+  });
+
+  it("keeps demo mode on reset", () => {
+    expect(reducer({ ...initialState, demo: true, entered: true }, { type: "RESET" })).toMatchObject({ demo: true, layer: "splash", entered: false });
+  });
+
   it("dev tools: grant Knowledge, unlock everything, reset", () => {
     let s = run([{ type: "DEV_GRANT", knowledge: 5000 }, { type: "DEV_UNLOCK_ALL" }]);
     expect(derive(s).level).toBe(25);
