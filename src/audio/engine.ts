@@ -30,6 +30,11 @@ export class AudioEngine {
     return this.ctx !== null;
   }
 
+  /** True when audio can actually come out (a created context can still be suspended). */
+  get running(): boolean {
+    return this.ctx?.state === "running";
+  }
+
   /** Create and resume the AudioContext. Call from a click or key press; safe to call again. */
   unlock(): void {
     if (!this.ctx) {
@@ -62,6 +67,19 @@ export class AudioEngine {
 
   /** Play an interface sound (a no-op until unlocked or while muted). */
   playSfx(id: SfxId): void {
+    if (!this.ctx || !this.uiBus || this.settings.muted) return;
+    const ctx = this.ctx;
+    // A suspended context would stack every sound up and fire them all at once on resume. Resume first and play only if it
+    // comes back quickly (Safari resumes a moment after the gesture); otherwise the sound is simply skipped.
+    if (ctx.state !== "running") {
+      const asked = Date.now();
+      void ctx.resume().then(() => { if (Date.now() - asked < 400 && ctx.state === "running") this.schedule(id); }, () => undefined);
+      return;
+    }
+    this.schedule(id);
+  }
+
+  private schedule(id: SfxId): void {
     if (!this.ctx || !this.uiBus || this.settings.muted) return;
     const ctx = this.ctx;
     const start = ctx.currentTime + 0.005;

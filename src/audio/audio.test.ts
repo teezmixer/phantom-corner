@@ -149,6 +149,44 @@ describe("AudioEngine", () => {
     expect(f.log.busGains).toContain(0.2);
   });
 
+  it("never queues sounds on a suspended context: it resumes first and plays once, or skips", async () => {
+    vi.useFakeTimers();
+    try {
+      const f = fakeContext("suspended");
+      const engine = new AudioEngine(() => f.ctx);
+      f.raw.resume = vi.fn(async () => { f.raw.state = "suspended"; }); // stays suspended: the sound must be dropped
+      engine.unlock();
+      engine.playSfx("sessionComplete");
+      await vi.advanceTimersByTimeAsync(10);
+      expect(f.log.oscillators).toBe(0); // nothing piled up to fire at once later
+      f.raw.resume = vi.fn(async () => { f.raw.state = "running"; }); // now it resumes promptly
+      engine.playSfx("select");
+      await vi.advanceTimersByTimeAsync(10);
+      expect(f.log.oscillators).toBe(SFX.select.length);
+      expect(engine.running).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("fades an ambience layer out instead of cutting it dead, and shares one noise buffer across layers", () => {
+    vi.useFakeTimers();
+    try {
+      const f = fakeContext("running");
+      const createBuffer = f.raw.createBuffer;
+      const engine = new AudioEngine(() => f.ctx);
+      engine.unlock();
+      engine.setAmbience([{ id: "a", label: "A", synth: "rain" }, { id: "b", label: "B", synth: "wind" }]);
+      expect(createBuffer).toHaveBeenCalledTimes(1); // one 2 s buffer for both layers
+      f.log.busGains.length = 0;
+      engine.setAmbience([]); // travel
+      expect(f.log.busGains).toContain(0); // gain ramps to silence first…
+      vi.advanceTimersByTime(300);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("defines a recipe for every ambience kind a location can name", () => {
     expect(Object.keys(AMBIENCE).sort()).toEqual(["city", "hum", "murmur", "rain", "room", "wind"]);
   });

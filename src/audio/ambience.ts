@@ -1,5 +1,8 @@
 import type { AmbienceSynth } from "@/content/types";
 
+/** How long an ambience layer fades out before it is stopped (travel, leaving the room). */
+export const FADE_OUT_S = 0.15;
+
 export interface AmbienceLayer {
   /** 0–1 within the ambience bus. */
   setLevel(level: number): void;
@@ -27,12 +30,16 @@ export const AMBIENCE: Record<AmbienceSynth, Recipe> = {
   hum: { filter: "lowpass", freq: 140, q: 0.8, gain: 0.5 },
 };
 
-/** Two seconds of looping white noise, shared by every layer on a context. */
+/** One two-second buffer of white noise per context, shared by every layer (they differ only by their filters). */
+const noiseCache = new WeakMap<AudioContext, AudioBuffer>();
 function noiseBuffer(ctx: AudioContext): AudioBuffer {
+  const cached = noiseCache.get(ctx);
+  if (cached) return cached;
   const length = ctx.sampleRate * 2;
   const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
+  noiseCache.set(ctx, buffer);
   return buffer;
 }
 
@@ -68,9 +75,12 @@ export function buildAmbience(ctx: AudioContext, kind: AmbienceSynth, destinatio
 
   return {
     setLevel: (level) => fader.gain.setTargetAtTime(Math.min(1, Math.max(0, level)), ctx.currentTime, 0.05),
+    // A short fade, then stop: cutting a running noise source dead clicks.
     stop: () => {
-      try { source.stop(); lfo?.stop(); } catch { /* already stopped */ }
-      fader.disconnect();
+      const end = ctx.currentTime + FADE_OUT_S;
+      fader.gain.setTargetAtTime(0, ctx.currentTime, FADE_OUT_S / 4);
+      try { source.stop(end); lfo?.stop(end); } catch { /* already stopped */ }
+      setTimeout(() => fader.disconnect(), FADE_OUT_S * 1000 + 50);
     },
   };
 }
