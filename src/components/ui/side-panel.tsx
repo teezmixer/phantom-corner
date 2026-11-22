@@ -40,7 +40,7 @@ export const SidePanel = forwardRef<HTMLDivElement, PanelContainerProps>(
       <ResizablePanel>
         <motion.div
           className={cn(
-            "w-[160px] rounded-r-[44px] bg-card text-card-foreground md:w-[260px]",
+            "w-[160px] bg-card text-card-foreground md:w-[260px]",
             className
           )}
           animate={panelOpen ? "open" : "closed"}

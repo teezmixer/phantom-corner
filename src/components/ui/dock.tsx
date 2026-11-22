@@ -123,69 +123,6 @@ function Dock({ className, children }: DockProps) {
   )
 }
 
-// Props for the DockCardInner component
-interface DockCardInnerProps {
-  src: string // Source URL for the image
-  id: string // Unique identifier for the card
-  children?: ReactNode // Optional children for the card
-}
-
-// DockCardInner component to display images and handle animation states
-function DockCardInner({ src, id, children }: DockCardInnerProps) {
-  const { animatingIndexes } = useDock() // Access the Dock context to get the animating indexes. This determines which cards are currently animating.
-
-  return (
-    <span className="relative z-0 flex h-full w-full items-center justify-center overflow-hidden rounded-md">
-      {/* Background image with a blur effect to give a depth illusion */}
-      <motion.img
-        className="absolute z-10 translate-y-2.5 scale-125 transform opacity-40 blur-md filter"
-        src={src}
-        alt=""
-      />
-
-      {/* AnimatePresence component to handle the entrance and exit animations of children - in our case, the "openIcon" */}
-      <AnimatePresence>
-        {animatingIndexes.includes(parseInt(id)) && children ? (
-          <motion.div
-            className="relative z-0 h-full w-full rounded-full"
-            initial={{ scale: 0, opacity: 0, filter: "blur(4px)" }}
-            animate={{
-              scale: 1,
-              opacity: 1,
-              filter: "blur(0px)",
-              transition: { type: "spring", delay: 0.2 }, // Animation to spring into place with a delay so our layoutId animations can be smooth
-            }}
-            exit={{
-              scale: 0,
-              opacity: 0,
-              filter: "blur(4px)",
-              transition: { duration: 0 }, // Exit animation with no delay
-            }}
-          >
-            <div className="flex h-full w-full flex-col items-center justify-center">
-              {/* Render the openIcon */}
-              {children}
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      {/* Another AnimatePresence to handle layout animations */}
-      <AnimatePresence mode="popLayout">
-        {!animatingIndexes.includes(parseInt(id)) ? (
-          <motion.img
-            layoutId={id} // Unique identifier for layout animations
-            className="relative z-0 h-1/2 w-1/2 rounded-full border border-black/30 dark:border-white/10"
-            src={src}
-            alt=""
-          />
-        ) : null}
-      </AnimatePresence>
-    </span>
-  )
-}
-
-// Props for the DockCard component
 interface DockCardProps {
   children: ReactNode // React children to be rendered within the dock card
   id: string // Unique identifier for the dock card
@@ -420,5 +357,5 @@ export function useMousePosition(
   )
 }
 
-export { Dock, DockCard, DockCardInner, DockDivider, useDock }
+export { Dock, DockCard, DockDivider, useDock }
 export default Dock

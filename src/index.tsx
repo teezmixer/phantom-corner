@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { MotionConfig } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
@@ -16,9 +17,11 @@ const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement)
 root.render(
   <React.StrictMode>
     <GateRoute>
-      <StoreProvider initial={initial}>
-        <App dev={mode.dev} />
-      </StoreProvider>
+      <MotionConfig reducedMotion="user">
+        <StoreProvider initial={initial}>
+          <App dev={mode.dev} />
+        </StoreProvider>
+      </MotionConfig>
     </GateRoute>
     <Analytics />
     <SpeedInsights />

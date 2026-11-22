@@ -17,10 +17,10 @@ export const TimerRoot = React.forwardRef<HTMLDivElement, React.HTMLAttributes<H
 );
 TimerRoot.displayName = "TimerRoot";
 
-/** The clock icon turns slowly while a session runs, and stays still for reduced motion. */
-export function TimerIcon({ running, className }: { running?: boolean; className?: string }) {
+/** Upstream spins the icon while running; here it stays still — the room is calm while the timer runs (spec Part 1). */
+export function TimerIcon({ className }: { className?: string }) {
   return (
-    <span aria-hidden="true" className={cn("size-5", running && "motion-safe:animate-spin [animation-duration:4s]", className)}>
+    <span aria-hidden="true" className={cn("size-5", className)}>
       <Clock className="size-full" />
     </span>
   );

@@ -23,7 +23,7 @@ export function TimerWidget() {
   return (
     <Slab className="flex h-full w-full items-center justify-between gap-2 px-1" label="Timer">
       <TimerRoot className="border-0 px-1" data-status={timer.status}>
-        <TimerIcon running={timer.status === "running"} />
+        <TimerIcon />
         <TimerDisplay time={formatClock(remainingMs(timer, now))} className="font-hud-timer text-4xl leading-none" />
       </TimerRoot>
       <div className="flex items-center gap-1">

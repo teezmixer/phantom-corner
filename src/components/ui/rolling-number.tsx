@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { motion, MotionValue, useSpring, useTransform } from "motion/react"
+import { motion, MotionValue, useReducedMotion, useSpring, useTransform } from "motion/react"
 
 interface RollingNumberProps {
   value: number
@@ -24,7 +24,9 @@ export function RollingNumber({
   onAnimationStart,
   onAnimationComplete,
 }: RollingNumberProps) {
-  const spring = useSpring(value, { mass, stiffness, damping })
+  // Phantom Corner: with reduced motion the number changes at once instead of counting.
+  const reduce = useReducedMotion()
+  const spring = useSpring(value, reduce ? { duration: 0 } : { mass, stiffness, damping })
   const display: MotionValue<string> = useTransform(spring, (current) =>
     format(parseFloat(current.toFixed(precision)))
   )
