@@ -2,9 +2,8 @@
 
 Format: what · why · what would unblock it · what was built around it.
 
-## B-01 Vercel CLI not installed (partial)
-- **Why:** `vercel` is not on this machine. **Unblock:** not needed — Vercel's GitHub integration deploys, and `gh api repos/teezmixer/phantom-corner/deployments` shows preview/production deployments.
-- **Built around:** previews verified through GitHub deployment statuses and a browser on the preview URL. Vercel project settings (e.g. output dir `dist/` for Vite) cannot be inspected or changed here; if a deploy fails on settings it is logged here, not changed.
+## B-01 Vercel CLI — RESOLVED 2026-11-22
+- Ares connected Vercel; `vercel whoami` → teezmixer. Previews are checked with the CLI and `gh api .../deployments`. Project settings are still not changed without Ares (log here if needed).
 
 ## B-02 Live Supabase accounts and sync (pre-flight P4)
 - **Why:** no `SUPABASE_URL` / `SUPABASE_ANON_KEY`. **Unblock:** create the two Supabase projects (spec §4.9) and add the keys to `.env.local` and Vercel env.

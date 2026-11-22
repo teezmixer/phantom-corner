@@ -10,9 +10,9 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **Options:** (a) treat the existing code tokens (`tailwind.config.js` colours, `src/index.css` font tokens, `src/gate/gate.css`) as the design system; (b) Ares defines variables in Figma and M1 re-transcribes them.
 - **Spec:** n/a. **Placeholder now:** (a) — M1 consolidates the code tokens into `styles/tokens.css` + `DESIGN.md`, marked "from code, pending Figma variables".
 
-### D-02 Music-player vector in the frame — Ares's own?
-- **Question:** Frame `12:187` "Music Player" (Star, CD, Note vectors) is neither named as a game rip nor listed as Ares's asset.
-- **Options:** export and use it / treat as reference only. **Placeholder now:** not exported; the TV slot uses a token block.
+### D-02 Music-player vector in the frame — RESOLVED 2026-11-22
+- **Ares:** not his; an internet placeholder. Replace with interactive assets from our libraries.
+- **Now:** never exported. The music player is built from Phosphor icons (ui-ux-pro-max catalogue) and Cult UI behaviour, styled only with tokens.
 
 ### D-03 Local-only files kept out of the public repo
 - `handoff/` was already excluded in `.git/info/exclude`. Step 0 also excluded the root duplicates `/BUILD-PROMPT.md`, `/phantom-corner-spec.md` (byte-identical to `handoff/`) and `/DESIGN.md-spec.md` (third-party format spec, licence unchecked) the same way, rather than deleting or committing them.
