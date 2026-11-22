@@ -331,3 +331,12 @@ test.describe("switching tracks (found by playing it in a real browser)", () => 
     expect(calls.filter((c) => c[0] === "pause")).toHaveLength(0); // we never told the new track to pause
   });
 });
+
+test("on a very short window the whole player stays on screen", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 330 });
+  await page.goto("/");
+  await enter(page);
+  const box = (await page.getByTestId("tv-player").boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(330); // the bottom (YouTube's watermark) is not pushed off-screen
+});

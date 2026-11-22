@@ -88,8 +88,21 @@ export const createYouTubeBackend: BackendFactory = async (container, handlers, 
   const mount = document.createElement("div");
   container.appendChild(mount);
   return new Promise<MusicBackend>((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error("YouTube player did not become ready")), READY_TIMEOUT_MS);
-    const player = new YT.Player(mount, {
+    // Once abandoned (timeout or abort before ready) the player is destroyed, its iframe removed, and anything it
+    // still says is ignored — a retry then builds the only live player.
+    let abandoned = false;
+    let player: YTPlayer | null = null;
+    const abandon = (reason: string) => {
+      if (abandoned) return;
+      abandoned = true;
+      clearTimeout(timeout);
+      try { player?.destroy(); } catch { /* already gone */ }
+      mount.remove();
+      reject(new Error(reason));
+    };
+    const timeout = setTimeout(() => abandon("YouTube player did not become ready"), READY_TIMEOUT_MS);
+    signal?.addEventListener("abort", () => abandon("cancelled"), { once: true });
+    player = new YT.Player(mount, {
       width: 200,
       height: 200,
       // Default player chrome stays (spec §4.8: do not alter the player). The privacy-enhanced host is used; `origin`
@@ -97,16 +110,16 @@ export const createYouTubeBackend: BackendFactory = async (container, handlers, 
       host: "https://www.youtube-nocookie.com",
       playerVars: { playsinline: 1, rel: 0, origin: window.location.origin },
       events: {
-        onReady: () => { clearTimeout(timeout); resolve({
-          load: (id, play) => (play ? player.loadVideoById(id) : player.cueVideoById(id)),
-          play: () => player.playVideo(),
-          pause: () => player.pauseVideo(),
-          setVolume: (v) => player.setVolume(v),
-          setMuted: (m) => (m ? player.mute() : player.unMute()),
-          destroy: () => { try { player.destroy(); } catch { /* already gone */ } },
+        onReady: () => { if (abandoned || !player) return; clearTimeout(timeout); const p = player; resolve({
+          load: (id, play) => (play ? p.loadVideoById(id) : p.cueVideoById(id)),
+          play: () => p.playVideo(),
+          pause: () => p.pauseVideo(),
+          setVolume: (v) => p.setVolume(v),
+          setMuted: (m) => (m ? p.mute() : p.unMute()),
+          destroy: () => { try { p.destroy(); } catch { /* already gone */ } },
         }); },
-        onStateChange: (e) => { const s = STATE[e.data]; if (s) handlers.onState(s); },
-        onError: (e) => handlers.onError(e.data),
+        onStateChange: (e) => { if (abandoned) return; const s = STATE[e.data]; if (s) handlers.onState(s); },
+        onError: (e) => { if (!abandoned) handlers.onError(e.data); },
       },
     });
   });

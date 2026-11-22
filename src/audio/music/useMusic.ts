@@ -5,6 +5,8 @@ import { createYouTubeBackend, type BackendFactory, type MusicBackend } from "./
 
 /** How long a requested play may stay "loading" (with a player present) before we call it blocked by autoplay rules. */
 export const BLOCKED_AFTER_MS = 5000;
+/** A "playing" event this soon after the user paused a loading track is the video starting late, not a new request. */
+export const LATE_PLAY_WINDOW_MS = 4000;
 
 export interface UseMusic {
   state: MusicState;
@@ -34,6 +36,9 @@ export function useMusic({ tracks, resetKey, volume, muted, enabled = true, fact
   const loaded = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  // When the user pauses while a track is still loading, the video can start a moment later anyway. Remember the pause so
+  // the late "playing" is answered with pause() instead of overriding what the user asked for.
+  const pausedWhileLoading = useRef<number | null>(null);
 
   // Travel: a new location always stops the TV and starts from its first track, cued (spec D-26).
   const trackIds = tracks.map((t) => t.videoId).join(",");
@@ -45,10 +50,15 @@ export function useMusic({ tracks, resetKey, volume, muted, enabled = true, fact
     dispatch({ type: "SET_PLAYLIST", tracks });
   }, [key, tracks]);
 
+  // The latest state, readable from event handlers without making them depend on it.
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
+
   // Pressing play after the script failed to load tries again.
   const apiFailed = state.apiFailed;
   const send = useCallback((event: MusicEvent) => {
     if (event.type === "PLAY" && apiFailed) setAttempt((a) => a + 1);
+    pausedWhileLoading.current = event.type === "PAUSE" && stateRef.current.status === "loading" ? Date.now() : null;
     dispatch(event);
   }, [apiFailed]);
 
@@ -59,7 +69,15 @@ export function useMusic({ tracks, resetKey, volume, muted, enabled = true, fact
     const controller = new AbortController();
     factory(container, {
       onState: (s) => {
-        if (s === "playing") dispatch({ type: "PLAYER_PLAYING" });
+        if (s === "playing") {
+          const asked = pausedWhileLoading.current;
+          if (asked !== null && Date.now() - asked < LATE_PLAY_WINDOW_MS) {
+            pausedWhileLoading.current = null;
+            backend.current?.pause(); // honour the pause the user pressed before the video started
+            return;
+          }
+          dispatch({ type: "PLAYER_PLAYING" });
+        }
         else if (s === "paused") dispatch({ type: "PLAYER_PAUSED" });
         else if (s === "ended") dispatch({ type: "PLAYER_ENDED" });
       },

@@ -207,6 +207,23 @@ describe("TV", () => {
     expect(screen.getByRole("status").className).toContain("sr-only");
   });
 
+  it("honours a pause pressed while a track is still loading, even if the video then starts anyway", async () => {
+    const { latest } = await setup();
+    click("Play");
+    expect(caption()).toBe("Tuning in.");
+    click("Pause"); // paused before the video ever started
+    expect(caption()).toContain("Paused");
+    const pause = latest().backend.pause as unknown as ReturnType<typeof vi.fn>;
+    pause.mockClear();
+    emit(() => latest().handlers.onState("playing")); // …but it starts a moment later
+    expect(pause).toHaveBeenCalledTimes(1); // told to pause again
+    expect(caption()).toContain("Paused"); // the user's pause stands
+    // a click on the video itself later is a fresh user action and is followed
+    act(() => { vi.advanceTimersByTime(5000); });
+    emit(() => latest().handlers.onState("playing"));
+    expect(caption()).toBe(PLACEHOLDER_PLAYLIST[0]!.title);
+  });
+
   it("destroys its player when it unmounts", async () => {
     const { created, unmount } = await setup();
     expect(created.every((c) => c.destroyed)).toBe(false);

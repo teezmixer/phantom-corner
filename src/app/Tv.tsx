@@ -66,7 +66,9 @@ export function Tv({ scale, locked = false, factory }: { scale: number; locked?:
   const todoBottom = (todo.y + todo.h) * scale;
   const signSpace = (sign.y + sign.h) * scale;
   const centred = `calc(${todoBottom}px + (100dvh - ${todoBottom + signSpace}px - ${BOX_PX}px) / 2)`;
-  const top = `max(${todoBottom + 4}px, ${centred})`;
+  // …but never lower than the window allows: on a very short window (heavy zoom) the player stays fully on screen even
+  // if it then overlaps the todo widget.
+  const top = `min(max(${todoBottom + 4}px, ${centred}), calc(100dvh - ${BOX_PX}px))`;
 
   const button = "grid size-9 place-items-center border border-white bg-black text-white hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal disabled:border-dashed disabled:text-greylight disabled:hover:bg-black";
   return (
