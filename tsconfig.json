@@ -18,5 +18,7 @@
     "baseUrl": ".",
     "paths": { "@/*": ["src/*"] }
   },
-  "include": ["src", "vite.config.ts", "e2e", "playwright.config.ts"]
+  "include": ["src", "vite.config.ts", "e2e", "playwright.config.ts"],
+  // iCloud/macOS sync-conflict copies ("name 2.ts") are never part of the app
+  "exclude": ["**/* 2.*", "**/* 3.*", "**/* 4.*", "**/* 5.*", "**/* 6.*", "**/* 7.*", "**/* 8.*", "**/* 9.*", "node_modules", "dist"]
 }
