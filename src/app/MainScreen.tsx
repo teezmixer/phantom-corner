@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { Eye } from "@phosphor-icons/react";
+import { ui } from "@/content/copy";
 import { CornerGroup, type Corner } from "@/hud/CornerGroup";
 import { DEFAULT_SLOTS, slotStyle, type WidgetId } from "@/hud/slots";
 import { useHudScale } from "@/hud/useHudScale";
@@ -47,14 +48,14 @@ export const MainScreen = (): React.JSX.Element => {
             {(Object.entries(DEFAULT_SLOTS) as [WidgetId, (typeof DEFAULT_SLOTS)[WidgetId]][])
               .filter(([id, slot]) => slot.corner === corner && id !== "music")
               .map(([id, slot]) => (
-                <div key={id} style={slotStyle(slot)} data-widget={id}>{widgets[id as keyof typeof widgets]}</div>
+                <div key={id} style={id === "phone" ? { ...slotStyle(slot), width: "auto", height: "auto", minHeight: slot.h } : slotStyle(slot)} data-widget={id}>{widgets[id as keyof typeof widgets]}</div>
               ))}
           </CornerGroup>
         ))}
       <TvPlaceholder scale={scale} />
       {state.hudHidden && (
         <button type="button" onClick={() => dispatch({ type: "TOGGLE_HUD" })} className="absolute bottom-4 left-4 z-10 flex items-center gap-2 border-2 border-white bg-black px-3 py-2 font-body-primary text-white hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
-          <Eye size={20} />Show UI
+          <Eye size={20} />{ui.showUi}
         </button>
       )}
     </main>

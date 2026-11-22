@@ -33,7 +33,7 @@ export const DEFAULT_SLOTS: SlotMap = {
   mission: { corner: "tr", x: 46, y: 43, w: 272, h: 101 },
   todo: { corner: "tr", x: 46, y: 177, w: 272, h: 101 },
   level: { corner: "bl", x: 39, y: 90, w: 158, h: 116 },
-  buttonBar: { corner: "bl", x: 39, y: 49, w: 233, h: 29 },
+  buttonBar: { corner: "bl", x: 39, y: 40, w: 233, h: 48 },
   music: { corner: "br", x: 39, y: 275, w: 213, h: 50 },
   location: { corner: "br", x: 39, y: 49, w: 484, h: 218 },
 };

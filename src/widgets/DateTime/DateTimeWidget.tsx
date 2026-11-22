@@ -15,13 +15,13 @@ export function DateTimeWidget() {
   const Icon = DAY_ICON[part];
   return (
     <Slab className="flex h-full w-full flex-col justify-between p-2" label="Date and time">
-      <div className="flex items-center gap-2 font-display-hero text-4xl leading-none">
-        <CalendarBlank size={28} aria-hidden="true" />
+      <div className="flex items-center gap-2 font-display-hero text-6xl leading-none">
+        <CalendarBlank size={36} aria-hidden="true" />
         <span aria-label={`${date.getMonth() + 1}/${date.getDate()}`}>
           <RollingNumber value={date.getMonth() + 1} />/<RollingNumber value={date.getDate()} />
         </span>
       </div>
-      <div className="flex items-baseline justify-between text-sm">
+      <div className="flex items-baseline justify-between text-base">
         <span className="font-body-primary uppercase tracking-wide text-redbright">{WEEKDAYS[date.getDay()]}</span>
         <span className="flex items-center gap-1"><Icon size={16} aria-hidden="true" />{part}</span>
         <time className="tabular-nums" dateTime={`${pad(date.getHours())}:${pad(date.getMinutes())}`}>
