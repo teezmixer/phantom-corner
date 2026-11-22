@@ -4,7 +4,7 @@ import { initialState, type AppState } from "../store";
 import { MAX_BACKUPS, localStorageAdapter, memoryAdapter } from "./adapter";
 import { isPersisted } from "./guard";
 import { loadPersisted } from "./load";
-import { stateFromPersisted, toPersisted } from "./mapping";
+import { repairTodos, stateFromPersisted, toPersisted } from "./mapping";
 import { migrate, type Migration } from "./migrate";
 import { freshPersisted, STORAGE_KEY } from "./schema";
 import { createSaver } from "./saver";
@@ -219,5 +219,57 @@ describe("state ↔ persisted", () => {
     const withMission = toPersisted({ ...initialState, mission: "x" }, fresh(), ISO);
     const done = toPersisted({ ...initialState, mission: "x", missionDone: true }, withMission, new Date(NOW + 9000).toISOString());
     expect(done.mission).toEqual({ text: "x", setAt: ISO, done: true });
+  });
+});
+
+describe("values the guard must refuse", () => {
+  const ok = fresh();
+  const bad: [string, unknown][] = [
+    ["a zero-length timer", { ...ok, timer: { status: "idle", durationMs: 0 } }],
+    ["a negative timer", { ...ok, timer: { status: "idle", durationMs: -60_000 } }],
+    ["a timer longer than the maximum", { ...ok, timer: { status: "idle", durationMs: 999 * 60_000 } }],
+    ["paused time left above the duration", { ...ok, timer: { status: "paused", durationMs: 60_000 * 25, remainingMs: 60_000 * 26 } }],
+    ["negative paused time", { ...ok, timer: { status: "paused", durationMs: 60_000 * 25, remainingMs: -1 } }],
+    ["focused time above the planned time", { ...ok, events: [{ kind: "session", plannedMs: 60_000, focusedMs: 600_000, outcome: "completed" }] }],
+    ["negative focused time", { ...ok, events: [{ kind: "session", plannedMs: 60_000, focusedMs: -5, outcome: "stopped" }] }],
+    ["a zero-length planned session", { ...ok, events: [{ kind: "session", plannedMs: 0, focusedMs: 0, outcome: "stopped" }] }],
+    ["a negative dev grant", { ...ok, events: [{ kind: "dev_grant", knowledge: -50 }] }],
+    ["a non-integer next todo id", { ...ok, nextTodoId: 1.5 }],
+    ["a next todo id below 1", { ...ok, nextTodoId: 0 }],
+  ];
+  it.each(bad)("rejects %s", (_name, data) => expect(isPersisted(data)).toBe(false));
+  it("still accepts a normal log", () => {
+    expect(isPersisted({ ...ok, events: [{ kind: "mission_first_set" }, { kind: "session", plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed" }] })).toBe(true);
+  });
+});
+
+describe("repairing recoverable data on load", () => {
+  it("gives duplicate todo ids fresh ones and keeps nextTodoId above every id", () => {
+    const r = repairTodos([{ id: 3, text: "a", done: false }, { id: 3, text: "b", done: true }, { id: 7, text: "c", done: false }], 2);
+    expect(new Set(r.todos.map((t) => t.id)).size).toBe(3);
+    expect(Math.min(...r.todos.map((t) => t.id))).toBe(3);
+    expect(r.nextTodoId).toBeGreaterThan(Math.max(...r.todos.map((t) => t.id)));
+    expect(r.todos.map((t) => t.text)).toEqual(["a", "b", "c"]);
+  });
+
+  it("cuts over-long text, drops empty todos and caps the list", () => {
+    const long = "x".repeat(500);
+    const r = repairTodos([{ id: 1, text: long, done: false }, { id: 2, text: "   ", done: false }], 3);
+    expect(r.todos).toHaveLength(1);
+    expect(r.todos[0]!.text).toHaveLength(80);
+    const many = Array.from({ length: 300 }, (_, i) => ({ id: i + 1, text: "t", done: false }));
+    expect(repairTodos(many, 301).todos).toHaveLength(200);
+  });
+
+  it("pulls an end time that is further away than a whole session back to a full session", () => {
+    const stored = toPersisted({ ...initialState, timer: { status: "running", durationMs: 25 * MINUTE, endsAt: NOW + 9999 * MINUTE } }, fresh(), ISO);
+    const back = stateFromPersisted(stored, NOW, { recovered: false, storageBlocked: false });
+    expect(back.timer).toEqual({ status: "running", durationMs: 25 * MINUTE, endsAt: NOW + 25 * MINUTE });
+  });
+
+  it("cuts an over-long stored mission", () => {
+    const stored = toPersisted({ ...initialState, mission: "m" }, fresh(), ISO);
+    const back = stateFromPersisted({ ...stored, mission: { text: "y".repeat(400), setAt: ISO, done: false } }, NOW, { recovered: false, storageBlocked: false });
+    expect(back.mission).toHaveLength(80);
   });
 });

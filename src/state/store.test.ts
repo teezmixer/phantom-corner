@@ -126,6 +126,23 @@ describe("store reducer", () => {
     expect(reducer({ ...initialState, layer: "about" }, { type: "CLOSE_LAYER" }).layer).toBe("splash");
   });
 
+  it("caps mission and todo length and the number of todos in the store itself", () => {
+    let s = run([{ type: "SET_MISSION", text: "m".repeat(500) }, { type: "ADD_TODO", text: "t".repeat(500) }]);
+    expect(s.mission).toHaveLength(80);
+    expect(s.todos[0]!.text).toHaveLength(80);
+    for (let i = 0; i < 250; i++) s = reducer(s, { type: "ADD_TODO", text: `todo ${i}` });
+    expect(s.todos).toHaveLength(200);
+  });
+
+  it("never records negative focus when the clock was moved back before stopping", () => {
+    const s = run([
+      { type: "TIMER", event: { type: "START", now: T0 }, now: T0 },
+      { type: "TIMER", event: { type: "STOP" }, now: T0 - 3 * 60 * 60_000 },
+    ]);
+    expect(derive(s).minutesFocused).toBe(0);
+    expect(derive(s).knowledge).toBe(0);
+  });
+
   it("keeps demo mode on reset", () => {
     expect(reducer({ ...initialState, demo: true, entered: true }, { type: "RESET" })).toMatchObject({ demo: true, layer: "splash", entered: false });
   });

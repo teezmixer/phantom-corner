@@ -5,6 +5,7 @@
 import { LOCATIONS, HOME_LOCATION_ID } from "@/content/registry";
 import { THREADS } from "@/content/threads";
 import { MAP_UNLOCK_LEVEL } from "@/content/progression";
+import { clampText, MAX_TODOS } from "@/domain/limits";
 import { initialTimer, remainingMs, transition, type TimerEvent, type TimerState } from "@/domain/timer";
 import { knowledgeFor, levelForKnowledge, unlockedIds, type ProgressEvent } from "@/domain/progress";
 
@@ -113,15 +114,15 @@ export function reducer(state: AppState, action: Action): AppState {
       if (state.entered && (state.layer === "about" || state.layer === "credits" || state.layer === "privacy")) return { ...state, layer: "settings" };
       return { ...state, layer: state.entered ? "main" : "splash" };
     case "SET_MISSION": {
-      const text = action.text.trim();
+      const text = clampText(action.text);
       const first = text !== "" && !state.events.some((e) => e.kind === "mission_first_set");
       return { ...state, mission: text, missionDone: false, events: first ? [...state.events, { kind: "mission_first_set" }] : state.events };
     }
     case "TOGGLE_MISSION_DONE":
       return state.mission ? { ...state, missionDone: !state.missionDone } : state;
     case "ADD_TODO": {
-      const text = action.text.trim();
-      if (!text) return state;
+      const text = clampText(action.text);
+      if (!text || state.todos.length >= MAX_TODOS) return state;
       return { ...state, todos: [...state.todos, { id: state.nextTodoId, text, done: false }], nextTodoId: state.nextTodoId + 1 };
     }
     case "TOGGLE_TODO":

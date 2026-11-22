@@ -31,15 +31,20 @@ export function clampCustomMinutes(input: number): number {
 
 export const initialTimer: TimerState = { status: "idle", durationMs: DEFAULT_DURATION_MS };
 
+/** A duration in ms forced into the allowed range (SET_DURATION can never store a negative, zero or huge length). */
+export function clampDurationMs(ms: number): number {
+  return clampCustomMinutes(ms / MINUTE) * MINUTE;
+}
+
 /** Unknown state/event combinations return the same state object. */
 export function transition(state: TimerState, event: TimerEvent): TimerState {
   switch (state.status) {
     case "idle":
-      if (event.type === "SET_DURATION") return { status: "idle", durationMs: event.durationMs };
+      if (event.type === "SET_DURATION") return { status: "idle", durationMs: clampDurationMs(event.durationMs) };
       if (event.type === "START") return { status: "running", durationMs: state.durationMs, endsAt: event.now + state.durationMs };
       return state;
     case "running":
-      if (event.type === "PAUSE") return { status: "paused", durationMs: state.durationMs, remainingMs: Math.max(0, state.endsAt - event.now) };
+      if (event.type === "PAUSE") return { status: "paused", durationMs: state.durationMs, remainingMs: clampRemaining(state.endsAt - event.now, state.durationMs) };
       if (event.type === "STOP") return { status: "idle", durationMs: state.durationMs };
       if (event.type === "TICK" && event.now >= state.endsAt) return { status: "complete", durationMs: state.durationMs };
       return state;
@@ -53,13 +58,22 @@ export function transition(state: TimerState, event: TimerEvent): TimerState {
   }
 }
 
+/**
+ * Remaining time is always within [0, durationMs]. Moving the system clock BACK would otherwise show more time than
+ * the session has, and make a stopped session record negative focus. (Moving it FORWARD ends the session early: that is
+ * inherent to a wall-clock design — see ADR 0005.)
+ */
+function clampRemaining(ms: number, durationMs: number): number {
+  return Math.min(durationMs, Math.max(0, ms));
+}
+
 /** Milliseconds left, derived from the state and the injected current time. */
 export function remainingMs(state: TimerState, now: number): number {
   switch (state.status) {
     case "idle":
       return state.durationMs;
     case "running":
-      return Math.max(0, state.endsAt - now);
+      return clampRemaining(state.endsAt - now, state.durationMs);
     case "paused":
       return state.remainingMs;
     case "complete":
