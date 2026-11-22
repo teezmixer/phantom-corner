@@ -2,6 +2,7 @@
 
 | Milestone | Round | Readiness | Build quality | Vision fit | Remaining gap |
 | --- | --- | --- | --- | --- | --- |
+| M3 | 2 | 4 | 4 | 4 | none blocking; limits and draft copy are Ares's |
 | M3 | 1 | 3 | 3 | 4 | lock-before-read race, backup safety, silent write failures, value validation (all fixed after) |
 | M2 | 2 | 4 | 4 | 3 | timer/todo/phone fit (fixed after); empty slabs, faces, TV placement are Ares's |
 | M2 | 1 | 2 | 3 | 2 | stuck timer, dead padding, TV covered, focus, shortcuts, reduced motion |
@@ -37,3 +38,6 @@ Findings and Tier 3 proposals are recorded under each milestone heading below.
 - Evidence corrected: `timer-accuracy` (no real hidden-tab test is possible in Playwright), `session-two-tab-lock` (now also proves carry-over), `timer-complete`, `q-storage-adapter`, `entry-demo-memory`; closed-tab test now checks Profile totals (1 session / 25 min / 30 Knowledge) so a double count would fail; tab-lock screenshots now use the real viewport sizes.
 - Not done, with reasons: owner token on each write (needs a schema field; residual ≤250 ms window only on deliberate takeover — ADR 0005); Web Locks fallback heartbeat (ADR 0006); event ids/timestamps (D-24, planned for the M11 migration).
 - **Tier 3 for Ares:** confirm the schema departure from spec §4.7 (numeric todo ids, events without id/at — D-24); lock-screen and Morgana notice copy are drafts (D-10).
+
+**Round 2**: Readiness 4, Build quality 4, Vision fit 4. Remaining Tier 1 fixed afterwards: a huge stored todo list overflowed the stack on load (lists are now cut before folding and absurd sizes refused); one impossible event reset all progress (now dropped individually); mapping failures are treated as recoveries; bootstrap runs once per page load (StrictMode double-backup); a unit test proves storage is not read until the lock is granted (it fails if the old bug is reintroduced).
+- **Tier 3 for Ares:** the 80-character, 200-todo and 50,000-event limits are provisional; whether "newer build's data kept untouched" deserves its own Morgana line (today it shows the cannot-write notice, though the data is preserved).
