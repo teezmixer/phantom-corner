@@ -112,7 +112,8 @@ function Dock({ className, children }: DockProps) {
           setHovered(false) // Set hovered state to false
         }}
         style={{
-          x: "-50%", // Center the dock horizontally
+          // Phantom Corner: the demo's x: "-50%" centring assumed absolute left-3/4 placement and pushed the dock
+          // out of its HUD slot, so it is removed.
           scale: zoomLevel, // Bind the zoom level to the scale style property
         }}
       >
@@ -243,37 +244,13 @@ function DockCard({ children, id, label, onSelect }: DockCardProps) {
     setElCenterX(x + 24) // 24 is the half of INITIAL_WIDTH (48 / 2), centering the element
   })
 
-  const isAnimating = useRef(false) // Reference to track if the card is currently animating to avoid conflicting animations
-  const controls = useAnimation() // Animation controls for managing card's Y position during the animation loop
-  const timeoutRef = useRef<number | null>(null) // Reference to manage timeout cleanup on component unmount
-
-  // Handle click event to start or stop the card's animation
+  // Phantom Corner: upstream starts an app-launcher bounce that repeats forever until clicked again. These cards are
+  // navigation buttons, so a click is one short hop (none under reduced motion) and the card is never left moving.
+  const controls = useAnimation() // Animation controls for the card's one-shot Y hop
+  const timeoutRef = useRef<number | null>(null) // Kept so the unmount cleanup below still has its ref
   const handleClick = () => {
-    if (!isAnimating.current) {
-      isAnimating.current = true
-      // Add the card's id to the animatingIndexes array in the Dock context
-      dock.setAnimatingIndexes([...dock.animatingIndexes, parseInt(id)])
-      opacity.set(0.5) // Set opacity for the animation
-      controls.start({
-        y: -24, // Move the card up by 24 pixels
-        transition: {
-          repeat: Infinity, // Repeat the animation indefinitely
-          repeatType: "reverse", // Reverse the direction of the animation each cycle
-          duration: 0.5, // Duration of each cycle
-        },
-      })
-    } else {
-      isAnimating.current = false
-      // Remove the card's id from the animatingIndexes array in the Dock context
-      dock.setAnimatingIndexes(
-        dock.animatingIndexes.filter((index) => index !== parseInt(id))
-      )
-      opacity.set(0) // Reset opacity
-      controls.start({
-        y: 0, // Reset Y position to the original state
-        transition: { duration: 0.5 }, // Smooth transition back to original state
-      })
-    }
+    if (reduceMotion) return
+    controls.start({ y: [0, -8, 0], transition: { duration: 0.3 } })
   }
 
   // Cleanup timeout on component unmount to prevent memory leaks
