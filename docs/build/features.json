@@ -1605,8 +1605,8 @@
       "spec": "§4.15",
       "description": "GitHub Actions runs typecheck, lint, unit, build and Playwright smoke on PRs and main.",
       "steps": "Green run on the M1 PR.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "GitHub Actions CI job green on PR teezmixer/phantom-corner#2 (typecheck, lint, unit, build, Playwright smoke)"
     },
     {
       "id": "q-content-tests",
