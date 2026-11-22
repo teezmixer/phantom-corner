@@ -53,8 +53,21 @@ The full build brief is `handoff/BUILD-PROMPT.md`; the long-term spec is `handof
 
 ## Commands
 
-Filled in by M1 (Vite + TS5 + Vitest + Tailwind v4 + shadcn). Until then the repo is Create React App:
-`npm install`, `npm start`, `npm run build`, `npm test`.
+| Task | Command |
+| --- | --- |
+| Install | `npm ci` |
+| Dev server | `npm run dev` (port 5173; `.claude/launch.json` has `dev` and `preview`) |
+| Production build | `npm run build` → `dist/` |
+| Typecheck / lint | `npm run typecheck` · `npm run lint` |
+| Unit + component tests | `npm test` (Vitest, jsdom, `src/**/*.test.ts(x)`) |
+| End-to-end | `npm run e2e` (Playwright, builds then serves `vite preview` on 4173) |
+
+## Structure (spec §4.3)
+
+`src/app` composition root · `src/hud` corner groups, scaling, slots · `src/widgets/<Name>` · `src/screens/<Name>` ·
+`src/content` locations, threads, copy, progression data · `src/domain` pure logic (no React) · `src/state` store + persistence ·
+`src/audio` · `src/motion` · `src/styles` (`tokens.css` is the only colour/type source; `theme.css` maps Tailwind; `shadcn.css` maps shadcn roles) ·
+`src/lib/utils.ts` (`cn`) · `e2e/` Playwright · `docs/adr/` ADRs.
 
 ## Verification format
 
