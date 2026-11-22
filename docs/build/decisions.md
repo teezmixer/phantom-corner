@@ -86,3 +86,11 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **Ares:** only Café Leblanc is ready and the dates are in progress; do not use them now. Use assets from Cult UI and ui-ux-pro-max that best represent each widget's function.
 - **Now:** the Leblanc sign and month numeral are not rendered anywhere. Widgets: timer → Cult UI timer pieces + Phosphor; date/clock/Knowledge/level → Cult UI `rolling-number` + Phosphor; todo → Cult UI `sortable-list` behaviour; bottom bar → Cult UI `dock`; phone → Cult UI `side-panel`; Knowledge bar → Cult UI `halo-progress`; location → Phosphor map pin + name. Files stay in `src/assets/` unused.
 - **To restore:** re-add `sign` to `content/locations/leblanc/manifest.ts` and render it in `widgets/Location`.
+
+### D-22 Rules the review surfaced (provisional — Ares decides)
+- **Heading face:** Doctor Punk's H is a hairline and reads as missing in headings ("Hideout" → "ideout"). UI headings, menu labels and the location sign use Expose (`font-display-hero`) instead. The gate keeps its own per-letter mix (BUILT). Which face(s) the app uses is yours; Bubblegum Superstar and Earwig Factory (D-16) still have no loaded font.
+- **Travel mid-session:** allowed, and it never stops a running timer; a finished timer is acknowledged. Alternative: block travel while a session runs.
+- **Reset all data:** two presses (first arms for 4 s) instead of a confirm dialog, because "Are you sure?" is on the banned-phrase list. Alternative: in-voice confirm line from Morgana.
+- **A finished timer jumps whatever screen is open to the session-end choice.** Alternative: wait until the user closes the screen.
+- **Timer icon** is static while a session runs (upstream spins it) to keep the room calm.
+- **Overlay vs TV:** screens leave a gutter on the right so the TV sits above the scrim and is never covered; the TV is not inert while a screen is open. Placement is still D-05.

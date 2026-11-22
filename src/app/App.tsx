@@ -52,8 +52,7 @@ export function App({ dev }: { dev: boolean }) {
 
   return (
     <>
-      {/* The room is inert while a screen is open, so keyboard focus and assistive tech stay in the dialog. */}
-      {state.entered && <div className="contents" inert={state.layer !== "main"}><MainScreen /></div>}
+      {state.entered && <MainScreen locked={state.layer !== "main"} />}
       {LAYERS[state.layer]?.()}
       {dev && <DevPanel />}
     </>

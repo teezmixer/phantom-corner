@@ -1,9 +1,7 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 /** The walking skeleton, end to end: enter → mission → short timer → summary → map → travel. */
 test("a user can run the whole loop and travel to a newly unlocked location", async ({ page }) => {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
   await page.clock.install();
   await page.goto("/");
   await page.clock.resume(); // time flows normally; we jump it with fastForward below
@@ -38,7 +36,6 @@ test("a user can run the whole loop and travel to a newly unlocked location", as
   await expect(page.getByRole("status")).toContainText("School rooftop"); // travel title card
   await page.clock.fastForward(2000);
   await expect(page.getByLabel("Current location: School rooftop")).toBeVisible();
-  expect(errors).toEqual([]);
 });
 
 test("take five opens a break that returns to the choice", async ({ page }) => {

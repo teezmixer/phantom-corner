@@ -582,8 +582,8 @@
       "spec": "§3.6",
       "description": "Space start/pause, M menu, N map, H hide UI, Esc closes any layer; off while a text field has focus.",
       "steps": "Playwright: each key; typing in mission input does not trigger.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/hooks/shortcuts.test.ts (7 cases: M/N/H/Space/Esc, off while typing, modifier combos); e2e/behaviour.spec.ts \"keyboard shortcuts…\" and \"shortcuts stay off while typing\""
     },
     {
       "id": "banner-transient",

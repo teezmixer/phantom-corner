@@ -23,7 +23,11 @@ const CORNERS: { corner: Corner; label: string }[] = [
   { corner: "br", label: "Bottom right widgets" },
 ];
 
-export const MainScreen = (): React.JSX.Element => {
+/**
+ * `locked` is true while a screen is open on top. The scene and widgets then go inert so keyboard focus and
+ * assistive tech stay in the dialog; the TV is left out on purpose — it stays visible and hit-testable (spec §4.8).
+ */
+export const MainScreen = ({ locked = false }: { locked?: boolean }): React.JSX.Element => {
   const scale = useHudScale();
   const { state, dispatch } = useStore();
 
@@ -41,6 +45,7 @@ export const MainScreen = (): React.JSX.Element => {
 
   return (
     <main className="relative h-dvh w-screen overflow-hidden bg-black">
+      <div className="contents" inert={locked}>
       <Scene locationId={state.locationId} />
       {!state.hudHidden &&
         CORNERS.map(({ corner, label }) => (
@@ -52,6 +57,7 @@ export const MainScreen = (): React.JSX.Element => {
               ))}
           </CornerGroup>
         ))}
+      </div>
       <TvPlaceholder scale={scale} />
       {state.hudHidden && (
         <button type="button" onClick={() => dispatch({ type: "TOGGLE_HUD" })} className="absolute bottom-4 left-4 z-10 flex items-center gap-2 border-2 border-white bg-black px-3 py-2 font-body-primary text-white hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">

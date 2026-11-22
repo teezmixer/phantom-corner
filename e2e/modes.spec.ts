@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test.describe("demo mode", () => {
   test("lands mid-session with a mission, two todos and one unread message", async ({ page }) => {
@@ -73,9 +73,8 @@ test("every screen is reachable from the menu or settings and closes with Escape
       for (const page_ of ["About", "Credits", "Privacy"]) {
         await page.getByRole("button", { name: page_, exact: true }).click();
         await expect(page.getByRole("dialog", { name: page_ })).toBeVisible();
-        await page.keyboard.press("Escape");
-        await page.getByRole("button", { name: "Menu (M)" }).click();
-        await page.getByRole("button", { name: /SETTINGS/ }).click();
+        await page.keyboard.press("Escape"); // info pages close back to Settings
+        await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
       }
     }
     await page.keyboard.press("Escape");

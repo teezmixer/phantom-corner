@@ -1,8 +1,7 @@
-import { devices, expect, test } from "@playwright/test";
+import { devices } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("desktop opens on the splash, and entering shows the room with all four HUD corners", async ({ page }) => {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(page).toHaveTitle("Phantom Corner");
   await expect(page.getByText(/fan-made, non-commercial/)).toBeVisible();
@@ -11,7 +10,6 @@ test("desktop opens on the splash, and entering shows the room with all four HUD
     await expect(page.getByRole("region", { name: label })).toBeAttached();
   }
   await expect(page.getByLabel("Current location: Café Leblanc")).toBeVisible();
-  expect(errors).toEqual([]);
 });
 
 test.describe("phone browsers", () => {
