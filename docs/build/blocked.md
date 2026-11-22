@@ -16,3 +16,8 @@ Format: what · why · what would unblock it · what was built around it.
 - **Hosted music** — hard constraint; YouTube embeds only.
 - **Spec §6.7 cut list** — hidden player, YouTube background, real weather, notes, Spotify, five-stat system, co-study, task integrations, drag-and-drop layout, streaks/leaderboards, app stores, payments, Persona 6 concept.
 - **Phone layout** — a design decision (D-11).
+
+## B-03 Vercel project preset still says Create React App (worked around)
+- **Why:** the dashboard preset outputs `build/`; Vite outputs `dist/`. Project settings are not changed by this run.
+- **Built around:** `vercel.json` sets `framework: vite` and `outputDirectory: dist`, which overrides the dashboard per deploy.
+- **Optional for Ares:** switch the dashboard preset to Vite so settings and repo agree.
