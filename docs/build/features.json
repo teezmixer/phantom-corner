@@ -396,7 +396,7 @@
       "description": "A mission can have an optional deadline that counts down in the widget.",
       "steps": "Unit: countdown formatting with injected time; Playwright: deadline set shows countdown.",
       "status": "pass",
-      "evidence": "src/domain/deadline.test.ts (countdown text, rounding, overdue, datetime-local round trip); e2e/hud.spec.ts \"counts down from an optional deadline, goes red when overdue, and is saved\" and \"no countdown without a deadline; marking done hides it\"; src/state/store.test.ts; persistence round trip"
+      "evidence": "src/domain/deadline.test.ts (countdown text, rounding, overdue, bounds, datetime-local round trip); e2e/hud.spec.ts \"counts down from an optional deadline, goes red when overdue, and is saved\", \"changing only the deadline keeps a finished mission finished\", \"an absurd deadline is ignored rather than stored\", \"a mission without a deadline shows no countdown, and marking it done hides it\"; src/state/store.test.ts; src/state/persistence round trip. Overdue is white text on a red slab (small red-on-black is 4.1:1, §4.12)."
     },
     {
       "id": "mission-complete-moment",
@@ -1309,7 +1309,7 @@
       "description": "Settings has the Ren-with-mask art slot, widget toggles, per-bus volume, HUD size, motion, menu style, analytics, account, export and delete.",
       "steps": "Playwright: each control present and persisted.",
       "status": "pass",
-      "evidence": "e2e/hud.spec.ts (toggles, HUD size, motion, analytics, export, delete); the volumes are the mixer (e2e/audio.spec.ts); art slot, menu style (text only), account note and info links are present as placeholders; see D-28"
+      "evidence": "e2e/hud.spec.ts (widget toggles, HUD size, motion, analytics incl. opt-out surviving Delete, export, delete incl. demo mode and pristine visits, hidden timer still ending a session); volumes are the mixer (e2e/audio.spec.ts); the art slot, menu style (text only), account note and info buttons are placeholders; see D-28, D-29"
     },
     {
       "id": "settings-widget-toggles",
@@ -1320,7 +1320,7 @@
       "description": "Each widget can be shown or hidden from settings (no drag-and-drop).",
       "steps": "Playwright: toggle timer off, gone, reload, still off.",
       "status": "pass",
-      "evidence": "e2e/hud.spec.ts \"a widget can be hidden and shown again in Settings, and the choice is saved\" (mutation-checked) and \"the TV and the button bar cannot be hidden\"; src/state/store.test.ts; guard rejects hiding either"
+      "evidence": "e2e/hud.spec.ts \"a widget can be hidden and shown again in Settings, and the choice is saved\" (mutation-checked), \"the TV and the button bar cannot be hidden\" and \"hiding the timer widget (or the whole HUD) does not stop a running session from completing\"; src/state/store.test.ts; repairSettings drops unknown or protected widget names on load rather than rejecting the save"
     },
     {
       "id": "settings-motion",
@@ -1331,7 +1331,7 @@
       "description": "A motion setting (system/reduced/full) overrides prefers-reduced-motion.",
       "steps": "Unit: useReducedMotion resolves setting.",
       "status": "pass",
-      "evidence": "e2e/hud.spec.ts \"Reduce motion overrides the system\" (page mode + saved + CSS durations collapse even when the OS allows motion); src/hooks/useReducedMotion.ts used by the adopted components"
+      "evidence": "e2e/hud.spec.ts \"Reduce motion overrides the system\" (page mode, saved, CSS durations collapse even when the OS allows motion); src/hooks/useReducedMotion.ts used by the adopted components. Not covered by a unit test: the hook's resolution of setting vs system (only exercised through the browser)"
     },
     {
       "id": "settings-export-delete",
@@ -1342,7 +1342,7 @@
       "description": "Export downloads saved data as JSON; delete clears local data after a confirm in voice.",
       "steps": "Playwright: download event; delete → fresh start.",
       "status": "pass",
-      "evidence": "e2e/hud.spec.ts \"Export downloads the saved data as a JSON file in the current schema\" and \"Delete needs a second press, then removes everything including backups\"; src/state/persistence/exportData.test.ts"
+      "evidence": "e2e/hud.spec.ts \"Export downloads the saved data as a JSON file in the current schema\", \"Delete needs a second press, then removes everything including backups…\" (nothing is written back after the debounce; the next visit is a first visit), \"Delete in demo mode never touches the real saved progress\" (mutation-checked), \"a visit that only looks at the splash saves nothing\", \"the opt-out holds … and survives Delete my data\" (mutation-checked); src/state/persistence/exportData.test.ts"
     },
     {
       "id": "pages-about-credits-privacy",

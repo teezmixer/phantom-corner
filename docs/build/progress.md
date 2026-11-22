@@ -39,3 +39,9 @@
 ## 2026-11-22 — M4 review
 - Round 1 R2/BQ3/V3 → many fixes; playing the real YouTube player found a bug no test saw (transient pause on track switch) → fixed with a stub that behaves like the real player. Round 2 R4/BQ4/V4; the one blocker (abandoned player left in place) fixed. 259 unit + 70 e2e tests.
 - Sync-conflict copies deleted with Ares's approval (83 untracked + 2 accidentally tracked); the repo folder is iCloud-synced, so they may reappear.
+
+## 2026-11-22 — M5 review round 1 fixes (in progress)
+- Reviewer scored M5 R2/BQ3.5/V3.5. Fixed in code (b5bd63ed and the commit before it): repair-not-reject on load, Delete wipes only real progress and keeps the analytics opt-out, sessions complete without the Timer widget, banners above screens, no greeting after recovery, deadline bounds.
+- e2e now covers each of those; Delete-in-demo and opt-out-survives-Delete were mutation-checked (both fail when the fix is removed). Full e2e: 99 passed. Vitest: 318 passed (earlier run).
+- Corrected overstated features.json evidence; added D-29.
+- Still to do: refresh M5 screenshots, update taste-review.md, full verify (typecheck, lint, test, build, e2e) in one run, push, update PR #6, ask reviewer for round 2, merge.
