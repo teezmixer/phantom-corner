@@ -6,4 +6,4 @@ import { isPhoneBrowser } from "./isPhoneBrowser";
 export default function GateRoute({ children }: { children: React.ReactNode }): React.JSX.Element {
   return isPhoneBrowser() ? <MobileGate /> : <>{children}</>;
 }
-// Usage in App.tsx: <GateRoute><MainScreen /></GateRoute>
+// Usage in src/index.tsx: <GateRoute><MainScreen /></GateRoute>

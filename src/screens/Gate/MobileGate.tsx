@@ -49,7 +49,7 @@ async function copyToClipboard(text: string): Promise<boolean> {
 
 // "Open this on a computer" gate. Only state is the copy-link button feedback; no width detection.
 // Show/hide is handled outside: see GateRoute.tsx and isPhoneBrowser.ts.
-// Colors and fonts come from CSS variables via tailwind.config.js (see styles.css).
+// Colors and fonts come from the design tokens (src/styles/tokens.css) via Tailwind utilities (src/styles/theme.css).
 export default function MobileGate(): React.JSX.Element {
   const [copied, setCopied] = useState(false);
   const timer = useRef<number | undefined>(undefined);
