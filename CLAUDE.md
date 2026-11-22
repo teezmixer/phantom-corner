@@ -41,6 +41,7 @@ The full build brief is `handoff/BUILD-PROMPT.md`; the long-term spec is `handof
 - Never build spec §6.7 cut-list items (hidden player, notes, Spotify, real weather, co-study, task integrations, leaderboards, streaks, payments, app stores).
 - Keep BUILT: corner-anchored HUD scaling (`DECISIONS.md`), `LocationWidget` + Café Leblanc sign, mobile gate, self-hosted `@font-face`.
 - `public/fonts/`, the background screenshot and git history are untouched. Secrets only in `.env.local`; never print or commit them.
+- **Ares's instruction (2026-11-22): do not use any of his hand-drawn assets for now** — not the Café Leblanc sign, not the month numerals. Widgets use Cult UI components (`src/components/ui`, adapted) and Phosphor icons that best represent each widget's function. Hand-drawn art returns only when he says so. (The background screenshot is unchanged: BUILT, P5.)
 - Placeholder sounds are synthesised with Web Audio; no audio files.
 - Icons: Phosphor for app-level icons; lucide only inside adopted Cult UI components.
 

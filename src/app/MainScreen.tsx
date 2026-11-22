@@ -1,59 +1,69 @@
-import type React from "react";
-
-import { CornerGroup } from "@/hud/CornerGroup";
+import type { ReactElement } from "react";
+import { Eye } from "@phosphor-icons/react";
+import { ui } from "@/content/copy";
+import { CornerGroup, type Corner } from "@/hud/CornerGroup";
+import { DEFAULT_SLOTS, slotStyle, type WidgetId } from "@/hud/slots";
 import { useHudScale } from "@/hud/useHudScale";
+import { useStore } from "@/state/StoreProvider";
+import { ButtonBar } from "@/widgets/ButtonBar/ButtonBar";
+import { DateTimeWidget } from "@/widgets/DateTime/DateTimeWidget";
+import { LevelWidget } from "@/widgets/Level/LevelWidget";
 import LocationWidget from "@/widgets/Location/LocationWidget";
-import screenshot20260614At93936Pm1 from "@/screenshot-2026-06-14-at-9-39-36-PM-1.png";
+import { MissionWidget } from "@/widgets/Mission/MissionWidget";
+import { PhoneWidget } from "@/widgets/Phone/PhoneWidget";
+import { TimerWidget } from "@/widgets/Timer/TimerWidget";
+import { TodoWidget } from "@/widgets/Todo/TodoWidget";
+import { Scene } from "./Scene";
+import { TvPlaceholder } from "./TvPlaceholder";
 
-// Grey stand-in until the real widget exists. Delete it when the widget ships.
-// DECISION: token-missing-placeholder-grey (D-17) — nearest token to the old #d9d9d9.
-const Placeholder = ({
-  label,
-  className,
-}: {
-  label: string;
-  className: string;
-}): React.JSX.Element => (
-  <div
-    className={`absolute flex items-center justify-center bg-greylight font-body-primary text-black ${className}`}
-  >
-    {label}
-  </div>
-);
+const CORNERS: { corner: Corner; label: string }[] = [
+  { corner: "tl", label: "Top left widgets" },
+  { corner: "tr", label: "Top right widgets" },
+  { corner: "bl", label: "Bottom left widgets" },
+  { corner: "br", label: "Bottom right widgets" },
+];
 
-export const MainScreen = (): React.JSX.Element => {
+/**
+ * `locked` is true while a screen is open on top. The scene and widgets then go inert so keyboard focus and
+ * assistive tech stay in the dialog; the TV is left out on purpose — it stays visible and hit-testable (spec §4.8).
+ */
+export const MainScreen = ({ locked = false }: { locked?: boolean }): React.JSX.Element => {
   const scale = useHudScale();
+  const { state, dispatch } = useStore();
+
+  // The music slot is the TV, which lives outside the scaled groups (see TvPlaceholder).
+  const widgets: Record<Exclude<WidgetId, "music">, ReactElement> = {
+    date: <DateTimeWidget />,
+    timer: <TimerWidget />,
+    phone: <PhoneWidget />,
+    mission: <MissionWidget />,
+    todo: <TodoWidget />,
+    level: <LevelWidget />,
+    buttonBar: <ButtonBar />,
+    location: <LocationWidget locationId={state.locationId} className="h-full w-full" />,
+  };
 
   return (
-    <main className="w-screen h-screen relative overflow-hidden">
-      <img
-        className="absolute inset-0 w-full h-full object-cover"
-        alt="Background scene"
-        src={screenshot20260614At93936Pm1}
-      />
-
-      <CornerGroup corner="tl" scale={scale} label="Top left widgets">
-        <Placeholder label="Weather / date" className="top-[58px] left-[39px] w-[251px] h-[164px]" />
-        <Placeholder label="pomodoro timer" className="top-[255px] left-[39px] w-[204px] h-[66px]" />
-      </CornerGroup>
-
-      <CornerGroup corner="tr" scale={scale} label="Top right widgets">
-        <Placeholder label="mission" className="top-[43px] right-[46px] w-[272px] h-[101px]" />
-        <Placeholder label="todo list" className="top-[177px] right-[46px] w-[272px] h-[101px]" />
-      </CornerGroup>
-
-      <CornerGroup corner="bl" scale={scale} label="Bottom left widgets">
-        <Placeholder label="xp / level" className="bottom-[90px] left-[39px] w-[158px] h-[116px]" />
-        <Placeholder label="buttons menu" className="bottom-[49px] left-[39px] w-[233px] h-[29px]" />
-      </CornerGroup>
-
-      <CornerGroup corner="br" scale={scale} label="Bottom right widgets">
-        <Placeholder label="music player" className="bottom-[275px] right-[39px] w-[213px] h-[50px]" />
-        <LocationWidget
-          spaceId="leblanc"
-          className="absolute bottom-[49px] right-[39px] w-[484px] h-[218px]"
-        />
-      </CornerGroup>
+    <main className="relative h-dvh w-screen overflow-hidden bg-black">
+      <div className="contents" inert={locked}>
+      <Scene locationId={state.locationId} />
+      {!state.hudHidden &&
+        CORNERS.map(({ corner, label }) => (
+          <CornerGroup key={corner} corner={corner} scale={scale} label={label}>
+            {(Object.entries(DEFAULT_SLOTS) as [WidgetId, (typeof DEFAULT_SLOTS)[WidgetId]][])
+              .filter(([id, slot]) => slot.corner === corner && id !== "music")
+              .map(([id, slot]) => (
+                <div key={id} style={id === "phone" ? { ...slotStyle(slot), width: "auto", height: "auto", minHeight: slot.h } : slotStyle(slot)} data-widget={id}>{widgets[id as keyof typeof widgets]}</div>
+              ))}
+          </CornerGroup>
+        ))}
+      </div>
+      <TvPlaceholder scale={scale} />
+      {state.hudHidden && (
+        <button type="button" onClick={() => dispatch({ type: "TOGGLE_HUD" })} className="absolute bottom-4 left-4 z-10 flex items-center gap-2 border-2 border-white bg-black px-3 py-2 font-body-primary text-white hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
+          <Eye size={20} />{ui.showUi}
+        </button>
+      )}
     </main>
   );
 };

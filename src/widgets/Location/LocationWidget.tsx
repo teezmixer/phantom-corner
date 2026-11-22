@@ -1,45 +1,21 @@
-import React from "react";
-
-import leblancLocation from "@/assets/location-leblanc.png";
-
-type SpaceId = "leblanc" | "ryuji";
+import { MapPin } from "@phosphor-icons/react";
+import { getLocation } from "@/content/registry";
 
 type LocationWidgetProps = {
-  spaceId: SpaceId;
+  locationId: string;
   className?: string;
 };
 
-type Location = {
-  name: string;
-  image?: string;
-};
-
-// Record<SpaceId, ...> forces us to list EVERY space; TS errors if one is missing.
-const LOCATIONS: Record<SpaceId, Location> = {
-  leblanc: { name: "Café Leblanc", image: leblancLocation },
-  ryuji: { name: "Ryuji's Place" }, // no artwork yet, falls back to text
-};
-
-export const LocationWidget = ({
-  spaceId,
-  className = "",
-}: LocationWidgetProps): React.JSX.Element => {
-  const location = LOCATIONS[spaceId];
-
+/**
+ * The location sign. Until Ares's drawn signs return (D-21), it is a Phosphor map pin plus the place name in the
+ * display face — the spec's own fallback for a location without sign art (§3.6).
+ */
+export const LocationWidget = ({ locationId, className = "" }: LocationWidgetProps): React.JSX.Element => {
+  const location = getLocation(locationId);
   return (
-    <div
-      className={`flex items-center justify-center ${className}`}
-      aria-label={`Current location: ${location.name}`}
-    >
-      {location.image ? (
-        <img
-          className="h-full w-full object-contain"
-          src={location.image}
-          alt={location.name}
-        />
-      ) : (
-        <span className="font-body-primary text-black">{location.name}</span>
-      )}
+    <div className={`pointer-events-auto flex items-center justify-end gap-3 text-white ${className}`} aria-label={`Current location: ${location.name}`}>
+      <MapPin size={48} weight="fill" className="shrink-0 text-redbright" aria-hidden="true" />
+      <span className="border-2 border-white bg-black px-4 py-2 font-display-hero text-5xl leading-none [text-shadow:none]">{location.name}</span>
     </div>
   );
 };

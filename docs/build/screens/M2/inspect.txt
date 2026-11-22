@@ -1,0 +1,26 @@
+TASTESKILL · INSPECT   http://localhost:4173/?demo=true
+
+MEASURED (first viewport listed)
+  hero headline   "Café Leblanc"  2 words · 1 line(s) · 48px (3.3vw) · Doctor Punk 400 · tracking 0em · leading 1
+  @1024px          1 line(s) · 48px
+  typefaces       Optima Nova LT Black 87%, Doctor Punk 7%, Expose 3%, Earwig Factory 3%
+  sizes in use    10 / 14 / 16 / 36 / 48 px
+  colour          page #000000 · sections #000000
+  page            1 screens · 36 words · 1 images · hero media 100% img
+  headings        4 · longest 1 line(s) · median 1 words
+
+FAIL — fix every one of these
+  [eyebrow] @1440px (+1024)  1 eyebrow/kicker label(s) above headings: "Sunday" above "16:58"
+  [font-count] @1440px (+1024)  4 typefaces in use (Optima Nova LT Black, Doctor Punk, Expose, Earwig Factory).
+  [few-pictures] @1440px  Only 1 picture(s) on the page (1 photographs, footage or raster images, 0 interface fragments). Drawings in SVG do not count.
+  [still-page] @1440px  Only 1 element(s) moved while the page loaded and scrolled.
+
+WARN — fix, or be able to defend
+  [font-fallback] @1440px (+1024)  Typeface(s) declared but not loaded, so a fallback is rendering: Earwig Factory
+  [first-action] @1440px (+1024)  No visible button in the first screen.
+  [no-footage] @1440px  No video anywhere on the page.
+
+                  ../../../../../private/tmp/claude-501/-Users-aresknox-Documents-GitHub-phantom-corner/5126f2cd-f57f-4bed-a0ce-2bb9ca490815/scratchpad/inspect-m2/desktop-page-01.jpg
+                  ../../../../../private/tmp/claude-501/-Users-aresknox-Documents-GitHub-phantom-corner/5126f2cd-f57f-4bed-a0ce-2bb9ca490815/scratchpad/inspect-m2/tablet-page-01.jpg
+
+RESULT: 4 FAIL, 3 WARN — not done.
