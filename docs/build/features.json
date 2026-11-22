@@ -10,8 +10,8 @@
       "spec": "§3.1",
       "description": "A first-time visitor sees a black splash with the mark and 'press to enter'; clicking or pressing Enter goes to LeBlanc.",
       "steps": "Playwright: load /, expect splash, press Enter, expect main screen.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/smoke.spec.ts \"desktop opens on the splash, and entering shows the room\""
     },
     {
       "id": "entry-splash-disclaimer",
@@ -21,8 +21,8 @@
       "spec": "§3.1, §8.1",
       "description": "The splash shows the fan-project disclaimer line.",
       "steps": "Playwright: splash contains disclaimer text from content/copy.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/smoke.spec.ts (fan-made, non-commercial text visible on splash)"
     },
     {
       "id": "entry-splash-mute",
@@ -65,8 +65,8 @@
       "spec": "§3.1",
       "description": "After the splash on a first visit, the user arrives at LeBlanc.",
       "steps": "Playwright: clean storage, enter, current location is leblanc.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/smoke.spec.ts + loop.spec.ts: after Enter the sign reads \"Café Leblanc\""
     },
     {
       "id": "entry-first-visit-sign",
@@ -208,8 +208,8 @@
       "spec": "§3.12",
       "description": "?demo=true skips onboarding and lands with ~17 min left, a mission, two todos and one unread message.",
       "steps": "Playwright: /?demo=true shows those within 10 s.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts \"demo mode › lands mid-session…\" (mission, 2 todos, timer 16–17 min, 1 unread)"
     },
     {
       "id": "entry-demo-memory",
@@ -230,8 +230,8 @@
       "spec": "§3.12",
       "description": "?demo=true&at=summary opens on the session summary.",
       "steps": "Playwright: summary visible.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts \"&at=summary and &at=menu open those screens\"; src/app/initialState.test.ts"
     },
     {
       "id": "entry-demo-at-menu",
@@ -241,8 +241,8 @@
       "spec": "§3.12",
       "description": "?demo=true&at=menu opens on the hideout menu.",
       "steps": "Playwright: menu visible.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts \"&at=summary and &at=menu open those screens\""
     },
     {
       "id": "entry-demo-tag",
@@ -274,8 +274,8 @@
       "spec": "DECISIONS.md BUILT",
       "description": "Corner groups stay pinned to screen corners and scale by min(3, w/1440, h/900) (BUILT).",
       "steps": "Unit: useHudScale values at 1024x600/1440x900/2560x1440/4000x2500; screenshots at three sizes.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/hud/useHudScale.test.ts (formula at 4 sizes + 3x cap), src/hud/CornerGroup.test.tsx (origin per corner); screenshots docs/build/screens/M2/main-*.jpg at 1024x600, 1440x900, 2560x1440"
     },
     {
       "id": "hud-size-setting",
@@ -307,8 +307,8 @@
       "spec": "§4.5",
       "description": "The timer moves through idle, running, paused and complete via a pure transition function.",
       "steps": "Unit: full transition table incl. unknown events return same state.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/timer.test.ts (full transition table, unknown events return same object)"
     },
     {
       "id": "timer-durations",
@@ -472,8 +472,8 @@
       "spec": "§3.6 BUILT",
       "description": "The location sign shows the current location (Café Leblanc art BUILT; others placeholder name).",
       "steps": "Playwright: travel to another location, sign label changes.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/loop.spec.ts: travel to School rooftop → \"Current location: School rooftop\"; widgets/Location/LocationWidget.test.tsx"
     },
     {
       "id": "music-tv-visible",
@@ -791,8 +791,8 @@
       "spec": "§3.3, §4.6",
       "description": "LeBlanc (Sojiro, Morgana): a content manifest with placeholder scene (token block, name, register), sign placeholder, playlist and ambience.",
       "steps": "Content test passes; dev panel jump shows the scene.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (canon order 0–7, unlock levels, lines); e2e/modes.spec.ts map shows 12 markers and dev unlock-all makes them selectable; scene screenshot docs/build/screens/M2/scene-ryuji-*.jpg"
     },
     {
       "id": "loc-leblanc-lines",
@@ -813,8 +813,8 @@
       "spec": "§3.3, §4.6",
       "description": "Ryuji: a content manifest with placeholder scene (token block, name, register), sign placeholder, playlist and ambience.",
       "steps": "Content test passes; dev panel jump shows the scene.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (canon order 0–7, unlock levels, lines); e2e/modes.spec.ts map shows 12 markers and dev unlock-all makes them selectable; scene screenshot docs/build/screens/M2/scene-ryuji-*.jpg"
     },
     {
       "id": "loc-ryuji-lines",
@@ -846,8 +846,8 @@
       "spec": "§3.3, §4.6",
       "description": "Ann: a content manifest with placeholder scene (token block, name, register), sign placeholder, playlist and ambience.",
       "steps": "Content test passes; dev panel jump shows the scene.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (canon order 0–7, unlock levels, lines); e2e/modes.spec.ts map shows 12 markers and dev unlock-all makes them selectable; scene screenshot docs/build/screens/M2/scene-ryuji-*.jpg"
     },
     {
       "id": "loc-ann-lines",
@@ -879,8 +879,8 @@
       "spec": "§3.3, §4.6",
       "description": "Yusuke: a content manifest with placeholder scene (token block, name, register), sign placeholder, playlist and ambience.",
       "steps": "Content test passes; dev panel jump shows the scene.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (canon order 0–7, unlock levels, lines); e2e/modes.spec.ts map shows 12 markers and dev unlock-all makes them selectable; scene screenshot docs/build/screens/M2/scene-ryuji-*.jpg"
     },
     {
       "id": "loc-yusuke-lines",
@@ -912,8 +912,8 @@
       "spec": "§3.3, §4.6",
       "description": "Makoto: a content manifest with placeholder scene (token block, name, register), sign placeholder, playlist and ambience.",
       "steps": "Content test passes; dev panel jump shows the scene.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (canon order 0–7, unlock levels, lines); e2e/modes.spec.ts map shows 12 markers and dev unlock-all makes them selectable; scene screenshot docs/build/screens/M2/scene-ryuji-*.jpg"
     },
     {
       "id": "loc-makoto-lines",
@@ -945,8 +945,8 @@
       "spec": "§3.3, §4.6",
       "description": "Futaba: a content manifest with placeholder scene (token block, name, register), sign placeholder, playlist and ambience.",
       "steps": "Content test passes; dev panel jump shows the scene.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (canon order 0–7, unlock levels, lines); e2e/modes.spec.ts map shows 12 markers and dev unlock-all makes them selectable; scene screenshot docs/build/screens/M2/scene-ryuji-*.jpg"
     },
     {
       "id": "loc-futaba-lines",
@@ -978,8 +978,8 @@
       "spec": "§3.3, §4.6",
       "description": "Haru: a content manifest with placeholder scene (token block, name, register), sign placeholder, playlist and ambience.",
       "steps": "Content test passes; dev panel jump shows the scene.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (canon order 0–7, unlock levels, lines); e2e/modes.spec.ts map shows 12 markers and dev unlock-all makes them selectable; scene screenshot docs/build/screens/M2/scene-ryuji-*.jpg"
     },
     {
       "id": "loc-haru-lines",
@@ -1011,8 +1011,8 @@
       "spec": "§3.3, §4.6",
       "description": "Akechi: a content manifest with placeholder scene (token block, name, register), sign placeholder, playlist and ambience.",
       "steps": "Content test passes; dev panel jump shows the scene.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (canon order 0–7, unlock levels, lines); e2e/modes.spec.ts map shows 12 markers and dev unlock-all makes them selectable; scene screenshot docs/build/screens/M2/scene-ryuji-*.jpg"
     },
     {
       "id": "loc-akechi-lines",
@@ -1044,8 +1044,8 @@
       "spec": "§3.3",
       "description": "Bonus location Rainy walk is playable with a placeholder manifest, reachable on the map under a provisional unlock rule.",
       "steps": "Content test; Playwright: dev unlock → travel there.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (4 bonus manifests registered); e2e/modes.spec.ts dev unlock-all → map unlocked, jump to Mementos"
     },
     {
       "id": "bonus-subway",
@@ -1055,8 +1055,8 @@
       "spec": "§3.3",
       "description": "Bonus location Subway ride home is playable with a placeholder manifest, reachable on the map under a provisional unlock rule.",
       "steps": "Content test; Playwright: dev unlock → travel there.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (4 bonus manifests registered); e2e/modes.spec.ts dev unlock-all → map unlocked, jump to Mementos"
     },
     {
       "id": "bonus-velvet-room",
@@ -1066,8 +1066,8 @@
       "spec": "§3.3",
       "description": "Bonus location Velvet Room is playable with a placeholder manifest, reachable on the map under a provisional unlock rule.",
       "steps": "Content test; Playwright: dev unlock → travel there.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (4 bonus manifests registered); e2e/modes.spec.ts dev unlock-all → map unlocked, jump to Mementos"
     },
     {
       "id": "bonus-mementos",
@@ -1077,8 +1077,8 @@
       "spec": "§3.3",
       "description": "Bonus location Mementos is playable with a placeholder manifest, reachable on the map under a provisional unlock rule.",
       "steps": "Content test; Playwright: dev unlock → travel there.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/content.test.ts (4 bonus manifests registered); e2e/modes.spec.ts dev unlock-all → map unlocked, jump to Mementos"
     },
     {
       "id": "bonus-unlock-rule",
@@ -1297,8 +1297,8 @@
       "spec": "§3.2",
       "description": "Profile is reachable as a working placeholder screen.",
       "steps": "Playwright: menu → profile.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts \"every screen is reachable…\" (Profile dialog opens from the menu and closes with Escape)"
     },
     {
       "id": "settings-screen",
@@ -1363,8 +1363,8 @@
       "spec": "",
       "description": "Every screen in the inventory is reachable in the walking skeleton.",
       "steps": "Playwright: route through each.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts (menu→profile/settings→about/credits/privacy, map, phone, summary), loop.spec.ts (session-end, summary, travel), \"take five\" break test; splash in smoke.spec.ts"
     },
     {
       "id": "acct-save-prompt",
@@ -1671,8 +1671,8 @@
       "spec": "",
       "description": "?dev=true shows a dev panel, hidden otherwise.",
       "steps": "Playwright: panel absent by default, present with param.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts \"dev panel › is absent by default and present with ?dev=true\""
     },
     {
       "id": "dev-grant-knowledge",
@@ -1682,8 +1682,8 @@
       "spec": "",
       "description": "Dev panel grants Knowledge.",
       "steps": "Playwright: grant, level rises.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts \"dev panel › grants Knowledge, unlocks all, jumps…\"; src/state/store.test.ts DEV_GRANT"
     },
     {
       "id": "dev-unlock-all",
@@ -1693,8 +1693,8 @@
       "spec": "",
       "description": "Dev panel unlocks all locations.",
       "steps": "Playwright: map shows all unlocked.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts (map shows 12 markers, 0 locked after Unlock all)"
     },
     {
       "id": "dev-jump",
@@ -1704,8 +1704,8 @@
       "spec": "",
       "description": "Dev panel jumps to any location, thread or screen.",
       "steps": "Playwright: each jump.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts (jump to map screen; jump to Mementos location)"
     },
     {
       "id": "dev-replay-onboarding",
@@ -1726,8 +1726,8 @@
       "spec": "",
       "description": "Dev panel resets all data.",
       "steps": "Playwright: reset → first-visit state.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts (Reset all data → splash); store.test.ts RESET"
     },
     {
       "id": "loop-end-to-end",
@@ -1737,8 +1737,8 @@
       "spec": "",
       "description": "The full loop runs end to end: enter → mission → short timer → summary → travel.",
       "steps": "Playwright e2e.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/loop.spec.ts \"a user can run the whole loop and travel…\" (enter → mission → 25 min → summary → map → travel)"
     },
     {
       "id": "oos-1",
