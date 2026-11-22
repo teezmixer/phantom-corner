@@ -24,3 +24,9 @@
 - M1 review: round 1 R4/BQ3/V4 → fixes → round 2 R4/BQ4/V4. PR teezmixer/phantom-corner#2 merged (merge commit faefd3e). Production deploy verified.
 - M2 (branch m2-walking-skeleton, stacked on M1 and now merged with main): slot map as data (D-20), content types, provisional places (D-07) and progression (D-06, thresholds interpolated from the spec's hour anchors at ~72 Knowledge/hour), speaker-grouped copy, 12 manifests by folder glob, content test.
 - **Next:** domain/progress.ts (level from Knowledge), app store + layer state, screens and widgets as working placeholders, dev panel, demo mode.
+
+## 2026-11-22 — M2 review loop and merge
+- M2 built on branch m2-walking-skeleton (PR teezmixer/phantom-corner#3). Review round 1 R2/BQ3/V2 → fixes (see taste-review.md) → round 2 R4/BQ4/V3 → small fit fixes (D-23).
+- Ares's instruction mid-run: do not use hand-drawn assets for now; use Cult UI + Phosphor (D-21, B-06). Output style/model switched to Sonnet mid-run; a usage limit paused the run once and it resumed from the repo state.
+- Commit-hygiene note: commit 0f2c933 and 1ba7cae are ordered store → ui → widgets → screens → app, so intermediate commits may not typecheck on their own (the build is green at each PR head).
+- **Next:** merge M2; M3 core loop in depth (storage adapter with migrations/guard/backup, resume after reload, tab title countdown, two-tab lock, timer polish).
