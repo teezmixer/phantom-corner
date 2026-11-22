@@ -123,6 +123,32 @@ describe("AudioEngine", () => {
     expect(engine.playingLayers).toEqual([]);
   });
 
+  it("applies a per-layer level to the right layer, clamped to 0–1", () => {
+    const f = fakeContext("running");
+    const engine = new AudioEngine(() => f.ctx);
+    engine.unlock();
+    engine.setAmbience([{ id: "a-rain", label: "Rain", synth: "rain" }]);
+    f.log.busGains.length = 0;
+    engine.setLayerLevels({ "a-rain": 0.3 });
+    expect(f.log.busGains).toContain(0.3);
+    f.log.busGains.length = 0;
+    engine.setLayerLevels({ "a-rain": 7 });
+    expect(f.log.busGains).toContain(1); // never above full
+    f.log.busGains.length = 0;
+    engine.setLayerLevels({ "somewhere-else": 0.1 }); // a layer that is not playing changes nothing
+    expect(f.log.busGains).toEqual([1]); // a-rain falls back to full level; the unknown id is ignored
+  });
+
+  it("a layer started after its level was set uses that level straight away", () => {
+    const f = fakeContext("running");
+    const engine = new AudioEngine(() => f.ctx);
+    engine.unlock();
+    engine.setLayerLevels({ "late-wind": 0.2 });
+    f.log.busGains.length = 0;
+    engine.setAmbience([{ id: "late-wind", label: "Wind", synth: "wind" }]);
+    expect(f.log.busGains).toContain(0.2);
+  });
+
   it("defines a recipe for every ambience kind a location can name", () => {
     expect(Object.keys(AMBIENCE).sort()).toEqual(["city", "hum", "murmur", "rain", "room", "wind"]);
   });
