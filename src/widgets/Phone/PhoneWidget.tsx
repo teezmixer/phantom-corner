@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, DeviceMobile } from "@phosphor-icons/react";
 import { SidePanel } from "@/components/ui/side-panel";
 import { widgets } from "@/content/copy";
@@ -12,6 +12,11 @@ import { useStore } from "@/state/StoreProvider";
 export function PhoneWidget() {
   const { state, dispatch } = useStore();
   const [openThread, setOpenThread] = useState<string | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  // Opened from the menu or dev panel: move focus to the phone so keyboard users land on it.
+  useEffect(() => {
+    if (state.phoneOpen && document.activeElement === document.body) buttonRef.current?.focus();
+  }, [state.phoneOpen]);
   const unread = state.unreadThreads.length;
   const thread = THREADS.find((t) => t.id === openThread);
 
@@ -27,13 +32,13 @@ export function PhoneWidget() {
         handlePanelOpen={() => dispatch({ type: "SET_PHONE", open: !state.phoneOpen })}
         className="rounded-none border-2 border-white bg-black"
         renderButton={(toggle) => (
-          <button type="button" onClick={toggle} aria-expanded={state.phoneOpen} aria-label={unread ? `Phone, ${unread} unread` : "Phone"} className="relative grid size-10 place-items-center hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
+          <button type="button" ref={buttonRef} onClick={toggle} aria-expanded={state.phoneOpen} aria-label={unread ? `Phone, ${unread} unread` : "Phone"} className="relative grid size-10 place-items-center hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
             <DeviceMobile size={28} />
             {unread > 0 && <span className="absolute -right-1 -top-1 grid min-w-4 place-items-center bg-redbright px-1 text-[10px] leading-4">{unread}</span>}
           </button>
         )}
       >
-        <div className="max-h-64 overflow-y-auto px-3 pb-3 text-sm">
+        <div className="max-h-72 overflow-y-auto px-3 pb-3 text-sm">
           {thread ? (
             <div>
               <button type="button" onClick={() => setOpenThread(null)} className="mb-2 flex items-center gap-1 text-redbright focus-visible:outline-2 focus-visible:outline-accentteal"><ArrowLeft size={14} />{thread.title}</button>

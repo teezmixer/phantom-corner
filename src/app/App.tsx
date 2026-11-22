@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { isTypingTarget, shortcutAction } from "@/hooks/shortcuts";
 import { useStore } from "@/state/StoreProvider";
 import type { Layer } from "@/state/store";
 import { BreakScreen } from "@/screens/Break/BreakScreen";
@@ -29,24 +30,30 @@ const LAYERS: Partial<Record<Layer, () => ReactNode>> = {
   privacy: () => <PrivacyScreen />,
 };
 
-/** Layers Esc may close (spec §3.6: Esc closes any layer). Moments that need a choice are not dismissable. */
-const DISMISSABLE: Layer[] = ["menu", "map", "settings", "profile", "about", "credits", "privacy"];
-
 /** Composition root: the room is always underneath once entered; one `layer` decides what sits on top. */
 export function App({ dev }: { dev: boolean }) {
-  const { state, dispatch } = useStore();
+  const { state, derived, dispatch } = useStore();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && DISMISSABLE.includes(state.layer)) dispatch({ type: "CLOSE_LAYER" });
+      const target = e.target;
+      const action = shortcutAction(e.key, state, derived, Date.now(), {
+        typing: isTypingTarget(target),
+        onButton: target instanceof HTMLElement && target.tagName === "BUTTON",
+        ctrl: e.ctrlKey, meta: e.metaKey, alt: e.altKey,
+      });
+      if (!action) return;
+      if (e.key === " ") e.preventDefault(); // Space would otherwise scroll the page
+      dispatch(action);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [state.layer, dispatch]);
+  }, [state, derived, dispatch]);
 
   return (
     <>
-      {state.entered && <MainScreen />}
+      {/* The room is inert while a screen is open, so keyboard focus and assistive tech stay in the dialog. */}
+      {state.entered && <div className="contents" inert={state.layer !== "main"}><MainScreen /></div>}
       {LAYERS[state.layer]?.()}
       {dev && <DevPanel />}
     </>
