@@ -22,7 +22,8 @@ export interface MusicBackend {
   destroy(): void;
 }
 
-export type BackendFactory = (container: HTMLElement, handlers: Handlers) => Promise<MusicBackend>;
+/** `signal` aborts when the TV unmounts or the effect is re-run (React StrictMode): the factory must then create nothing. */
+export type BackendFactory = (container: HTMLElement, handlers: Handlers, signal?: AbortSignal) => Promise<MusicBackend>;
 
 interface YTPlayer {
   loadVideoById(id: string): void;
@@ -40,6 +41,7 @@ interface YTApi {
     opts: {
       width: number;
       height: number;
+      host?: string;
       playerVars: Record<string, string | number>;
       events: { onReady(): void; onStateChange(e: { data: number }): void; onError(e: { data: number }): void };
     },
@@ -54,6 +56,7 @@ declare global {
 
 const API_SRC = "https://www.youtube.com/iframe_api";
 const LOAD_TIMEOUT_MS = 10_000;
+const READY_TIMEOUT_MS = 10_000;
 let apiPromise: Promise<YTApi> | null = null;
 
 /** Load the IFrame API once per page. Rejects offline, when blocked, or on timeout. */
@@ -78,24 +81,30 @@ export function loadYouTubeApi(): Promise<YTApi> {
 const STATE: Record<number, PlayerEvent> = { [-1]: "unstarted", 0: "ended", 1: "playing", 2: "paused", 3: "buffering", 5: "cued" };
 
 /** Our own controls drive the player through the API; the iframe keeps its attribution and is never altered or covered. */
-export const createYouTubeBackend: BackendFactory = async (container, handlers) => {
+export const createYouTubeBackend: BackendFactory = async (container, handlers, signal) => {
   const YT = await loadYouTubeApi();
+  // Nothing is created for a cancelled request (StrictMode runs effects twice; only one iframe may exist).
+  if (signal?.aborted) throw new Error("cancelled");
   const mount = document.createElement("div");
   container.appendChild(mount);
-  return new Promise<MusicBackend>((resolve) => {
+  return new Promise<MusicBackend>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error("YouTube player did not become ready")), READY_TIMEOUT_MS);
     const player = new YT.Player(mount, {
       width: 200,
       height: 200,
-      playerVars: { controls: 0, disablekb: 1, fs: 0, playsinline: 1, rel: 0, iv_load_policy: 3, origin: window.location.origin },
+      // Default player chrome stays (spec §4.8: do not alter the player). The privacy-enhanced host is used; `origin`
+      // lets YouTube identify the site; Referrer-Policy stays strict-origin-when-cross-origin (M10).
+      host: "https://www.youtube-nocookie.com",
+      playerVars: { playsinline: 1, rel: 0, origin: window.location.origin },
       events: {
-        onReady: () => resolve({
+        onReady: () => { clearTimeout(timeout); resolve({
           load: (id, play) => (play ? player.loadVideoById(id) : player.cueVideoById(id)),
           play: () => player.playVideo(),
           pause: () => player.pauseVideo(),
           setVolume: (v) => player.setVolume(v),
           setMuted: (m) => (m ? player.mute() : player.unMute()),
           destroy: () => { try { player.destroy(); } catch { /* already gone */ } },
-        }),
+        }); },
         onStateChange: (e) => { const s = STATE[e.data]; if (s) handlers.onState(s); },
         onError: (e) => handlers.onError(e.data),
       },

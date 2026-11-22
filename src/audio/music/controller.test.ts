@@ -14,18 +14,42 @@ describe("music state machine", () => {
     expect(musicReducer(initialMusic([]), { type: "PLAY" }).status).toBe("unavailable");
   });
 
-  it("never starts by itself: only PLAY, NEXT or PREV leave 'off', and a stray playing event is ignored", () => {
-    let s = initialMusic(T);
-    expect(musicReducer(s, { type: "PLAYER_PLAYING" }).status).toBe("off");
-    s = run([{ type: "PLAY" }]);
-    expect(s.status).toBe("loading");
+  it("nothing in the reducer starts music by itself: only PLAY, NEXT or PREV leave 'off'", () => {
+    expect(musicReducer(initialMusic(T), { type: "PLAYER_PAUSED" }).status).toBe("off");
+    expect(musicReducer(initialMusic(T), { type: "PLAYER_ENDED" }).status).toBe("off");
+    expect(run([{ type: "PLAY" }]).status).toBe("loading");
     expect(run([{ type: "PLAY" }, { type: "PLAYER_PLAYING" }]).status).toBe("playing");
+  });
+
+  it("follows the player when the user clicks the video itself (YouTube's own controls stay): the caption matches the sound", () => {
+    expect(musicReducer(initialMusic(T), { type: "PLAYER_PLAYING" }).status).toBe("playing");
+    const paused = run([{ type: "PLAY" }, { type: "PLAYER_PLAYING" }, { type: "PAUSE" }]);
+    expect(musicReducer(paused, { type: "PLAYER_PLAYING" }).status).toBe("playing");
+    expect(run([{ type: "PLAY" }, { type: "PLAYER_PLAYING" }, { type: "PLAYER_PAUSED" }]).status).toBe("paused");
+    expect(run([{ type: "PLAY" }, { type: "PLAYER_PAUSED" }]).status).toBe("paused"); // paused before it even started
+    expect(musicReducer(initialMusic([]), { type: "PLAYER_PLAYING" }).status).toBe("unavailable"); // nothing to play
+  });
+
+  it("a track that ends moves on only when it was playing — a paused, off or unavailable TV never starts another track", () => {
+    const playing = run([{ type: "PLAY" }, { type: "PLAYER_PLAYING" }]);
+    expect(musicReducer(playing, { type: "PLAYER_ENDED" })).toMatchObject({ index: 1, status: "loading" });
+    const paused = musicReducer(playing, { type: "PAUSE" });
+    expect(musicReducer(paused, { type: "PLAYER_ENDED" })).toBe(paused);
+    expect(musicReducer(initialMusic(T), { type: "PLAYER_ENDED" }).status).toBe("off");
+    const dead = musicReducer(initialMusic(T), { type: "API_FAILED" });
+    expect(musicReducer(dead, { type: "PLAYER_ENDED" })).toBe(dead);
+  });
+
+  it("a failed script stays failed across travel, and pressing play tries again", () => {
+    const failed = musicReducer(initialMusic(T), { type: "API_FAILED" });
+    expect(failed).toMatchObject({ status: "unavailable", apiFailed: true });
+    expect(musicReducer(failed, { type: "SET_PLAYLIST", tracks: [track("z")] })).toMatchObject({ status: "unavailable", apiFailed: true });
+    expect(musicReducer(failed, { type: "PLAY" })).toMatchObject({ status: "loading", apiFailed: false });
   });
 
   it("pauses and plays again", () => {
     const s = run([{ type: "PLAY" }, { type: "PLAYER_PLAYING" }, { type: "PAUSE" }]);
     expect(s.status).toBe("paused");
-    expect(musicReducer(s, { type: "PLAYER_PLAYING" }).status).toBe("paused"); // late event ignored
     expect(musicReducer(s, { type: "PLAY" }).status).toBe("loading");
   });
 

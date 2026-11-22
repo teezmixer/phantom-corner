@@ -42,6 +42,7 @@ export const widgets = {
   musicUnavailable: "That tape's gone. Skipping it.", // draft
   musicOff: "TV's off.", // draft
   musicLoading: "Tuning in.", // draft
+  musicPaused: (title: string) => `Paused — ${title}`, // draft
   pausedLong: "Still on it, or calling it a night?", // draft (spec §3.6 sample)
   secondTab: "LeBlanc's already open in another tab.", // draft (spec §3.11)
   secondTabTakeover: "Study here instead", // draft
@@ -84,6 +85,7 @@ export const ui = {
   lockedAt: (level: number) => `Locked · reach level ${level}`,
   youAreHere: "You are here",
   mixer: "Mixer",
+  tv: { region: "TV", previous: "Previous track", next: "Next track", play: "Play", pause: "Pause" },
   mixerBuses: { music: "Music", ambience: "Ambience", ui: "Interface" },
   soundOn: "Sound on",
   soundOff: "Sound off",

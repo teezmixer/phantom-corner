@@ -58,7 +58,7 @@ export const MainScreen = ({ locked = false }: { locked?: boolean }): React.JSX.
           </CornerGroup>
         ))}
       </div>
-      <Tv scale={scale} />
+      <Tv scale={scale} locked={locked} />
       {state.hudHidden && (
         <button type="button" onClick={() => dispatch({ type: "TOGGLE_HUD" })} className="absolute bottom-4 left-4 z-10 flex items-center gap-2 border-2 border-white bg-black px-3 py-2 font-body-primary text-white hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
           <Eye size={20} />{ui.showUi}

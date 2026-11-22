@@ -10,6 +10,8 @@ export interface MusicState {
   status: MusicStatus;
   /** Tracks that failed to load or play this visit, skipped from then on. */
   failed: readonly number[];
+  /** The YouTube script could not be loaded. Pressing play tries again. */
+  apiFailed: boolean;
 }
 
 export type MusicEvent =
@@ -29,7 +31,7 @@ export type MusicEvent =
   | { type: "API_FAILED" };
 
 export function initialMusic(tracks: readonly TrackRef[] = []): MusicState {
-  return { tracks, index: 0, status: tracks.length > 0 ? "off" : "unavailable", failed: [] };
+  return { tracks, index: 0, status: tracks.length > 0 ? "off" : "unavailable", failed: [], apiFailed: false };
 }
 
 /** YouTube player errors that mean "this video cannot play here": invalid id, HTML5 error, removed, embedding off. */
@@ -57,11 +59,13 @@ export const isActive = (s: MusicState): boolean => s.status === "loading" || s.
 export function musicReducer(state: MusicState, event: MusicEvent): MusicState {
   switch (event.type) {
     case "SET_PLAYLIST":
-      return initialMusic(event.tracks);
+      // A new playlist (travel) stops playback. A failed script stays failed until the user presses play again.
+      return state.apiFailed ? { ...initialMusic(event.tracks), apiFailed: true, status: "unavailable" } : initialMusic(event.tracks);
     case "API_FAILED":
-      return { ...state, status: "unavailable" };
+      return { ...state, apiFailed: true, status: "unavailable" };
     case "PLAY":
       if (state.tracks.length === 0) return { ...state, status: "unavailable" };
+      if (state.apiFailed) return { ...state, apiFailed: false, status: "loading" }; // a retry
       if (state.status === "playing" || state.status === "loading") return state;
       return { ...state, status: "loading" };
     case "PAUSE":
@@ -72,12 +76,15 @@ export function musicReducer(state: MusicState, event: MusicEvent): MusicState {
       const i = nextIndex(state, state.index, event.type === "NEXT" ? 1 : -1);
       return i === null ? { ...state, status: "unavailable" } : { ...state, index: i, status: "loading" };
     }
+    // The player's own state is the truth about what is audible. If the user clicks the video itself (a real user action,
+    // and YouTube's own controls stay on it), the caption must follow rather than disagree with the sound.
     case "PLAYER_PLAYING":
-      // Only a play that was asked for can start the TV; a stray "playing" event while paused, off or unavailable is ignored.
-      return state.status === "loading" || state.status === "blocked" || state.status === "playing" ? { ...state, status: "playing" } : state;
+      return state.status === "unavailable" ? state : { ...state, status: "playing" };
     case "PLAYER_PAUSED":
-      return state.status === "playing" ? { ...state, status: "paused" } : state;
+      return state.status === "playing" || state.status === "loading" ? { ...state, status: "paused" } : state;
     case "PLAYER_ENDED": {
+      // A track that ends moves on ONLY if it was playing. A paused, off or unavailable TV never starts another track by itself.
+      if (state.status !== "playing") return state;
       const i = nextIndex(state, state.index, 1);
       return i === null ? { ...state, status: "unavailable" } : { ...state, index: i, status: "loading" };
     }

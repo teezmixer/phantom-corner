@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { getLocation } from "@/content/registry";
 import { initialState, type Action, type AppState } from "@/state/store";
 import { StoreProvider, useStore } from "@/state/StoreProvider";
-import { AudioProvider } from "./AudioProvider";
+import { AudioProvider, useAudio } from "./AudioProvider";
 import type { AudioEngine } from "./engine";
 
 function fakeEngine() {
@@ -43,13 +43,25 @@ function setup(start: Partial<AppState> = {}) {
 const lastConfig = (e: ReturnType<typeof fakeEngine>) => e.configure.mock.calls.at(-1)![0];
 
 describe("AudioProvider", () => {
-  it("does not unlock audio until the user's first gesture", () => {
+  it("does not unlock audio until the user's first gesture, and keeps trying on later ones (a suspended context can resume)", () => {
     const { engine } = setup();
     expect(engine.unlock).not.toHaveBeenCalled();
     act(() => { fireEvent.pointerDown(window); });
     expect(engine.unlock).toHaveBeenCalledTimes(1);
     act(() => { fireEvent.keyDown(window, { key: "a" }); });
-    expect(engine.unlock).toHaveBeenCalledTimes(1); // only the first gesture
+    act(() => { fireEvent.touchEnd(window); });
+    act(() => { fireEvent.click(window); });
+    expect(engine.unlock).toHaveBeenCalledTimes(4); // every gesture re-tries; unlock() itself is idempotent
+  });
+
+  it("reports whether the user has made a gesture yet, so the YouTube player can wait for it", () => {
+    let seen: boolean[] = [];
+    function Probe() { const { gestured } = useAudio(); seen = [...seen, gestured]; return null; }
+    const engine = fakeEngine();
+    render(<StoreProvider initial={{ ...initialState }}><AudioProvider engine={engine as unknown as AudioEngine}><Probe /></AudioProvider></StoreProvider>);
+    expect(seen.at(-1)).toBe(false);
+    act(() => { fireEvent.pointerDown(window); });
+    expect(seen.at(-1)).toBe(true);
   });
 
   it("passes mute and volumes to the engine, and halves interface sounds while a session runs", () => {
@@ -85,13 +97,31 @@ describe("AudioProvider", () => {
     expect(engine.setLayerLevels).toHaveBeenLastCalledWith({ "leblanc-rain": 0.25 });
   });
 
-  it("plays interface sounds from state changes and a tick for button presses inside screens", () => {
-    const { engine, dispatch, view } = setup({ entered: true, layer: "main" });
+  it("plays interface sounds from state changes", () => {
+    const { engine, dispatch } = setup({ entered: true, layer: "main" });
     dispatch({ type: "SET_LAYER", layer: "menu" });
     expect(engine.playSfx).toHaveBeenCalledWith("menuOpen");
-    engine.playSfx.mockClear();
-    fireEvent.click(view.getByRole("button", { name: "press" }));
-    expect(engine.playSfx).toHaveBeenCalledWith("select");
+  });
+
+  it("ticks for a button press inside a screen, but not when the press brings its own sound (no double sound on Close)", () => {
+    vi.useFakeTimers();
+    try {
+      const { engine, dispatch, view } = setup({ entered: true, layer: "menu" });
+      engine.playSfx.mockClear();
+      // a plain press: the tick plays shortly after
+      fireEvent.click(view.getByRole("button", { name: "press" }));
+      act(() => { vi.advanceTimersByTime(80); });
+      expect(engine.playSfx).toHaveBeenCalledWith("select");
+      // a press that closes the menu: the screen's own sound plays and the tick is cancelled
+      engine.playSfx.mockClear();
+      fireEvent.click(view.getByRole("button", { name: "press" }));
+      dispatch({ type: "SET_LAYER", layer: "main" });
+      act(() => { vi.advanceTimersByTime(80); });
+      expect(engine.playSfx).toHaveBeenCalledTimes(1);
+      expect(engine.playSfx).toHaveBeenCalledWith("menuClose");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("makes no sound on first render", () => {

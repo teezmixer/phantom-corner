@@ -51,8 +51,9 @@ describe("TV", () => {
     const { created } = await setup();
     expect(created).toHaveLength(1);
     const box = screen.getByTestId("tv-player");
-    expect(box.style.height).toBe("200px");
-    expect(parseInt(box.style.width)).toBeGreaterThanOrEqual(200);
+    // The player's INNER area must be 200×200: the 2 px border (border-box sizing) is added on each side.
+    expect(box.style.height).toBe("204px");
+    expect(box.style.width).toBe("204px");
   });
 
   it("is one player even under React StrictMode's double effects", async () => {
@@ -128,6 +129,82 @@ describe("TV", () => {
     expect(latest().backend.setVolume).toHaveBeenLastCalledWith(20);
     dispatch({ type: "TOGGLE_MUTE" });
     expect(latest().backend.setMuted).toHaveBeenLastCalledWith(true);
+  });
+
+  it("follows the player's own state: a user click on the video itself updates the caption", async () => {
+    const { latest } = await setup();
+    emit(() => latest().handlers.onState("playing")); // the user clicked the YouTube player directly
+    expect(caption()).toBe(PLACEHOLDER_PLAYLIST[0]!.title);
+    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+  });
+
+  it("a track that ends does not start another while paused", async () => {
+    const { latest } = await setup();
+    click("Play");
+    emit(() => latest().handlers.onState("playing"));
+    click("Pause");
+    const load = latest().backend.load as unknown as ReturnType<typeof vi.fn>;
+    load.mockClear();
+    emit(() => latest().handlers.onState("ended"));
+    expect(load).not.toHaveBeenCalled();
+    expect(caption()).toContain("Paused");
+  });
+
+  it("stays 'tuning in' while the player is still being created — a slow script is not a browser block", async () => {
+    const never: BackendFactory = vi.fn(() => new Promise<MusicBackend>(() => undefined));
+    await setup({ factory: never });
+    click("Play");
+    act(() => { vi.advanceTimersByTime(BLOCKED_AFTER_MS * 3); });
+    expect(caption()).toBe("Tuning in.");
+  });
+
+  it("pressing play after the script failed tries to create the player again", async () => {
+    const real = fakeFactory();
+    let calls = 0;
+    const flaky: BackendFactory = vi.fn(async (c, h, s) => {
+      calls += 1;
+      if (calls === 1) throw new Error("offline");
+      return real.factory(c, h, s);
+    });
+    await setup({ factory: flaky });
+    expect(caption()).toBe("That tape's gone. Skipping it.");
+    expect(screen.getByRole("button", { name: "Play" })).toBeEnabled(); // a retry is possible
+    click("Play");
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(flaky).toHaveBeenCalledTimes(2);
+    expect(real.created).toHaveLength(1);
+    // a brand-new player has nothing loaded, so the requested play is a load-and-play of the current track
+    expect(real.latest().backend.load).toHaveBeenCalledWith(PLACEHOLDER_PLAYLIST[0]!.videoId, true);
+  });
+
+  it("gives the factory an abort signal that fires on unmount, so a cancelled creation builds nothing", async () => {
+    let signal: AbortSignal | undefined;
+    const factory: BackendFactory = vi.fn(async (_c, _h, s) => { signal = s; return fakeFactory().factory(_c, _h, s); });
+    const { unmount } = await setup({ factory });
+    expect(signal?.aborted).toBe(false);
+    unmount();
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it("travelling to another location stops the music even when both share the same playlist (D-26)", async () => {
+    const { latest, dispatch } = await setup();
+    click("Play");
+    emit(() => latest().handlers.onState("playing"));
+    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+    dispatch({ type: "DEV_JUMP_LOCATION", id: "ryuji" });
+    expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
+    expect(caption()).toBe("TV's off.");
+  });
+
+  it("while a screen is open the caption goes screen-reader-only and the mixer closes, so neither covers a dialog", async () => {
+    const fake = fakeFactory();
+    const { rerender } = render(<StoreProvider initial={{ ...initialState, entered: true, layer: "main" }}><Tv scale={1} factory={fake.factory} /></StoreProvider>);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    click("Mixer");
+    expect(screen.getByRole("group", { name: "Mixer" })).toBeInTheDocument();
+    rerender(<StoreProvider initial={{ ...initialState, entered: true, layer: "main" }}><Tv scale={1} locked factory={fake.factory} /></StoreProvider>);
+    expect(screen.queryByRole("group", { name: "Mixer" })).not.toBeInTheDocument();
+    expect(screen.getByRole("status").className).toContain("sr-only");
   });
 
   it("destroys its player when it unmounts", async () => {
