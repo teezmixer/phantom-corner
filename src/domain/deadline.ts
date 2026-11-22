@@ -14,7 +14,13 @@ const DAY = 24 * HOUR;
 
 function span(ms: number): string {
   if (ms >= DAY) { const d = Math.floor(ms / DAY); return `${d} day${d === 1 ? "" : "s"}`; }
-  if (ms >= HOUR) { const h = Math.floor(ms / HOUR); const m = Math.floor((ms % HOUR) / MIN); return m === 0 ? `${h} h` : `${h} h ${m} min`; }
+  if (ms >= HOUR) {
+    // Minutes round UP, like the timer: 2 h 14 min 59 s left reads "2 h 15 min", never "2 h 14 min".
+    const total = Math.ceil(ms / MIN);
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    return m === 0 ? `${h} h` : `${h} h ${m} min`;
+  }
   const m = Math.max(1, Math.ceil(ms / MIN));
   return `${m} min`;
 }

@@ -36,6 +36,7 @@ export const morgana = {
 /** Widget prompts and states. */
 export const widgets = {
   missionEmpty: "What's today's mission?", // VERBATIM
+  missionDue: "Due", // draft
   todoEmpty: "Nothing on the list. Suspicious.", // draft (spec §3.6 sample)
   phoneEmpty: "No messages. Enjoy the quiet.", // draft (spec §3.6 sample)
   musicBlocked: "It won't start on its own. Press play on the screen.", // draft (spec §3.6 sample)
@@ -90,4 +91,31 @@ export const ui = {
   mixerBuses: { music: "Music", ambience: "Ambience", ui: "Interface" },
   soundOn: "Sound on",
   soundOff: "Sound off",
+} as const;
+
+/** Settings screen labels. DRAFTS (decision D-10). */
+export const settings = {
+  title: "Settings",
+  artSlot: "Ren with the mask — art slot",
+  widgets: "Widgets",
+  widgetNames: { date: "Date and time", timer: "Timer", phone: "Phone", mission: "Mission", todo: "Todo list", level: "Level and Knowledge", location: "Location sign" },
+  widgetsNote: "The TV and the button bar always stay.",
+  volumes: "Sound",
+  hudSize: "HUD size",
+  hudSizes: { 0.85: "Small", 1: "Normal", 1.15: "Large", 1.3: "Largest" } as Record<number, string>,
+  motion: "Motion",
+  motionOptions: { system: "Follow my system", reduced: "Reduce motion" },
+  menuStyle: "Menu style",
+  menuStyleNow: "Hideout (text)",
+  menuStyleLater: "Illustrated Student Ren — not yet.",
+  analytics: "Anonymous visit statistics",
+  analyticsNote: "Page views and speed only, never your mission or todos. A change applies the next time the page loads.",
+  account: "Account",
+  accountNote: "Accounts: not yet. Everything is saved in this browser.",
+  data: "Your data",
+  export: "Export my data",
+  exported: "Saved as a file.",
+  erase: "Delete my data",
+  eraseConfirm: "Press again to delete everything",
+  info: "About, credits and privacy",
 } as const;

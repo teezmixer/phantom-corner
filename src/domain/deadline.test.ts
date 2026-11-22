@@ -11,6 +11,7 @@ describe("countdown", () => {
     [45 * MIN, "due in 45 min"],
     [HOUR, "due in 1 h"],
     [2 * HOUR + 15 * MIN, "due in 2 h 15 min"],
+    [2 * HOUR + 15 * MIN - 10, "due in 2 h 15 min"], // a few milliseconds early still reads as the full 2 h 15 min
     [DAY, "due in 1 day"],
     [3 * DAY + 5 * HOUR, "due in 3 days"],
   ])("%i ms ahead → %s", (ms, text) => expect(countdown(at(ms), NOW)).toEqual({ text, overdue: false }));
