@@ -30,3 +30,7 @@
 - Ares's instruction mid-run: do not use hand-drawn assets for now; use Cult UI + Phosphor (D-21, B-06). Output style/model switched to Sonnet mid-run; a usage limit paused the run once and it resumed from the repo state.
 - Commit-hygiene note: commit 0f2c933 and 1ba7cae are ordered store → ui → widgets → screens → app, so intermediate commits may not typecheck on their own (the build is green at each PR head).
 - **Next:** merge M2; M3 core loop in depth (storage adapter with migrations/guard/backup, resume after reload, tab title countdown, two-tab lock, timer polish).
+
+## 2026-11-22 — M3 review
+- Round 1 R3/BQ3/V4. Fixed lock-before-read race, backup/newer-data safety, silent write failure, value validation, clock clamps, dev read-only, visibility recompute, focus; corrected overstated evidence; 169 unit + 45 e2e tests.
+- Removed 75 untracked iCloud/macOS sync-conflict copies ("name 2.ext") after verifying each was byte-identical to the original or to a version in git history; `.gitignore` now ignores the pattern. If the repo folder keeps syncing they may reappear.

@@ -220,7 +220,7 @@
       "description": "Demo mode uses in-memory state and never touches real saved progress.",
       "steps": "Playwright: seed real state, open demo, act, reopen /, real state unchanged.",
       "status": "pass",
-      "evidence": "e2e/persistence.spec.ts \"demo mode never takes the session lock or writes saved progress\" (stored data unchanged by a demo page); src/app/bootstrap.test.ts (demo ignores storage)"
+      "evidence": "e2e/persistence.spec.ts \"demo mode never takes the session lock or writes saved progress\" (a demo page open next to a real session leaves the stored data byte-identical); src/app/bootstrap.test.ts (demo ignores storage)"
     },
     {
       "id": "entry-demo-at-summary",
@@ -341,7 +341,7 @@
       "description": "Remaining time derives from endsAt (timestamp-based), staying within 1 s over 5 min incl. a background tab.",
       "steps": "Unit: remainingMs with injected now; Playwright clock: hidden tab then visible.",
       "status": "pass",
-      "evidence": "src/domain/timer.test.ts (remainingMs from endsAt); e2e/session.spec.ts \"the countdown stays within a second… after the clock jumps\" (5 minutes in one jump, ±1 s)"
+      "evidence": "src/domain/timer.test.ts (remainingMs derived from endsAt, clamped to [0, duration]); e2e/session.spec.ts \"the countdown stays within a second… after the clock jumps\" (5 minutes in one jump, ±1 s, visible tab). useNow recomputes on visibilitychange; a real hidden-tab test is NOT automated (Playwright cannot throttle a background tab) — see ADR 0005."
     },
     {
       "id": "timer-tab-title",
@@ -363,7 +363,7 @@
       "description": "After a reload the timer resumes with the correct remaining time (or completes if it ended).",
       "steps": "Playwright: start, reload, remaining time correct; ended while closed counts.",
       "status": "pass",
-      "evidence": "e2e/persistence.spec.ts \"progress survives a reload… a running timer\" (~15 min left after 10 min + reload) and \"a session that ended while the tab was closed still counts\"; src/state/persistence/persistence.test.ts (resume, paused stays paused)"
+      "evidence": "e2e/persistence.spec.ts: running timer resumes with ~15 min left after a reload; a session that ended while the tab was closed counts exactly once (Profile: 1 session, 25 min, 30 Knowledge); src/state/persistence/persistence.test.ts (resume, paused stays paused, far-future end time pulled back)"
     },
     {
       "id": "timer-complete",
@@ -374,7 +374,7 @@
       "description": "At zero the timer enters complete exactly once and triggers the session-end choice.",
       "steps": "Unit: TICK past endsAt → complete; component: one completion event.",
       "status": "pass",
-      "evidence": "src/domain/timer.test.ts (TICK at/after endsAt → complete, not before); src/state/store.test.ts (one completed session event, layer → choice); e2e/loop.spec.ts"
+      "evidence": "src/domain/timer.test.ts (TICK at/after endsAt → complete, not before); src/state/store.test.ts (exactly one completed session event, layer → choice); e2e/loop.spec.ts and e2e/persistence.spec.ts (closed-tab completion counts once: Profile shows 1 session / 25 min / 30 Knowledge)"
     },
     {
       "id": "mission-one-line",
@@ -704,7 +704,7 @@
       "description": "A second tab shows \"LeBlanc's already open in another tab.\" with a takeover button.",
       "steps": "Playwright: two pages, second shows lock copy; takeover works.",
       "status": "pass",
-      "evidence": "e2e/persistence.spec.ts \"a second tab shows the takeover screen and taking over moves the session\"; docs/adr/0006"
+      "evidence": "e2e/persistence.spec.ts: \"a second tab shows the takeover screen…\" (screens swap) and \"taking over carries the mission and running timer to the new tab, and the old tab stays out\" (new owner sees the mission and running timer; its later edit is what stays stored); lock is acquired before storage is read (src/app/Root.tsx); docs/adr/0006"
     },
     {
       "id": "prog-xp-rules",
@@ -1518,7 +1518,7 @@
       "description": "Storage adapter with schema version, migrations, guard, backup on corrupt data and recovery message.",
       "steps": "Unit: corrupt JSON → backup key + recovered flag.",
       "status": "pass",
-      "evidence": "src/state/persistence/persistence.test.ts (load/migrate/guard/backup/saver/localStorage blocked, 25 cases); e2e corrupt data (backup key + Morgana line) and blocked storage tests; docs/adr/0005"
+      "evidence": "src/state/persistence/persistence.test.ts + src/app/bootstrap.test.ts: load/migrate/guard/backup (verified, capped at 5)/saver/localStorage blocked and quota errors, newer data never overwritten, value guard (11 impossible values), load-time repair; e2e: corrupt data (backup key + Morgana line), blocked storage, failed save mid-session notice; docs/adr/0005"
     },
     {
       "id": "q-error-boundary",
