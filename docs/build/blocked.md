@@ -21,3 +21,8 @@ Format: what · why · what would unblock it · what was built around it.
 - **Why:** the dashboard preset outputs `build/`; Vite outputs `dist/`. Project settings are not changed by this run.
 - **Built around:** `vercel.json` sets `framework: vite` and `outputDirectory: dist`, which overrides the dashboard per deploy.
 - **Optional for Ares:** switch the dashboard preset to Vite so settings and repo agree.
+
+## B-04 Vercel preview deployments are behind Vercel login (worked around)
+- **Why:** Deployment Protection on previews redirects browsers to vercel.com/login; this run never signs in for Ares.
+- **Built around:** preview HTML is checked with `vercel curl / --deployment <url>` (protection bypass via the logged-in CLI); visual checks run on a local production build (`npm run build && vite preview`). Production (`phantom-corner.vercel.app`) is public and checked after each merge.
+- **Optional for Ares:** a Protection Bypass for Automation secret would let Playwright run against previews.

@@ -20,7 +20,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "screens": "playwright test e2e/screens.spec.ts"
   },
   "type": "module",
   "devDependencies": {
