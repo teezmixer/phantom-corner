@@ -56,3 +56,16 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 
 ### D-14 Analytics policy (spec D14) and licence (spec D11)
 - Analytics events are built behind the settings switch (default to be decided; placeholder: on, with the switch). No LICENSE file is added; licence choice is Ares's.
+
+## Visual identity
+
+### D-15 Two token values disagree between the old Figma export and the live gate
+- Recovered export (commits 4129f5e/df6a002): `--redbright` rgb(254 0 0), `--greymid` rgb(123 123 123).
+- Live gate (`gate.css`, BUILT) and spec §4.12 contrast figures: `--redbright` rgb(221 5 7), `--greymid` rgb(97 96 101).
+- **Placeholder now:** the live values (no visible change). In `src/styles/tokens.css`, marked `DECISION: D-15`. Ares picks one.
+
+### D-16 Token families whose fonts are not loaded
+- `--display-label` (Bubblegum Superstar) and `--hud-timer` (Earwig Factory) name faces that only exist in `public/fonts/` (untouched per P5) and have no `@font-face`. They fall back to Expose/Impact. Wiring them would add commercial fonts (spec CHANGE-5 / D1), so it waits for Ares.
+
+### D-17 Placeholder grey
+- The BUILT HUD placeholders used `#d9d9d9`, which is not a token. Replaced with `--greylight` (rgb 207 207 207), the nearest token. `DECISION: token-missing-placeholder-grey`.

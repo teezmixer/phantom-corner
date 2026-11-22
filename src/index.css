@@ -1,3 +1,4 @@
+@import "./styles/tokens.css";
 @import "./gate/gate.css";
 
 @tailwind base;
@@ -17,7 +18,7 @@ html, body, #root {
 }
 
 main {
-  background-color: #000;
+  background-color: var(--black);
 }
 
 @font-face {
@@ -36,11 +37,3 @@ main {
   font-display: swap;
 }
 
-:root {
-  --body-primary-font-family: "Optima Nova LT Black", Optima, Candara, Calibri, "Segoe UI", sans-serif;
-  --body-primary-font-weight: 400;
-  --body-primary-font-size: 16px;
-  --body-primary-letter-spacing: 0px;
-  --body-primary-line-height: normal;
-  --body-primary-font-style: normal;
-}
