@@ -9,7 +9,8 @@ export const MIGRATIONS: readonly Migration[] = [
     const settings = (typeof data.settings === "object" && data.settings !== null ? data.settings : {}) as Record<string, unknown>;
     return {
       ...data,
-      settings: { ...settings, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {} },
+      // `muted` is defaulted too, so a v1 save with a damaged or missing settings object is upgraded, not thrown away.
+      settings: { ...settings, muted: typeof settings.muted === "boolean" ? settings.muted : false, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {} },
     };
   },
 ];

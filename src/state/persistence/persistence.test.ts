@@ -84,6 +84,22 @@ describe("the real 1 → 2 migration (existing users keep their progress)", () =
     expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {} });
   });
 
+  it("upgrades a schema-1 save whose settings are missing or damaged instead of throwing it away", () => {
+    for (const settings of [undefined, null, "oops", {}, { muted: "yes" }]) {
+      const r = load(JSON.stringify({ ...v1, settings }));
+      expect(r.recovered, JSON.stringify(settings)).toBe(false);
+      expect(r.persisted.settings.muted).toBe(false);
+      expect(r.persisted.settings.volumes).toEqual({ music: 0.5, ambience: 0.35, ui: 0.7 });
+      expect(r.persisted.name).toBe("Ren"); // the rest of the save is intact
+    }
+  });
+
+  it("is idempotent: migrating an already-migrated save changes nothing", () => {
+    const once = load(JSON.stringify(v1)).persisted;
+    const twice = load(JSON.stringify(once)).persisted;
+    expect(twice).toEqual(once);
+  });
+
   it("rejects out-of-range volumes and mix levels", () => {
     const ok = fresh();
     expect(isPersisted({ ...ok, settings: { ...ok.settings, volumes: { music: 1.5, ambience: 0.3, ui: 0.7 } } })).toBe(false);

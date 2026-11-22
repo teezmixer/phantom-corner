@@ -31,6 +31,12 @@ describe("bootstrap", () => {
     expect(b.initial).toMatchObject({ recovered: true, storageBlocked: true });
   });
 
+  it("a genuine first visit rings the doorbell, but blocked storage does not make EVERY visit a first one", () => {
+    expect(bootstrap(parseMode(""), NOW, memoryAdapter(), id).initial.firstVisit).toBe(true);
+    const blocked = { ...memoryAdapter(), blocked: true } as ReturnType<typeof memoryAdapter>;
+    expect(bootstrap(parseMode(""), NOW, blocked, id).initial.firstVisit).toBe(false);
+  });
+
   it("a first visit starts at the splash with nothing marked recovered", () => {
     const b = bootstrap(parseMode(""), NOW, memoryAdapter(), id);
     expect(b.initial).toMatchObject({ layer: "splash", entered: false, recovered: false, storageBlocked: false });
