@@ -1,4 +1,6 @@
 import { useEffect, type ReactNode } from "react";
+import { BASE_TITLE, tabTitle } from "@/domain/title";
+import { useNow } from "@/hooks/useNow";
 import { isTypingTarget, shortcutAction } from "@/hooks/shortcuts";
 import { useStore } from "@/state/StoreProvider";
 import type { Layer } from "@/state/store";
@@ -30,6 +32,16 @@ const LAYERS: Partial<Record<Layer, () => ReactNode>> = {
   privacy: () => <PrivacyScreen />,
 };
 
+/** Keeps the tab title in step with the timer so the countdown shows from other tabs (spec §3.6). */
+function TabTitle() {
+  const { state } = useStore();
+  const now = useNow(1000);
+  const title = tabTitle(state.timer, now);
+  useEffect(() => { document.title = title; }, [title]);
+  useEffect(() => () => { document.title = BASE_TITLE; }, []);
+  return null;
+}
+
 /** Composition root: the room is always underneath once entered; one `layer` decides what sits on top. */
 export function App({ dev }: { dev: boolean }) {
   const { state, derived, dispatch } = useStore();
@@ -54,6 +66,7 @@ export function App({ dev }: { dev: boolean }) {
     <>
       {state.entered && <MainScreen locked={state.layer !== "main"} />}
       {LAYERS[state.layer]?.()}
+      <TabTitle />
       {dev && <DevPanel />}
     </>
   );
