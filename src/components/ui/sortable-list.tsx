@@ -29,7 +29,7 @@ export function SortableList({ items, onReorder, onToggle, onRemove, className }
         <Reorder.Item
           key={item.id}
           value={item}
-          className={cn("flex cursor-grab items-center gap-2 border border-border bg-secondary px-2 py-1 active:cursor-grabbing", item.done && "text-muted-foreground")}
+          className={cn("flex cursor-grab items-center gap-2 border border-border bg-secondary px-2 py-0.5 active:cursor-grabbing", item.done && "text-muted-foreground")}
           transition={{ type: "spring", bounce: 0, duration: 0.4 }}
         >
           <input

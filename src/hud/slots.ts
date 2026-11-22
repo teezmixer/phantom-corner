@@ -28,10 +28,10 @@ export type SlotMap = Record<WidgetId, Slot>;
  */
 export const DEFAULT_SLOTS: SlotMap = {
   date: { corner: "tl", x: 39, y: 58, w: 251, h: 164 },
-  timer: { corner: "tl", x: 39, y: 255, w: 204, h: 66 },
+  timer: { corner: "tl", x: 39, y: 255, w: 260, h: 66 },
   phone: { corner: "tl", x: 44, y: 342, w: 65, h: 60 },
   mission: { corner: "tr", x: 46, y: 43, w: 272, h: 101 },
-  todo: { corner: "tr", x: 46, y: 177, w: 272, h: 101 },
+  todo: { corner: "tr", x: 46, y: 177, w: 272, h: 120 },
   level: { corner: "bl", x: 39, y: 90, w: 158, h: 116 },
   buttonBar: { corner: "bl", x: 39, y: 40, w: 233, h: 48 },
   music: { corner: "br", x: 39, y: 275, w: 213, h: 50 },

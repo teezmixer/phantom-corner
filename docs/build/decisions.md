@@ -94,3 +94,6 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **A finished timer jumps whatever screen is open to the session-end choice.** Alternative: wait until the user closes the screen.
 - **Timer icon** is static while a session runs (upstream spins it) to keep the room calm.
 - **Overlay vs TV:** screens leave a gutter on the right so the TV sits above the scrim and is never covered; the TV is not inert while a screen is open. Placement is still D-05.
+
+### D-23 Slot sizes grown to fit their content
+- `timer` 204 → 260 px wide (digits + controls overflowed the Figma 204); `todo` 101 → 120 px tall (shows two items). Positions unchanged; still data in `src/hud/slots.ts`. At 1024×600 the todo bottom (198 px) still clears the TV (top 200 px).

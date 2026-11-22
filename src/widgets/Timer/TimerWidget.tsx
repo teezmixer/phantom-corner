@@ -24,7 +24,7 @@ export function TimerWidget() {
     <Slab className="flex h-full w-full items-center justify-between gap-2 px-1" label="Timer">
       <TimerRoot className="border-0 px-1" data-status={timer.status}>
         <TimerIcon />
-        <TimerDisplay time={formatClock(remainingMs(timer, now))} className="font-hud-timer text-4xl leading-none" />
+        <TimerDisplay time={formatClock(remainingMs(timer, now))} className="font-hud-timer text-3xl leading-none" />
       </TimerRoot>
       <div className="flex items-center gap-1">
         {timer.status === "idle" && (
