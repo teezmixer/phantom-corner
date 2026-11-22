@@ -101,3 +101,11 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 ### D-24 Event ids and timestamps before sync (engineering note for M11, Ares may weigh in)
 - Stored events are `{kind, …}` without an `id` or `at`, and todo ids are numbers, unlike spec §4.7 (`id: string`) and §4.9 (sync merges events by `id`). **Plan:** M11 adds `id` and `at` through a schema migration 1→2 (`id = "<clientId>:<index>"` for existing events), the first real use of the migration path. Alternative: add them now. Cost now: every event creator needs a clock and an id source (the reducer is deliberately pure).
 - No heartbeat fallback for browsers without Web Locks (ADR 0006); all evergreen browsers have them.
+
+### D-09 (updated) / D-26 Placeholder TV playlist — Ares picks the real music
+- The spec names no video ids. **Placeholder now:** three rights-holder uploads (label-generated "Lyn – Topic" tracks of "Beneath the Mask": plain, rain, instrumental), shared by every location, in one file `src/content/tracks.ts`. Embeddability was checked with YouTube's oEmbed endpoint on 2026-11-22 (HTTP 200 for all three). Candidates also seen: an official "Winter Version" upload on SEGA Asia's channel (`YIft4h8S4R8`).
+- **Ares decides:** which tracks, per location (spec §3.3 sound notes: café murmur/jazz for LeBlanc, wind for Ryuji's rooftop, …), and whether a rights-holder upload is acceptable at all for the public launch (spec §8.2).
+- **Rule I applied (provisional):** travelling stops the music; the user presses play again, so playback only ever starts from a user action. Alternative: continue into the new location's playlist.
+
+### D-25 Placeholder sound design and default volumes
+- Every interface sound is a short synthesised tone (select, menu open/close, travel, session start, session complete, door bell) and every ambience is filtered noise — stand-ins for real, licensed sounds (D-13). Default bus volumes (music 50 %, ambience 35 %, interface 70 %) and the "halve interface sounds while a session runs" rule (spec §3.9) are provisional. `src/audio/sfx.ts`, `src/audio/ambience.ts`, `src/content/copy`.

@@ -32,8 +32,8 @@
       "spec": "§3.9",
       "description": "The splash has a global mute control; its state persists and silences every bus.",
       "steps": "Unit: mute sets all bus gains to 0; Playwright: toggle mute on splash, reload, still muted.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/audio.spec.ts \"mute on the splash is remembered and silences interface sounds\" (still muted after a reload; no doorbell while muted); src/audio/AudioProvider.test.tsx (mute reaches the engine)"
     },
     {
       "id": "entry-splash-audio-unlock",
@@ -43,8 +43,8 @@
       "spec": "§3.1",
       "description": "The enter click resumes the AudioContext (the user gesture that unlocks audio).",
       "steps": "Unit/component: enter handler calls audioContext.resume(); Playwright: context state 'running' after enter.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/audio.spec.ts \"nothing is created before the user's first click; the click unlocks audio\" (AudioContext count 0 → 1); src/audio/audio.test.ts (no context until unlock()); src/audio/AudioProvider.test.tsx (first gesture only)"
     },
     {
       "id": "entry-mobile-gate",
@@ -87,8 +87,8 @@
       "spec": "§3.9",
       "description": "On first arrival a synthesised door-bell placeholder tone plays (if not muted).",
       "steps": "Unit: arrival triggers sfx 'doorbell'; registry tone is synthesised, no audio file.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/audio.spec.ts \"the doorbell rings on a first-ever arrival but not on a return visit\" (880 + 659.25 Hz notes seen only the first time); src/audio/triggers.test.ts"
     },
     {
       "id": "onb-name",
@@ -483,8 +483,8 @@
       "spec": "§4.8",
       "description": "The music player is a visible TV (YouTube iframe ≥200x200, never covered, one per page). Placement provisional.",
       "steps": "Playwright: iframe bounding box ≥200x200, no element above it (elementFromPoint).",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/audio.spec.ts (one player, bounding box ≥200×200, uncovered under Hide UI and while playing); e2e/behaviour.spec.ts (visible, ≥200×200 and hit-testable under every screen); src/app/Tv.test.tsx (one player incl. StrictMode, 200 px box)"
     },
     {
       "id": "music-controls",
@@ -494,8 +494,8 @@
       "spec": "§3.6, §4.8",
       "description": "The TV player shows track title and play/pause/next/previous/volume controls.",
       "steps": "Component with fake MusicPlayer; Playwright smoke.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/audio.spec.ts (play/pause, next/previous, title caption, mixer volume + mute reach the player); src/app/Tv.test.tsx; src/audio/music/controller.test.ts"
     },
     {
       "id": "music-user-start",
@@ -505,8 +505,8 @@
       "spec": "§4.8",
       "description": "Playback only ever starts from a user action; Knowledge never depends on music.",
       "steps": "Unit: no play() before user event; progress fold ignores music.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/audio.spec.ts \"only cued until the user presses play\" (mutation-checked: making the TV autoplay fails it) and \"Knowledge is never tied to music\"; src/audio/music/controller.test.ts (a stray playing event is ignored; travel stops playback)"
     },
     {
       "id": "music-playlist-per-location",
@@ -516,8 +516,8 @@
       "spec": "§4.6",
       "description": "Each location has its own playlist; travelling switches it.",
       "steps": "Unit: manifest playlists; component: travel cues new playlist.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/app/Tv.travel.test.tsx (two locations with different playlists: travel swaps them, stops playback, cues the new first track); src/content/content.test.ts. NOTE: every location currently shares one provisional playlist (D-26)."
     },
     {
       "id": "music-blocked-unavailable",
@@ -528,7 +528,7 @@
       "description": "Blocked and unavailable states show copy; unavailable tracks are skipped and logged.",
       "steps": "Unit with fake player emitting error 150 → next track + analytics event.",
       "status": "todo",
-      "evidence": ""
+      "evidence": "PARTIAL (stays todo): copy + silent skip + blocked + all-failed + offline are tested (e2e/audio.spec.ts, src/app/Tv.test.tsx, controller.test.ts); the \"logged\" part — the track_unavailable analytics event and the weekly oEmbed check — arrives in M10."
     },
     {
       "id": "ambience-layers",
@@ -538,8 +538,8 @@
       "spec": "§3.6, §3.9",
       "description": "Each location has ambience layers (synthesised placeholders) with a mixer for per-layer volume.",
       "steps": "Unit: mixer gains per layer; Playwright: open mixer, adjust.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/audio/audio.test.ts (layers per location replace on travel; per-layer level, clamped); e2e/audio.spec.ts (LeBlanc 2 layers → Ryuji 2 layers, mixer level saved across reload); src/audio/AudioProvider.test.tsx"
     },
     {
       "id": "level-widget",
