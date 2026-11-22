@@ -1660,8 +1660,8 @@
       "spec": "",
       "description": "The Vite build deploys on Vercel (dist/).",
       "steps": "Production deployment for the merge commit loads.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "Merge faefd3e deployed to Production in 18 s (vercel ls); curl https://phantom-corner.vercel.app → <title>Phantom Corner</title>; browser shows main screen, no console errors"
     },
     {
       "id": "dev-panel",

@@ -19,3 +19,8 @@
 - **Slip:** commit e5239d6 ("chore: add preview launch configs") also carries the staged deletion of tailwind.config.cjs/postcss.config.cjs, so that one commit is mixed and its tree does not build. Not rewritten (history rule); the next commit 5015429 restores a green build.
 - Output style switched to Learning mid-run; autonomy rules still apply, so human-contribution requests are logged in PR descriptions ("Explain it back") rather than blocking the run.
 - **Next:** push, PR, CI, Vercel preview check, M1 review loop, merge.
+
+## 2026-11-22 — M1 merged; M2 started
+- M1 review: round 1 R4/BQ3/V4 → fixes → round 2 R4/BQ4/V4. PR teezmixer/phantom-corner#2 merged (merge commit faefd3e). Production deploy verified.
+- M2 (branch m2-walking-skeleton, stacked on M1 and now merged with main): slot map as data (D-20), content types, provisional places (D-07) and progression (D-06, thresholds interpolated from the spec's hour anchors at ~72 Knowledge/hour), speaker-grouped copy, 12 manifests by folder glob, content test.
+- **Next:** domain/progress.ts (level from Knowledge), app store + layer state, screens and widgets as working placeholders, dev panel, demo mode.
