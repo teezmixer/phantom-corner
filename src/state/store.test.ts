@@ -59,6 +59,17 @@ describe("store reducer", () => {
     expect(s.timer.status).toBe("idle");
   });
 
+  it("records a cut-short session when stopped from paused too, so paused minutes are not lost", () => {
+    const s = run([
+      { type: "TIMER", event: { type: "START", now: T0 }, now: T0 },
+      { type: "TIMER", event: { type: "PAUSE", now: T0 + 9 * 60_000 }, now: T0 + 9 * 60_000 },
+      { type: "TIMER", event: { type: "STOP" }, now: T0 + 60 * 60_000 }, // a long time later; pause time does not count
+    ]);
+    expect(s.layer).toBe("summary");
+    expect(derive(s).minutesFocused).toBe(9);
+    expect(derive(s).knowledge).toBe(9);
+  });
+
   it("does not change state for a meaningless timer event", () => {
     const s = run([]);
     expect(reducer(s, { type: "TIMER", event: { type: "PAUSE", now: T0 }, now: T0 })).toBe(s);

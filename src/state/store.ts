@@ -137,7 +137,8 @@ export function reducer(state: AppState, action: Action): AppState {
         const done: ProgressEvent = { kind: "session", plannedMs: before.durationMs, focusedMs: before.durationMs, outcome: "completed" };
         return { ...state, timer: after, events: [...state.events, done], layer: "choice" };
       }
-      if (before.status === "running" && action.event.type === "STOP") {
+      // Stopping — from running or from paused — records the focused time so far as a cut-short session.
+      if ((before.status === "running" || before.status === "paused") && action.event.type === "STOP") {
         const focusedMs = before.durationMs - remainingMs(before, action.now);
         return { ...state, timer: after, events: [...state.events, { kind: "session", plannedMs: before.durationMs, focusedMs, outcome: "stopped" }], layer: "summary" };
       }
