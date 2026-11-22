@@ -75,3 +75,9 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 
 ### D-19 shadcn role mapping
 - shadcn roles mapped onto tokens in `src/styles/shadcn.css`: background/card black, foreground white, primary redbright, accent and ring accentteal (spec §3.7 "red selection, teal accent", §4.12 teal focus ring), muted greydark/greylight, border greymid, destructive redmid. Ares may remap any role.
+
+## Layout
+
+### D-20 Slot positions: BUILT offsets vs Figma "Group 5"
+- `src/hud/slots.ts` uses the BUILT MainScreen offsets (e.g. left 39 px; mission top 43, right 46). Figma's hidden Group 5 slots sit at 64 px from the edges, and its location slot is 264×67 while the BUILT sign is 484×218. `phone` (no BUILT position) uses Figma (44, 342, 65×60).
+- **Ares picks:** keep BUILT offsets, or snap to the Figma slots. Either is a data change in one file.
