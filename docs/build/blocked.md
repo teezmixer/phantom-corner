@@ -26,3 +26,8 @@ Format: what · why · what would unblock it · what was built around it.
 - **Why:** Deployment Protection on previews redirects browsers to vercel.com/login; this run never signs in for Ares.
 - **Built around:** preview HTML is checked with `vercel curl / --deployment <url>` (protection bypass via the logged-in CLI); visual checks run on a local production build (`npm run build && vite preview`). Production (`phantom-corner.vercel.app`) is public and checked after each merge.
 - **Optional for Ares:** a Protection Bypass for Automation secret would let Playwright run against previews.
+
+## B-05 Background screenshot over the performance budget (constraint)
+- **Why:** `src/screenshot-2026-06-14-at-9-39-36-PM-1.png` is 1.56 MB (budget: largest first-load image ≤ 250 KB, spec §4.13) and shows fake player chrome and a cursor. The build brief forbids touching it (pre-flight P5) and spec CHANGE-3 / D2 asks Ares to replace it.
+- **Unblock:** Ares supplies an original scene (or approves converting/replacing this file).
+- **Built around:** the CI size budget (M10) will exempt this one file by name and fail on anything else over budget.
