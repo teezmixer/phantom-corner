@@ -182,6 +182,19 @@ describe("store reducer", () => {
     expect(reducer(s, { type: "SET_MISSION", text: "" }).missionDeadline).toBeNull(); // clearing the mission clears it
   });
 
+  it("re-submitting the same mission (to change its deadline) keeps it done; a different mission is not done", () => {
+    let s = run([{ type: "SET_MISSION", text: "Read" }, { type: "TOGGLE_MISSION_DONE" }]);
+    expect(s.missionDone).toBe(true);
+    s = reducer(s, { type: "SET_MISSION", text: "Read" });
+    expect(s.missionDone).toBe(true);
+    expect(reducer(s, { type: "SET_MISSION", text: "Something else" }).missionDone).toBe(false);
+  });
+
+  it("a reset never silently turns analytics back on", () => {
+    const optedOut = run([{ type: "SET_ANALYTICS", on: false }]);
+    expect(reducer(optedOut, { type: "RESET" }).analytics).toBe(false);
+  });
+
   it("keeps demo mode on reset", () => {
     expect(reducer({ ...initialState, demo: true, entered: true }, { type: "RESET" })).toMatchObject({ demo: true, layer: "splash", entered: false });
   });

@@ -22,6 +22,14 @@ describe("bannersFor", () => {
     expect(texts(demo, { ...demo, entered: true, layer: "main" })).toEqual([]);
   });
 
+  it("does not say 'you're back' when the save was lost or cannot be kept (it would contradict the notice)", () => {
+    const splash: AppState = { ...initialState, entered: false, layer: "splash" };
+    for (const flag of [{ recovered: true }, { storageBlocked: true }] as const) {
+      const before = { ...splash, ...flag };
+      expect(texts(before, { ...before, entered: true, layer: "main" })).toEqual([]);
+    }
+  });
+
   it("announces Knowledge gained, a level-up and a newly unlocked place, in that order", () => {
     const withMission = run([{ type: "SET_MISSION", text: "Study" }]); // +10 Knowledge → level 2
     expect(texts(room, withMission)).toEqual(["+10 Knowledge", "Level 2"]);

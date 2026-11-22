@@ -27,9 +27,20 @@ describe("countdown", () => {
   it("returns null for a date it cannot read", () => expect(countdown("nonsense", NOW)).toBeNull());
 });
 
+describe("deadline bounds", () => {
+  const now = NOW;
+  it("accepts a sensible deadline, a recent past one, and rejects typos far in the past or future", () => {
+    expect(deadlineFromInput("2026-11-23T10:00", now)).not.toBeNull();
+    expect(deadlineFromInput("2026-11-20T10:00", now)).not.toBeNull(); // slightly overdue is fine
+    expect(deadlineFromInput("2020-01-01T10:00", now)).toBeNull(); // years ago
+    expect(deadlineFromInput("2999-01-01T10:00", now)).toBeNull(); // centuries ahead
+    expect(deadlineFromInput("2032-01-01T10:00", now)).toBeNull(); // beyond five years
+  });
+});
+
 describe("datetime-local conversion", () => {
   it("round-trips a local time through ISO and back", () => {
-    const iso = deadlineFromInput("2026-11-22T18:30");
+    const iso = deadlineFromInput("2026-11-22T18:30", NOW);
     expect(iso).not.toBeNull();
     expect(inputFromDeadline(iso)).toBe("2026-11-22T18:30");
   });

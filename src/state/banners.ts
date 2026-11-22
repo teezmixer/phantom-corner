@@ -16,7 +16,8 @@ export function bannersFor(prev: AppState, next: AppState): BannerMessage[] {
   if (prev === next) return [];
   const out: BannerMessage[] = [];
 
-  if (!prev.entered && next.entered && !next.firstVisit && !next.demo) out.push({ id: "back", text: sojiro.back });
+  // No greeting on a first visit, in demo, or when the save was lost or cannot be kept ("you're back" would contradict that).
+  if (!prev.entered && next.entered && !next.firstVisit && !next.demo && !next.recovered && !next.storageBlocked) out.push({ id: "back", text: sojiro.back });
 
   const before = derive(prev);
   const after = derive(next);

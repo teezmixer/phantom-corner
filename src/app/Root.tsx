@@ -3,6 +3,7 @@ import { MotionConfig } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useStore } from "@/state/StoreProvider";
+import { analyticsGate, readOptOut, rememberOptOut, setAnalyticsAllowed } from "./telemetry";
 import { useSessionLock } from "@/hooks/useSessionLock";
 import { TabLockScreen } from "@/screens/TabLock/TabLockScreen";
 import { localStorageAdapter } from "@/state/persistence/adapter";
@@ -31,7 +32,7 @@ export function Root({ mode }: { mode: UrlMode }) {
  */
 let booted: Bootstrap | undefined;
 function bootOnce(mode: UrlMode): Bootstrap {
-  booted ??= bootstrap(mode, Date.now(), localStorageAdapter(STORAGE_KEY), () => crypto.randomUUID());
+  booted ??= bootstrap(mode, Date.now(), localStorageAdapter(STORAGE_KEY), () => crypto.randomUUID(), readOptOut());
   return booted;
 }
 
@@ -60,13 +61,18 @@ function Preferences({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.motion = reduced ? "reduced" : "system";
   }, [reduced]);
+  // The send-time gate and the remembered opt-out follow the switch.
+  useEffect(() => {
+    setAnalyticsAllowed(state.analytics);
+    rememberOptOut(!state.analytics);
+  }, [state.analytics]);
   return (
     <MotionConfig reducedMotion={reduced ? "always" : "user"}>
       {children}
       {state.analytics && (
         <>
-          <Analytics />
-          <SpeedInsights />
+          <Analytics beforeSend={analyticsGate} />
+          <SpeedInsights beforeSend={analyticsGate} />
         </>
       )}
     </MotionConfig>

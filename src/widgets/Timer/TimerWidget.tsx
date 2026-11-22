@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pause, Play, Stop } from "@phosphor-icons/react";
 import { TimerDisplay, TimerIcon, TimerRoot } from "@/components/ui/timer";
 import { useNow } from "@/hooks/useNow";
@@ -16,11 +16,6 @@ export function TimerWidget() {
   const minutes = Math.round(timer.durationMs / MINUTE);
   const [custom, setCustom] = useState(!(DURATIONS as readonly number[]).includes(minutes));
   const send = (event: TimerEvent) => dispatch({ type: "TIMER", event, now: Date.now() });
-
-  // One TICK once the end passes; the reducer turns it into a completed session.
-  useEffect(() => {
-    if (timer.status === "running" && now >= timer.endsAt) dispatch({ type: "TIMER", event: { type: "TICK", now }, now });
-  }, [timer, now, dispatch]);
 
   return (
     <Slab className="flex h-full w-full items-center justify-between gap-2 px-1" label="Timer">

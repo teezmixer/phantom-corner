@@ -37,6 +37,8 @@ export const morgana = {
 export const widgets = {
   missionEmpty: "What's today's mission?", // VERBATIM
   missionDue: "Due", // draft
+  // The accessible name must contain the visible label ("Due") — WCAG 2.5.3 label in name.
+  mission: { set: "Set", done: "Mission done", edit: "Edit mission", deadline: "Due — mission deadline" },
   todoEmpty: "Nothing on the list. Suspicious.", // draft (spec §3.6 sample)
   phoneEmpty: "No messages. Enjoy the quiet.", // draft (spec §3.6 sample)
   musicBlocked: "It won't start on its own. Press play on the screen.", // draft (spec §3.6 sample)
@@ -83,6 +85,7 @@ export const ui = {
   lockedPlace: (n: number) => `Place ${n}`,
   lockedAt: (level: number) => `Locked · reach level ${level}`,
   youAreHere: "You are here",
+  deadline: { dueIn: (span: string) => `due in ${span}`, overdueBy: (span: string) => `overdue by ${span}`, dueNow: "due now", day: "day", days: "days", hour: "h", minute: "min" },
   banner: { knowledge: (n: number) => `+${n} Knowledge`, level: (n: number) => `Level ${n}` },
   mixer: "Mixer",
   tv: { region: "TV", previous: "Previous track", next: "Next track", play: "Play", pause: "Pause" },
@@ -116,4 +119,5 @@ export const settings = {
   erase: "Delete my data",
   eraseConfirm: "Press again to delete everything",
   info: "About, credits and privacy",
+  infoButtons: { about: "About", credits: "Credits", privacy: "Privacy" },
 } as const;

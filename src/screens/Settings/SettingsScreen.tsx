@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Mixer } from "@/app/Mixer";
 import { settings as copy, ui } from "@/content/copy";
 import { HUD_SIZES, TOGGLEABLE_WIDGETS, type WidgetId } from "@/hud/slots";
-import { buildExport, eraseStoredData } from "@/state/persistence/exportData";
+import { buildExport } from "@/state/persistence/exportData";
 import { STORAGE_KEY } from "@/state/persistence/schema";
 import { useStore } from "@/state/StoreProvider";
 import { Overlay, buttonClass } from "../Overlay";
 
 const group = "flex flex-col gap-2 border border-white p-3";
-const legend = "px-1 font-body-primary text-sm uppercase tracking-wide text-redbright";
+// White text with a red accent bar: small red-on-black text is only 4.1:1 (spec §4.12 allows red for large text only).
+const legend = "border-l-4 border-redbright px-2 font-body-primary text-sm uppercase tracking-wide text-white";
 const row = "flex items-center gap-2 text-sm";
 
 function readStored(): string | null {
@@ -20,18 +21,15 @@ function readStored(): string | null {
  * Everything here is saved with the rest of the preferences. The art slot is a placeholder for the drawn Ren (Ares).
  */
 export function SettingsScreen() {
-  const { state, dispatch } = useStore();
-  // Two presses to delete: the first arms the button for a few seconds. ("Are you sure?" is a banned phrase.)
+  const { state, dispatch, persistent, wipe } = useStore();
+  // Two presses to delete: the first arms the button, and it disarms when focus leaves it — no timer to race against
+  // (WCAG 2.2.1). ("Are you sure?" is a banned phrase.)
   const [armed, setArmed] = useState(false);
   const [exported, setExported] = useState(false);
-  useEffect(() => {
-    if (!armed) return;
-    const id = setTimeout(() => setArmed(false), 4000);
-    return () => clearTimeout(id);
-  }, [armed]);
 
   const exportData = () => {
-    const { filename, json } = buildExport(state, readStored(), new Date().toISOString());
+    // Demo and dev visits export their own state, never mixed with the real saved identity.
+    const { filename, json } = buildExport(state, persistent ? readStored() : null, new Date().toISOString());
     const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
     const a = document.createElement("a");
     a.href = url;
@@ -43,8 +41,10 @@ export function SettingsScreen() {
 
   const erase = () => {
     if (!armed) { setArmed(true); return; }
-    try { eraseStoredData(window.localStorage); } catch { /* storage blocked: there is nothing stored to remove */ }
-    dispatch({ type: "RESET" });
+    // Real progress: wipe storage, cancel pending saves and reload to a true first visit. A demo or dev visit has no saved
+    // progress of its own, so it only resets itself and never touches the real save.
+    if (persistent) wipe();
+    else dispatch({ type: "RESET" });
   };
 
   return (
@@ -119,15 +119,16 @@ export function SettingsScreen() {
         <legend className={legend}>{copy.data}</legend>
         <button type="button" onClick={exportData} className={`${buttonClass} text-sm`}>{copy.export}</button>
         {exported && <p role="status" className="text-xs text-greylight">{copy.exported}</p>}
-        <button type="button" onClick={erase} className={`${buttonClass} text-sm ${armed ? "bg-redbright" : ""}`}>{armed ? copy.eraseConfirm : copy.erase}</button>
+        <button type="button" onClick={erase} onBlur={() => setArmed(false)} className={`${buttonClass} text-sm ${armed ? "bg-redbright" : ""}`}>{armed ? copy.eraseConfirm : copy.erase}</button>
+        <p role="status" className="sr-only">{armed ? copy.eraseConfirm : ""}</p>
       </fieldset>
 
       <fieldset className={group}>
         <legend className={legend}>{copy.info}</legend>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => dispatch({ type: "SET_LAYER", layer: "about" })} className={`${buttonClass} text-sm`}>About</button>
-          <button type="button" onClick={() => dispatch({ type: "SET_LAYER", layer: "credits" })} className={`${buttonClass} text-sm`}>Credits</button>
-          <button type="button" onClick={() => dispatch({ type: "SET_LAYER", layer: "privacy" })} className={`${buttonClass} text-sm`}>Privacy</button>
+          <button type="button" onClick={() => dispatch({ type: "SET_LAYER", layer: "about" })} className={`${buttonClass} text-sm`}>{copy.infoButtons.about}</button>
+          <button type="button" onClick={() => dispatch({ type: "SET_LAYER", layer: "credits" })} className={`${buttonClass} text-sm`}>{copy.infoButtons.credits}</button>
+          <button type="button" onClick={() => dispatch({ type: "SET_LAYER", layer: "privacy" })} className={`${buttonClass} text-sm`}>{copy.infoButtons.privacy}</button>
         </div>
       </fieldset>
     </Overlay>

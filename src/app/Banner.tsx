@@ -19,7 +19,7 @@ export function Banner() {
   }, [current, dispatch]);
 
   return (
-    <div role="status" aria-live="polite" className="pointer-events-none fixed left-1/2 top-3 z-30 -translate-x-1/2 font-body-primary">
+    <div role="status" aria-live="polite" className="pointer-events-none fixed left-1/2 top-3 z-[58] -translate-x-1/2 font-body-primary">
       {current && (
         <p key={current.id} className="border-2 border-white bg-black px-4 py-2 text-lg text-white motion-safe:animate-gate-in">{current.text}</p>
       )}

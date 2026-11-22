@@ -170,7 +170,8 @@ function coreReducer(state: AppState, action: Action): AppState {
       const text = clampText(action.text);
       const first = text !== "" && !state.events.some((e) => e.kind === "mission_first_set");
       // Clearing the mission also clears its deadline; changing it keeps the deadline.
-      return { ...state, mission: text, missionDone: false, missionDeadline: text === "" ? null : state.missionDeadline, events: first ? [...state.events, { kind: "mission_first_set" }] : state.events };
+      // Re-submitting the same text (e.g. to change the deadline) keeps the mission as it is, done or not.
+      return { ...state, mission: text, missionDone: text === state.mission ? state.missionDone : false, missionDeadline: text === "" ? null : state.missionDeadline, events: first ? [...state.events, { kind: "mission_first_set" }] : state.events };
     }
     case "SET_DEADLINE":
       return state.mission ? { ...state, missionDeadline: action.iso && !Number.isNaN(Date.parse(action.iso)) ? action.iso : null } : state;
@@ -268,7 +269,8 @@ function coreReducer(state: AppState, action: Action): AppState {
       return action.state;
     case "RESET":
       // Demo mode stays demo, so a reset can never turn into writing real progress later (M3 persistence).
-      return { ...initialState, layer: "splash", demo: state.demo, storageBlocked: state.storageBlocked };
+      // Demo stays demo, and the analytics choice is never silently undone by a reset.
+      return { ...initialState, layer: "splash", demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
   }
 }
 

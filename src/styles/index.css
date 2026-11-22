@@ -21,7 +21,9 @@ html, body, #root {
 [data-motion="reduced"] *::after {
   animation-duration: 0.001ms !important;
   animation-iteration-count: 1 !important;
+  animation-delay: 0s !important;
   transition-duration: 0.001ms !important;
+  transition-delay: 0s !important;
 }
 
 /* Thin, token-coloured scrollbars everywhere, so scrollable lists (todo, phone) show that they scroll. */

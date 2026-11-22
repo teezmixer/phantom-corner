@@ -41,7 +41,7 @@ export function PhoneWidget() {
         <div className="max-h-72 overflow-y-auto px-3 pb-3 text-sm">
           {thread ? (
             <div>
-              <button type="button" onClick={() => setOpenThread(null)} className="mb-2 flex items-center gap-1 text-redbright focus-visible:outline-2 focus-visible:outline-accentteal"><ArrowLeft size={14} />{thread.title}</button>
+              <button type="button" onClick={() => setOpenThread(null)} className="mb-2 flex items-center gap-1 text-white focus-visible:outline-2 focus-visible:outline-accentteal"><ArrowLeft size={14} />{thread.title}</button>
               <p className="border border-white p-2">{thread.placeholder}</p>
             </div>
           ) : (
