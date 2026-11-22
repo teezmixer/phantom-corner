@@ -68,3 +68,18 @@ export const sessionEnd = {
   summaryContinue: "One more",
   summaryFinish: "Done for today",
 } as const;
+
+/** Labels used by screens and widgets. DRAFTS (decision D-10). */
+export const ui = {
+  hideUi: "Hide UI",
+  showUi: "Show UI",
+  resetAll: "Reset all data",
+  resetConfirm: "Press again to erase everything",
+  stamped: "Today is stamped.",
+  defaultName: "Student Ren",
+  placeholderMarker: "placeholder",
+  settingsNotYet: "Volumes, HUD size, motion, menu style, analytics, export and delete: not yet.",
+  lockedPlace: (n: number) => `Place ${n}`,
+  lockedAt: (level: number) => `Locked · reach level ${level}`,
+  youAreHere: "You are here",
+} as const;

@@ -1,4 +1,5 @@
 import { Student } from "@phosphor-icons/react";
+import { ui } from "@/content/copy";
 import { LOCATIONS } from "@/content/registry";
 import { useStore } from "@/state/StoreProvider";
 import { Overlay } from "../Overlay";
@@ -13,7 +14,7 @@ export function ProfileScreen() {
     <Overlay title="Profile">
       <div className="flex items-center gap-4">
         <div className="grid size-24 shrink-0 place-items-center border-2 border-dashed border-greymid text-greymid" role="img" aria-label="Portrait art slot"><Student size={48} /></div>
-        <p className="font-display-title text-3xl">{state.name || "Student Ren"}</p>
+        <p className="font-display-hero text-3xl">{state.name || ui.defaultName}</p>
       </div>
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {stat("Knowledge", derived.knowledge)}

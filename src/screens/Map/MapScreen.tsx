@@ -1,4 +1,5 @@
 import { Lock, MapPin, MapPinSimpleArea } from "@phosphor-icons/react";
+import { ui } from "@/content/copy";
 import { LOCATIONS } from "@/content/registry";
 import { useStore } from "@/state/StoreProvider";
 import { Overlay, buttonClass } from "../Overlay";
@@ -20,17 +21,18 @@ export function MapScreen() {
             <li key={loc.id}>
               <button
                 type="button"
-                disabled={!unlocked || current}
+                disabled={!unlocked}
+                aria-disabled={current || undefined}
                 aria-current={current ? "location" : undefined}
-                onClick={() => dispatch({ type: "START_TRAVEL", to: loc.id })}
+                onClick={() => { if (!current) dispatch({ type: "START_TRAVEL", to: loc.id }); }}
                 className={`${buttonClass} flex w-full items-center gap-3 ${current ? "bg-redbright" : ""}`}
                 data-state={current ? "current" : unlocked ? "unlocked" : "locked"}
               >
                 <Icon size={24} weight={unlocked ? "fill" : "regular"} aria-hidden="true" />
                 <span className="min-w-0 flex-1">
-                  <span className={`block truncate text-lg ${unlocked ? "font-display-label" : "font-body-primary"}`}>{unlocked ? loc.name : `Place ${index + 1}`}</span>
-                  <span className="block text-xs text-greylight">
-                    {current ? "You are here" : unlocked ? loc.register : `Locked · reach level ${loc.unlockLevel}`}
+                  <span className={`block truncate text-lg ${unlocked ? "font-display-hero" : "font-body-primary"}`}>{unlocked ? loc.name : ui.lockedPlace(index + 1)}</span>
+                  <span className={`block text-xs ${current ? "text-white" : "text-greylight"}`}>
+                    {current ? ui.youAreHere : unlocked ? loc.register : ui.lockedAt(loc.unlockLevel)}
                   </span>
                 </span>
               </button>

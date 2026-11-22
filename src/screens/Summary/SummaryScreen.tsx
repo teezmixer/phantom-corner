@@ -1,6 +1,6 @@
 import { Calendar } from "@phosphor-icons/react";
 import { RollingNumber } from "@/components/ui/rolling-number";
-import { sessionEnd } from "@/content/copy";
+import { sessionEnd, ui } from "@/content/copy";
 import { getLocation } from "@/content/registry";
 import { knowledgeFor } from "@/domain/progress";
 import { useStore } from "@/state/StoreProvider";
@@ -28,7 +28,7 @@ export function SummaryScreen() {
       </dl>
       {state.mission && <p className="border-l-4 border-redbright pl-3">Mission: {state.mission}</p>}
       <p className="font-body-primary text-2xl">{line}</p>
-      <p className="flex items-center gap-2 text-sm text-greylight"><Calendar size={18} aria-hidden="true" />Today is stamped. <span className="sr-only">Calendar stamps arrive later.</span></p>
+      <p className="flex items-center gap-2 text-sm text-greylight"><Calendar size={18} aria-hidden="true" />{ui.stamped}</p>
       <div className="grid gap-2 sm:grid-cols-2">
         <button type="button" onClick={() => dispatch({ type: "START_SESSION", now: Date.now() })} className={buttonClass}>{sessionEnd.summaryContinue}</button>
         <button type="button" onClick={() => dispatch({ type: "FINISH" })} className={buttonClass}>{sessionEnd.summaryFinish}</button>

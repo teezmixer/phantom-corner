@@ -16,7 +16,7 @@ export function Splash() {
         type="button"
         ref={enterRef}
         onClick={() => dispatch({ type: "ENTER" })}
-        className="border-2 border-white bg-redbright px-8 py-3 font-display-title text-3xl hover:bg-white hover:text-redbright focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accentteal"
+        className="border-2 border-white bg-redbright px-8 py-3 font-display-hero text-3xl hover:bg-white hover:text-redbright focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accentteal"
       >
         {splash.enter}
       </button>
