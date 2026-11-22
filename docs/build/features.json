@@ -44,7 +44,7 @@
       "description": "The enter click resumes the AudioContext (the user gesture that unlocks audio).",
       "steps": "Unit/component: enter handler calls audioContext.resume(); Playwright: context state 'running' after enter.",
       "status": "pass",
-      "evidence": "e2e/audio.spec.ts \"nothing is created before the user's first click; the click unlocks audio\" (AudioContext count 0 → 1); src/audio/audio.test.ts (no context until unlock()); src/audio/AudioProvider.test.tsx (first gesture only)"
+      "evidence": "e2e/audio.spec.ts \"nothing is created before the user's first click; the click unlocks audio\" (context count 0 → 1 and state running); src/audio/audio.test.ts (no context until unlock(); never queues sounds on a suspended context); src/audio/AudioProvider.test.tsx (every gesture retries unlock)"
     },
     {
       "id": "entry-mobile-gate",
@@ -88,7 +88,7 @@
       "description": "On first arrival a synthesised door-bell placeholder tone plays (if not muted).",
       "steps": "Unit: arrival triggers sfx 'doorbell'; registry tone is synthesised, no audio file.",
       "status": "pass",
-      "evidence": "e2e/audio.spec.ts \"the doorbell rings on a first-ever arrival but not on a return visit\" (880 + 659.25 Hz notes seen only the first time); src/audio/triggers.test.ts"
+      "evidence": "e2e/audio.spec.ts: the doorbell (880 + 659.25 Hz) rings on a first-ever arrival, not on a return visit; a muted first visit makes no sound at all, with an unmuted control; src/audio/triggers.test.ts; blocked storage no longer makes every visit a first visit (src/app/bootstrap.test.ts)"
     },
     {
       "id": "onb-name",
@@ -484,7 +484,7 @@
       "description": "The music player is a visible TV (YouTube iframe ≥200x200, never covered, one per page). Placement provisional.",
       "steps": "Playwright: iframe bounding box ≥200x200, no element above it (elementFromPoint).",
       "status": "pass",
-      "evidence": "e2e/audio.spec.ts (one player, bounding box ≥200×200, uncovered under Hide UI and while playing); e2e/behaviour.spec.ts (visible, ≥200×200 and hit-testable under every screen); src/app/Tv.test.tsx (one player incl. StrictMode, 200 px box)"
+      "evidence": "e2e/audio.spec.ts: player inner area is a full 200×200 with unclipped, hit-testable corners (mutation-checked), uncovered under Hide UI and while playing, on a short 1024×500 window it never covers the todo widget, and no dialog overlaps it at 1024×600; e2e/behaviour.spec.ts (visible and hit-testable under every screen); src/app/Tv.test.tsx. Real browser: loaded at 200×200 with YouTube chrome."
     },
     {
       "id": "music-controls",
@@ -495,7 +495,7 @@
       "description": "The TV player shows track title and play/pause/next/previous/volume controls.",
       "steps": "Component with fake MusicPlayer; Playwright smoke.",
       "status": "pass",
-      "evidence": "e2e/audio.spec.ts (play/pause, next/previous, title caption, mixer volume + mute reach the player); src/app/Tv.test.tsx; src/audio/music/controller.test.ts"
+      "evidence": "e2e/audio.spec.ts (play/pause, next/previous incl. next-while-playing regression found in a real browser and mutation-checked, caption, mixer volume + mute reach the player, Escape closes the mixer and returns focus); src/app/Tv.test.tsx; src/audio/music/controller.test.ts"
     },
     {
       "id": "music-user-start",
@@ -506,7 +506,7 @@
       "description": "Playback only ever starts from a user action; Knowledge never depends on music.",
       "steps": "Unit: no play() before user event; progress fold ignores music.",
       "status": "pass",
-      "evidence": "e2e/audio.spec.ts \"only cued until the user presses play\" (mutation-checked: making the TV autoplay fails it) and \"Knowledge is never tied to music\"; src/audio/music/controller.test.ts (a stray playing event is ignored; travel stops playback)"
+      "evidence": "src/audio/music/controller.test.ts (nothing starts music by itself; a track that ends advances only from playing; travel stops playback); src/app/Tv.test.tsx; e2e/audio.spec.ts \"only cued until the user presses play\" (mutation-checked: autoplay fails it), \"demo mode does not contact YouTube until the first gesture\" (mutation-checked) and \"a session earns the same Knowledge with the TV playing\" (30 with music, as without). Also played in a real browser against the real YouTube API."
     },
     {
       "id": "music-playlist-per-location",
@@ -517,7 +517,7 @@
       "description": "Each location has its own playlist; travelling switches it.",
       "steps": "Unit: manifest playlists; component: travel cues new playlist.",
       "status": "pass",
-      "evidence": "src/app/Tv.travel.test.tsx (two locations with different playlists: travel swaps them, stops playback, cues the new first track); src/content/content.test.ts. NOTE: every location currently shares one provisional playlist (D-26)."
+      "evidence": "src/app/Tv.travel.test.tsx (different playlists swap on travel); src/app/Tv.test.tsx (travel stops playback even with the shared playlist, D-26); src/content/content.test.ts. NOTE: every location currently shares one provisional playlist."
     },
     {
       "id": "music-blocked-unavailable",
