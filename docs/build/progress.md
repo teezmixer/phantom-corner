@@ -34,3 +34,4 @@
 ## 2026-11-22 — M3 review
 - Round 1 R3/BQ3/V4. Fixed lock-before-read race, backup/newer-data safety, silent write failure, value validation, clock clamps, dev read-only, visibility recompute, focus; corrected overstated evidence; 169 unit + 45 e2e tests.
 - Removed 75 untracked iCloud/macOS sync-conflict copies ("name 2.ext") after verifying each was byte-identical to the original or to a version in git history; `.gitignore` now ignores the pattern. If the repo folder keeps syncing they may reappear.
+- 2026-11-22 (later): Ares approved deleting the sync-conflict copies. Deleted 83 untracked copies (each verified identical to an original or a committed version) and removed 2 tracked ones from git (src/test/setup 2.ts, src/vite-env.d 2.ts). node_modules copies left alone (inert, not ours). The folder is iCloud-synced, so copies may reappear; tsconfig/eslint/.gitignore already ignore the pattern.
