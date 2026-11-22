@@ -1,4 +1,4 @@
-TASTESKILL · LINT   142 file(s)
+TASTESKILL · LINT   122 file(s)
 
 FAIL
   [micro-label] Tiny uppercase letter-spaced label.  (1×)
@@ -13,18 +13,18 @@ FAIL
       … 1 more
 
 WARN
-  [copy] Stock marketing phrase. Say the specific thing the product does.  (36×)
+  [copy] Stock marketing phrase. Say the specific thing the product does.  (38×)
       src/app/DevPanel.tsx:26  Unlock
       src/audio/AudioProvider.test.tsx:14  unlock
       src/audio/AudioProvider.test.tsx:46  unlock
       src/audio/AudioProvider.test.tsx:48  unlock
       src/audio/AudioProvider.test.tsx:50  unlock
-      src/audio/AudioProvider.test.tsx:52  unlock
-      … 30 more
+      src/audio/AudioProvider.test.tsx:54  unlock
+      … 32 more
   [numbering] Zero-padding in script. Fine for a clock, a date or a price; if it builds 01 / 02 / 03 labels, remove it.  (2×)
       src/domain/timer.ts:89  padStart(2, "0")
       src/widgets/DateTime/DateTimeWidget.tsx:8  padStart(2, "0")
   [em-dash] Em-dash habit. Use a full stop or a comma; keep at most one or two on a page.  (1×)
-      (all files):0  12 em dashes
+      (all files):0  13 em dashes
 
-RESULT: 8 FAIL, 39 WARN — fix the FAILs before rendering.
+RESULT: 8 FAIL, 41 WARN — fix the FAILs before rendering.
