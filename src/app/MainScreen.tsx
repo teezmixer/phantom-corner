@@ -1,72 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import type React from "react";
 
+import { CornerGroup } from "@/hud/CornerGroup";
+import { useHudScale } from "@/hud/useHudScale";
 import LocationWidget from "@/widgets/Location/LocationWidget";
-import screenshot20260614At93936Pm1 from "./screenshot-2026-06-14-at-9-39-36-PM-1.png";
-
-// The HUD is designed on a 1440x900 reference screen, then scaled to the real screen.
-const REF_WIDTH = 1440;
-const REF_HEIGHT = 900;
-// Widgets are exported at 3x, so past 3x they would be upscaled and go soft.
-const MAX_HUD_SCALE = 3;
-
-// How much to grow/shrink the HUD so it always fits inside the user's screen.
-function useHudScale() {
-  const [scale, setScale] = useState(1);
-
-  useEffect(() => {
-    const updateScale = () => {
-      setScale(
-        Math.min(
-          MAX_HUD_SCALE,
-          window.innerWidth / REF_WIDTH,
-          window.innerHeight / REF_HEIGHT
-        )
-      );
-    };
-    updateScale();
-    window.addEventListener("resize", updateScale);
-    return () => window.removeEventListener("resize", updateScale);
-  }, []);
-
-  return scale;
-}
-
-type Corner = "tl" | "tr" | "bl" | "br";
-
-// Where each corner group is pinned, and which point it scales from.
-const CORNER_STYLES: Record<Corner, { position: string; origin: string }> = {
-  tl: { position: "top-0 left-0", origin: "top left" },
-  tr: { position: "top-0 right-0", origin: "top right" },
-  bl: { position: "bottom-0 left-0", origin: "bottom left" },
-  br: { position: "bottom-0 right-0", origin: "bottom right" },
-};
-
-// A corner group: a reference-sized box glued to one screen corner.
-// Children are placed by their distance from THAT corner.
-const CornerGroup = ({
-  corner,
-  scale,
-  label,
-  children,
-}: {
-  corner: Corner;
-  scale: number;
-  label: string;
-  children: React.ReactNode;
-}): React.JSX.Element => (
-  <section
-    aria-label={label}
-    className={`absolute ${CORNER_STYLES[corner].position} pointer-events-none`}
-    style={{
-      width: REF_WIDTH,
-      height: REF_HEIGHT,
-      transform: `scale(${scale})`,
-      transformOrigin: CORNER_STYLES[corner].origin,
-    }}
-  >
-    {children}
-  </section>
-);
+import screenshot20260614At93936Pm1 from "@/screenshot-2026-06-14-at-9-39-36-PM-1.png";
 
 // Grey stand-in until the real widget exists. Delete it when the widget ships.
 // DECISION: token-missing-placeholder-grey (D-17) — nearest token to the old #d9d9d9.
