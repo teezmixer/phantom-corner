@@ -30,7 +30,7 @@ export function PhoneWidget() {
       <SidePanel
         panelOpen={state.phoneOpen}
         handlePanelOpen={() => dispatch({ type: "SET_PHONE", open: !state.phoneOpen })}
-        className="rounded-none border-2 border-white bg-black"
+        className={state.phoneOpen ? "border-2 border-white bg-black" : "w-fit border-2 border-white bg-black md:w-fit"}
         renderButton={(toggle) => (
           <button type="button" ref={buttonRef} onClick={toggle} aria-expanded={state.phoneOpen} aria-label={unread ? `Phone, ${unread} unread` : "Phone"} className="relative grid size-10 place-items-center hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
             <DeviceMobile size={28} />
