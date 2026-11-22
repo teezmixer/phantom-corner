@@ -1,14 +1,15 @@
+import { PLACEHOLDER_PLAYLIST } from "@/content/tracks";
 import type { LocationManifest } from "@/content/types";
 
 // Lines are DRAFTS in voice (decision D-10) except Ares's VERBATIM lines. Place name and register: content/places.ts.
-// Playlist is empty until track ids are chosen (decision D-09); the TV shows its "unavailable" state.
+// Playlist is the shared PROVISIONAL one (content/tracks.ts, decision D-26) until per-location music is chosen.
 const manifest: LocationManifest = {
   id: "yusuke",
   canonIndex: 3,
   character: "Yusuke",
   speaker: "yusuke",
   scene: {},
-  playlist: [],
+  playlist: PLACEHOLDER_PLAYLIST,
   ambience: [
     { id: "yusuke-room", label: "Brush on paper", synth: "room" },
     { id: "yusuke-wind", label: "Birds outside", synth: "wind" },

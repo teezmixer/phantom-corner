@@ -99,7 +99,7 @@ test("Hide UI hides the widgets but never the TV, and Show UI brings them back",
   await page.goto("/?demo=true");
   await page.getByRole("button", { name: "Hide UI (H)" }).click();
   await expect(page.getByRole("region", { name: "Top left widgets" })).toHaveCount(0);
-  const tv = page.getByRole("region", { name: "TV (placeholder)" });
+  const tv = page.getByRole("region", { name: "TV" });
   await expect(tv).toBeVisible();
   const box = await tv.boundingBox();
   expect(box!.width).toBeGreaterThanOrEqual(200);

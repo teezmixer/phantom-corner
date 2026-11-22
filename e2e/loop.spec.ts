@@ -33,7 +33,7 @@ test("a user can run the whole loop and travel to a newly unlocked location", as
   const ryuji = page.getByRole("button", { name: /School rooftop/ });
   await expect(ryuji).toBeEnabled();
   await ryuji.click();
-  await expect(page.getByRole("status")).toContainText("School rooftop"); // travel title card
+  await expect(page.getByRole("status").filter({ hasText: "School rooftop" })).toBeVisible(); // travel title card
   await page.clock.fastForward(2000);
   await expect(page.getByLabel("Current location: School rooftop")).toBeVisible();
 });

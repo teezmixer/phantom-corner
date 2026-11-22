@@ -1,14 +1,15 @@
+import { PLACEHOLDER_PLAYLIST } from "@/content/tracks";
 import type { LocationManifest } from "@/content/types";
 
 // Lines are DRAFTS in voice (decision D-10) except Ares's VERBATIM lines. Place name and register: content/places.ts.
-// Playlist is empty until track ids are chosen (decision D-09); the TV shows its "unavailable" state.
+// Playlist is the shared PROVISIONAL one (content/tracks.ts, decision D-26) until per-location music is chosen.
 const manifest: LocationManifest = {
   id: "akechi",
   canonIndex: 7,
   character: "Akechi",
   speaker: "akechi",
   scene: {},
-  playlist: [],
+  playlist: PLACEHOLDER_PLAYLIST,
   ambience: [
     { id: "akechi-murmur", label: "Glasses and low talk", synth: "murmur" },
     { id: "akechi-room", label: "Brushed drums", synth: "room" },

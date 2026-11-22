@@ -101,3 +101,18 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 ### D-24 Event ids and timestamps before sync (engineering note for M11, Ares may weigh in)
 - Stored events are `{kind, …}` without an `id` or `at`, and todo ids are numbers, unlike spec §4.7 (`id: string`) and §4.9 (sync merges events by `id`). **Plan:** M11 adds `id` and `at` through a schema migration 1→2 (`id = "<clientId>:<index>"` for existing events), the first real use of the migration path. Alternative: add them now. Cost now: every event creator needs a clock and an id source (the reducer is deliberately pure).
 - No heartbeat fallback for browsers without Web Locks (ADR 0006); all evergreen browsers have them.
+
+### D-09 (updated) / D-26 Placeholder TV playlist — Ares picks the real music
+- The spec names no video ids. **Placeholder now:** three rights-holder uploads (label-generated "Lyn – Topic" tracks of "Beneath the Mask": plain, rain, instrumental), shared by every location, in one file `src/content/tracks.ts`. Embeddability was checked with YouTube's oEmbed endpoint on 2026-11-22 (HTTP 200 for all three). Candidates also seen: an official "Winter Version" upload on SEGA Asia's channel (`YIft4h8S4R8`).
+- **Ares decides:** which tracks, per location (spec §3.3 sound notes: café murmur/jazz for LeBlanc, wind for Ryuji's rooftop, …), and whether a rights-holder upload is acceptable at all for the public launch (spec §8.2).
+- **Rule I applied (provisional):** travelling stops the music; the user presses play again, so playback only ever starts from a user action. Alternative: continue into the new location's playlist.
+
+### D-25 Placeholder sound design and default volumes
+- Every interface sound is a short synthesised tone (select, menu open/close, travel, session start, session complete, door bell) and every ambience is filtered noise — stand-ins for real, licensed sounds (D-13). Default bus volumes (music 50 %, ambience 35 %, interface 70 %) and the "halve interface sounds while a session runs" rule (spec §3.9) are provisional. `src/audio/sfx.ts`, `src/audio/ambience.ts`, `src/content/copy`.
+
+### D-27 TV above the screens instead of pausing under them; other TV rules I chose (Ares to confirm)
+- **Spec §4.8 says** a full-screen layer that would cover the TV (menu, map, summary, travel) *pauses it first and resumes after*. **I did instead:** the TV sits above every screen's scrim and every screen leaves it a gutter, so it is never covered and keeps playing. This also means the music does not stop when you open the menu. Alternative: pause under screens as the spec says. Logged in ADR 0007.
+- **Next/Previous while paused or off start playback** (they are a user action, like Play).
+- **Keyboard access to the TV while a screen is open:** a screen traps focus inside itself, so the TV's buttons can be reached by mouse but not by Tab until the screen closes.
+- **YouTube's default player chrome stays on the video** (spec §4.8), so there are two sets of controls (ours beside the video, YouTube's on it). If you prefer only ours, that needs the owner's sign-off against the "do not alter the player" rule.
+- **Privacy / About pages say nothing about YouTube yet.** Embedding YouTube means YouTube may set cookies/collect data even with the privacy-enhanced host; the wording belongs in your voice (D-14).

@@ -29,7 +29,7 @@ export function repairTodos(todos: readonly Todo[], nextTodoId: number): { todos
   return { todos: repaired, nextTodoId: next };
 }
 
-export function stateFromPersisted(p: Persisted, now: number, flags: { recovered: boolean; storageBlocked: boolean }): AppState {
+export function stateFromPersisted(p: Persisted, now: number, flags: { recovered: boolean; storageBlocked: boolean; firstVisit?: boolean }): AppState {
   let timer = p.timer;
   // A single impossible event is dropped; the rest of the history is kept.
   let events = p.events.filter(isEvent);
@@ -43,6 +43,8 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     ...initialState,
     name: p.name ?? "",
     muted: p.settings.muted,
+    volumes: p.settings.volumes,
+    ambienceMix: p.settings.ambienceMix,
     mission: clampText(p.mission?.text ?? ""),
     missionDone: p.mission?.done ?? false,
     ...repairTodos(p.todos, p.nextTodoId),
@@ -51,6 +53,7 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     visited: p.visited,
     events,
     unreadThreads: p.unreadThreads,
+    firstVisit: flags.firstVisit ?? false,
     recovered: flags.recovered,
     storageBlocked: flags.storageBlocked,
   };
@@ -63,12 +66,13 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
 export function toPersisted(state: AppState, prev: Persisted, nowIso: string): Persisted {
   const missionChanged = (prev.mission?.text ?? "") !== state.mission || (prev.mission?.done ?? false) !== state.missionDone;
   const todosChanged = JSON.stringify(prev.todos) !== JSON.stringify(state.todos);
-  const settingsChanged = prev.settings.muted !== state.muted;
+  const settings = { muted: state.muted, volumes: state.volumes, ambienceMix: state.ambienceMix };
+  const settingsChanged = JSON.stringify(prev.settings) !== JSON.stringify(settings);
   return {
-    schema: 1,
+    schema: 2,
     clientId: prev.clientId,
     name: state.name === "" ? null : state.name,
-    settings: { muted: state.muted },
+    settings,
     mission: state.mission === "" ? null : { text: state.mission, setAt: missionChanged && (prev.mission?.text ?? "") !== state.mission ? nowIso : (prev.mission?.setAt ?? nowIso), done: state.missionDone },
     todos: state.todos,
     nextTodoId: state.nextTodoId,

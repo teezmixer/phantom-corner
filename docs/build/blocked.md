@@ -36,3 +36,7 @@ Format: what · why · what would unblock it · what was built around it.
 - **Why:** Ares said not to use his hand-drawn assets until they are finished (D-21). Affects `datetime-month-art` and the sign art in `loc-sign-current`.
 - **Unblock:** Ares says the assets are ready. Month art needs one drawing per month; only October exists in Figma (`80:31`).
 - **Built around:** Cult UI `rolling-number` + Phosphor icons in the date widget; Phosphor map pin + place name in the location widget.
+
+## B-07 Real interface sounds, ambience and per-location music (assets / decisions)
+- **Why:** no licensed sound files exist and none may come from the game; the spec names no track ids. **Unblock:** Ares supplies or approves royalty-free sounds (licence per file) and chooses tracks per location.
+- **Built around:** synthesised tones and noise (D-25) and a shared provisional playlist (D-26); the player, mixer, volumes and rules are real and tested.
