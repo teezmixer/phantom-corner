@@ -461,8 +461,8 @@
       "spec": "Figma 80:31",
       "description": "Ares's hand-drawn 'month 10' asset is exported from Figma and placed in the date slot.",
       "steps": "File exists in src/assets; screenshot shows it at Figma position.",
-      "status": "todo",
-      "evidence": ""
+      "status": "blocked",
+      "evidence": "docs/build/blocked.md B-06 — Ares: do not use hand-drawn assets for now (D-21)"
     },
     {
       "id": "location-sign-current",

@@ -31,3 +31,8 @@ Format: what · why · what would unblock it · what was built around it.
 - **Why:** `src/screenshot-2026-06-14-at-9-39-36-PM-1.png` is 1.56 MB (budget: largest first-load image ≤ 250 KB, spec §4.13) and shows fake player chrome and a cursor. The build brief forbids touching it (pre-flight P5) and spec CHANGE-3 / D2 asks Ares to replace it.
 - **Unblock:** Ares supplies an original scene (or approves converting/replacing this file).
 - **Built around:** the CI size budget (M10) will exempt this one file by name and fail on anything else over budget.
+
+## B-06 Hand-drawn month numeral and Café Leblanc sign paused (Ares's instruction)
+- **Why:** Ares said not to use his hand-drawn assets until they are finished (D-21). Affects `datetime-month-art` and the sign art in `loc-sign-current`.
+- **Unblock:** Ares says the assets are ready. Month art needs one drawing per month; only October exists in Figma (`80:31`).
+- **Built around:** Cult UI `rolling-number` + Phosphor icons in the date widget; Phosphor map pin + place name in the location widget.

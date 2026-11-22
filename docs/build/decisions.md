@@ -81,3 +81,8 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 ### D-20 Slot positions: BUILT offsets vs Figma "Group 5"
 - `src/hud/slots.ts` uses the BUILT MainScreen offsets (e.g. left 39 px; mission top 43, right 46). Figma's hidden Group 5 slots sit at 64 px from the edges, and its location slot is 264×67 while the BUILT sign is 484×218. `phone` (no BUILT position) uses Figma (44, 342, 65×60).
 - **Ares picks:** keep BUILT offsets, or snap to the Figma slots. Either is a data change in one file.
+
+### D-21 No hand-drawn assets for now — RESOLVED (Ares's instruction, 2026-11-22)
+- **Ares:** only Café Leblanc is ready and the dates are in progress; do not use them now. Use assets from Cult UI and ui-ux-pro-max that best represent each widget's function.
+- **Now:** the Leblanc sign and month numeral are not rendered anywhere. Widgets: timer → Cult UI timer pieces + Phosphor; date/clock/Knowledge/level → Cult UI `rolling-number` + Phosphor; todo → Cult UI `sortable-list` behaviour; bottom bar → Cult UI `dock`; phone → Cult UI `side-panel`; Knowledge bar → Cult UI `halo-progress`; location → Phosphor map pin + name. Files stay in `src/assets/` unused.
+- **To restore:** re-add `sign` to `content/locations/leblanc/manifest.ts` and render it in `widgets/Location`.
