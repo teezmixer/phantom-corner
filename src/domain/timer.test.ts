@@ -1,0 +1,69 @@
+import { describe, expect, it } from "vitest";
+import { DEFAULT_DURATION_MS, MINUTE, formatClock, initialTimer, remainingMs, transition, type TimerState } from "./timer";
+
+const T0 = 1_000_000;
+
+describe("timer transitions", () => {
+  it("starts from idle and ends at now + duration", () => {
+    const s = transition(initialTimer, { type: "START", now: T0 });
+    expect(s).toEqual({ status: "running", durationMs: DEFAULT_DURATION_MS, endsAt: T0 + DEFAULT_DURATION_MS });
+  });
+
+  it("pauses with the correct time left and resumes from it", () => {
+    const running = transition(initialTimer, { type: "START", now: T0 });
+    const paused = transition(running, { type: "PAUSE", now: T0 + 10 * MINUTE });
+    expect(paused).toMatchObject({ status: "paused", remainingMs: 15 * MINUTE });
+    // 40 minutes pass while paused; nothing is lost or gained
+    const resumed = transition(paused, { type: "RESUME", now: T0 + 50 * MINUTE });
+    expect(remainingMs(resumed, T0 + 50 * MINUTE)).toBe(15 * MINUTE);
+    expect(remainingMs(resumed, T0 + 55 * MINUTE)).toBe(10 * MINUTE);
+  });
+
+  it("completes on the first tick at or after endsAt, not before", () => {
+    const running = transition(initialTimer, { type: "START", now: T0 });
+    const endsAt = T0 + DEFAULT_DURATION_MS;
+    expect(transition(running, { type: "TICK", now: endsAt - 1 })).toBe(running);
+    expect(transition(running, { type: "TICK", now: endsAt }).status).toBe("complete");
+  });
+
+  it("stops from running or paused back to idle, keeping the duration", () => {
+    const set = transition(initialTimer, { type: "SET_DURATION", durationMs: 10 * MINUTE });
+    const running = transition(set, { type: "START", now: T0 });
+    expect(transition(running, { type: "STOP" })).toEqual({ status: "idle", durationMs: 10 * MINUTE });
+    const paused = transition(running, { type: "PAUSE", now: T0 + 1 });
+    expect(transition(paused, { type: "STOP" })).toEqual({ status: "idle", durationMs: 10 * MINUTE });
+  });
+
+  it("acknowledges a completed session back to idle", () => {
+    const done: TimerState = { status: "complete", durationMs: MINUTE };
+    expect(transition(done, { type: "ACKNOWLEDGE" })).toEqual({ status: "idle", durationMs: MINUTE });
+  });
+
+  it("returns the same object for combinations that mean nothing", () => {
+    const running = transition(initialTimer, { type: "START", now: T0 });
+    expect(transition(initialTimer, { type: "PAUSE", now: T0 })).toBe(initialTimer);
+    expect(transition(initialTimer, { type: "TICK", now: T0 })).toBe(initialTimer);
+    expect(transition(running, { type: "START", now: T0 + 5 })).toBe(running);
+    expect(transition(running, { type: "SET_DURATION", durationMs: 1 })).toBe(running);
+  });
+
+  it("only allows changing the duration while idle", () => {
+    expect(transition(initialTimer, { type: "SET_DURATION", durationMs: 30 * MINUTE })).toMatchObject({ durationMs: 30 * MINUTE });
+  });
+});
+
+describe("remainingMs and formatClock", () => {
+  it("derives remaining time from endsAt and never goes negative", () => {
+    const running = transition(initialTimer, { type: "START", now: T0 });
+    expect(remainingMs(running, T0 + 5 * MINUTE)).toBe(20 * MINUTE);
+    expect(remainingMs(running, T0 + 99 * MINUTE)).toBe(0);
+  });
+
+  it.each([
+    [25 * MINUTE, "25:00"],
+    [90_000, "01:30"],
+    [1, "00:01"], // partial second rounds up
+    [0, "00:00"],
+    [-500, "00:00"],
+  ])("formats %i ms as %s", (ms, text) => expect(formatClock(ms)).toBe(text));
+});
