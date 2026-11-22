@@ -49,7 +49,7 @@ The full build brief is `handoff/BUILD-PROMPT.md`; the long-term spec is `handof
 - One feature or fix per commit, Conventional Commits (`feat(timer): …`). No WIP, no mixed commits.
 - One branch + PR per milestone (`m3-core-loop`). PR body: what changed + screenshots, "Concepts in this PR", "Explain it back", decisions logged, features passed.
 - Merge commits (not squash) once CI is green and the Vercel preview is verified (pre-flight P3). Never force-push.
-- Vercel deploys via its GitHub integration (no CLI here); check previews with `gh api repos/teezmixer/phantom-corner/deployments`.
+- Vercel deploys via its GitHub integration; `vercel.json` sets Vite/`dist`. Check previews with `vercel ls` or `gh api repos/teezmixer/phantom-corner/deployments`. Never change project settings.
 
 ## Commands
 

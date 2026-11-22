@@ -8,3 +8,14 @@
 - Environment: Node v25.6.1, npm 11.9; `gh` logged in (teezmixer); no Vercel CLI (B-01); Playwright chromium-1208 cached, package installs in M1; all build skills present; no `~/.claude/CLAUDE.md`.
 - **Next:** M1 foundation on branch `m1-foundation`.
 - **Risks:** Vercel project may need its output dir changed for Vite (cannot change here); YouTube track embeddability unknown (D-09).
+
+## 2026-11-22 — M1 foundation (branch m1-foundation)
+- Ares: D-02 resolved (music vector is an internet placeholder → use Phosphor + Cult UI); Vercel CLI connected (B-01 resolved).
+- CRA → Vite 8 + Vitest 5 + TS 5.9 strict; ESLint flat config; Playwright 1.65 smoke (2 tests).
+- Found the lost design tokens in git history (Figma export inside node_modules/tailwindcss/tailwind.css) and restored them to `src/styles/tokens.css`. Conflicts logged as D-15; unloaded faces D-16; placeholder grey D-17; radius D-18; shadcn roles D-19.
+- Tailwind v4 with `@theme inline`, default palette cleared. shadcn set up by hand (ADR 0004).
+- Folder moves one per commit: Gate → screens/Gate, LocationWidget → widgets/Location, hud/ extracted, MainScreen → app/, CSS → styles/.
+- Vercel project preset is still CRA → `vercel.json` overrides (B-03).
+- **Slip:** commit e5239d6 ("chore: add preview launch configs") also carries the staged deletion of tailwind.config.cjs/postcss.config.cjs, so that one commit is mixed and its tree does not build. Not rewritten (history rule); the next commit 5015429 restores a green build.
+- Output style switched to Learning mid-run; autonomy rules still apply, so human-contribution requests are logged in PR descriptions ("Explain it back") rather than blocking the run.
+- **Next:** push, PR, CI, Vercel preview check, M1 review loop, merge.
