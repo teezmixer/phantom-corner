@@ -7,7 +7,8 @@
  */
 import { useMemo, type ComponentProps, type ReactNode } from "react"
 import { Progress as ProgressPrimitive } from "@base-ui/react/progress"
-import { motion, useReducedMotion } from "motion/react"
+import { motion } from "motion/react"
+import { useReducedMotion } from "@/hooks/useReducedMotion"
 
 import { cn } from "@/lib/utils"
 

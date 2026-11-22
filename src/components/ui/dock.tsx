@@ -16,11 +16,11 @@ import {
   motion,
   MotionValue,
   useAnimation,
-  useReducedMotion,
   useMotionValue,
   useSpring,
   useTransform,
 } from "motion/react"
+import { useReducedMotion } from "@/hooks/useReducedMotion"
 
 import { cn } from "@/lib/utils"
 

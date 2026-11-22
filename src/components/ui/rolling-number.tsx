@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect } from "react"
-import { motion, MotionValue, useReducedMotion, useSpring, useTransform } from "motion/react"
+import { motion, MotionValue, useSpring, useTransform } from "motion/react"
+import { useReducedMotion } from "@/hooks/useReducedMotion"
 
 interface RollingNumberProps {
   value: number
