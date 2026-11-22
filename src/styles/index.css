@@ -18,6 +18,11 @@ html, body, #root {
   overflow: hidden;
 }
 
+/* Explicit page background so nothing flashes white before React mounts. */
+html, body {
+  background-color: var(--black);
+}
+
 main {
   background-color: var(--black);
 }
