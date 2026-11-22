@@ -1,0 +1,30 @@
+
+MEASURED (first viewport listed)
+  typefaces       Optima Nova LT Black 100%
+  sizes in use    16 px
+  colour          page #ffffff · sections #000000
+  page            1 screens · 15 words · 2 images · hero media 100% img
+  headings        0 · longest 0 line(s) · median - words
+
+FAIL — fix every one of these
+  [few-pictures] @1440px  Only 2 picture(s) on the page (2 photographs, footage or raster images, 0 interface fragments). Drawings in SVG do not count.
+      → Find real pictures of the subject's world with scripts/assets.mjs (photographs, archival images, maps, engravings, footage), download them to assets/ and give them room: a hero picture, one per section that has a subject, a full-width band. At least four, usually six to twelve.
+  [still-page] @1440px  Only 0 element(s) moved while the page loaded and scrolled.
+      → Build the motion layer (SKILL.md step 9, references/motion.md): the signature move, an entrance for the parts of every section, feedback on every control, and one moving picture. Transform and opacity only, with a reduced-motion fallback.
+
+WARN — fix, or be able to defend
+  [first-action] @1440px (+1024)  No visible button in the first screen.
+      → Give the one primary action a real button in the first screen (a filled or solid-bordered control, 44px or taller), not only a link in the navigation.
+  [no-footage] @1440px  No video anywhere on the page.
+      → Look for one honest clip with scripts/assets.mjs --video (the place, the material, the process) and use it as a muted loop with a poster frame. Defend its absence only if no clip fits the subject.
+  [no-hero] @1440px (+1024)  No headline found in the first viewport.
+      → The first screen needs a clear focal statement or image.
+
+LOOK AT THE RENDER — open these with your image viewer / Read tool before saying anything about quality:
+  desktop 1440px  ../../../../../private/tmp/claude-501/-Users-aresknox-Documents-GitHub-phantom-corner/5126f2cd-f57f-4bed-a0ce-2bb9ca490815/scratchpad/inspect-m1/desktop-fold.jpg
+                  ../../../../../private/tmp/claude-501/-Users-aresknox-Documents-GitHub-phantom-corner/5126f2cd-f57f-4bed-a0ce-2bb9ca490815/scratchpad/inspect-m1/desktop-page-01.jpg
+  tablet 1024px   ../../../../../private/tmp/claude-501/-Users-aresknox-Documents-GitHub-phantom-corner/5126f2cd-f57f-4bed-a0ce-2bb9ca490815/scratchpad/inspect-m1/tablet-fold.jpg
+                  ../../../../../private/tmp/claude-501/-Users-aresknox-Documents-GitHub-phantom-corner/5126f2cd-f57f-4bed-a0ce-2bb9ca490815/scratchpad/inspect-m1/tablet-page-01.jpg
+
+report: ../../../../../private/tmp/claude-501/-Users-aresknox-Documents-GitHub-phantom-corner/5126f2cd-f57f-4bed-a0ce-2bb9ca490815/scratchpad/inspect-m1/report.json
+RESULT: 2 FAIL, 3 WARN — not done.

@@ -1,0 +1,72 @@
+/*
+ * Phantom Corner design-system tokens — the ONLY source of colour, type and spacing.
+ * Source: the Figma variable export that lived in node_modules/tailwindcss/tailwind.css
+ * (commits 4129f5e, df6a002; lost when node_modules was untracked in cf0e3c8),
+ * plus the BUILT gate tokens (src/gate/gate.css). See DESIGN.md and decisions D-01, D-15.
+ * Never add a colour or font here without Ares.
+ */
+:root {
+  /* Colour */
+  --black: rgb(0 0 0);
+  --white: rgb(255 255 255);
+  --greydark: rgb(55 55 55);
+  --greylight: rgb(207 207 207);
+  /* DECISION: D-15 — export had rgb(123 123 123); live gate uses this value. */
+  --greymid: rgb(97 96 101);
+  /* DECISION: D-15 — export had rgb(254 0 0); live gate and spec §4.12 use this value. */
+  --redbright: rgb(221 5 7);
+  --redmid: rgb(187 0 1);
+  --reddeep: rgb(105 1 2);
+  --accentblue: rgb(14 98 237);
+  --accentgold: rgb(218 173 2);
+  --accentmint: rgb(233 252 225);
+  --accentpink: rgb(250 133 214);
+  --accentteal: rgb(23 228 245);
+  --accentyellow: rgb(255 251 30);
+
+  /* Type — families fall back when a face is not loaded (see DESIGN.md "Fonts") */
+  --body-primary-font-family: "Optima Nova LT Black", Optima, Candara, Calibri, "Segoe UI", sans-serif;
+  --body-primary-font-size: 16px;
+  --body-primary-font-weight: 400;
+  --body-primary-line-height: 24px;
+  --body-primary-letter-spacing: 0px;
+  --body-primary-font-style: normal;
+
+  --body-secondary-font-family: "Optima Nova LT Black", Optima, Candara, Calibri, "Segoe UI", sans-serif;
+  --body-secondary-font-size: 13px;
+  --body-secondary-font-weight: 400;
+  --body-secondary-line-height: 20px;
+  --body-secondary-letter-spacing: 0px;
+
+  --display-hero-font-family: "Expose", Impact, sans-serif;
+  --display-hero-font-size: 64px;
+  --display-hero-line-height: 72px;
+
+  --display-title-font-family: "Doctor Punk", Impact, sans-serif;
+  --display-title-font-size: 48px;
+  --display-title-line-height: 56px;
+
+  --display-label-font-family: "Bubblegum Superstar", "Expose", Impact, sans-serif;
+  --display-label-font-size: 24px;
+  --display-label-line-height: 32px;
+
+  --hud-small-font-family: "Helvetica Now Display", "Helvetica Neue", Arial, sans-serif;
+  --hud-small-font-size: 11px;
+  --hud-small-line-height: 16px;
+  --hud-small-letter-spacing: 5.5px;
+
+  --hud-timer-font-family: "Earwig Factory", "Expose", Impact, sans-serif;
+  --hud-timer-font-size: 48px;
+  --hud-timer-line-height: 52px;
+
+  --font-expose: "Expose", Impact, sans-serif;
+  --font-doctorpunk: "Doctor Punk", Impact, sans-serif;
+  --font-helvetica: "Helvetica Now Display", "Helvetica Neue", Arial, sans-serif;
+
+  /* Spacing (export defined 4–24; larger steps were 0 in the export and are omitted) */
+  --space-04: 4px;
+  --space-08: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+}

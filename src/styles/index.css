@@ -1,0 +1,29 @@
+@import "./tokens.css";
+@import "./fonts.css";
+@import "../screens/Gate/gate.css";
+
+@import "tailwindcss";
+@import "./theme.css";
+@import "./shadcn.css";
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Explicit page background so nothing flashes white before React mounts. */
+html, body {
+  background-color: var(--black);
+}
+
+main {
+  background-color: var(--black);
+}
+

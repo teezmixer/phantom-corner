@@ -10,9 +10,9 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **Options:** (a) treat the existing code tokens (`tailwind.config.js` colours, `src/index.css` font tokens, `src/gate/gate.css`) as the design system; (b) Ares defines variables in Figma and M1 re-transcribes them.
 - **Spec:** n/a. **Placeholder now:** (a) — M1 consolidates the code tokens into `styles/tokens.css` + `DESIGN.md`, marked "from code, pending Figma variables".
 
-### D-02 Music-player vector in the frame — Ares's own?
-- **Question:** Frame `12:187` "Music Player" (Star, CD, Note vectors) is neither named as a game rip nor listed as Ares's asset.
-- **Options:** export and use it / treat as reference only. **Placeholder now:** not exported; the TV slot uses a token block.
+### D-02 Music-player vector in the frame — RESOLVED 2026-11-22
+- **Ares:** not his; an internet placeholder. Replace with interactive assets from our libraries.
+- **Now:** never exported. The music player is built from Phosphor icons (ui-ux-pro-max catalogue) and Cult UI behaviour, styled only with tokens.
 
 ### D-03 Local-only files kept out of the public repo
 - `handoff/` was already excluded in `.git/info/exclude`. Step 0 also excluded the root duplicates `/BUILD-PROMPT.md`, `/phantom-corner-spec.md` (byte-identical to `handoff/`) and `/DESIGN.md-spec.md` (third-party format spec, licence unchecked) the same way, rather than deleting or committing them.
@@ -56,3 +56,22 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 
 ### D-14 Analytics policy (spec D14) and licence (spec D11)
 - Analytics events are built behind the settings switch (default to be decided; placeholder: on, with the switch). No LICENSE file is added; licence choice is Ares's.
+
+## Visual identity
+
+### D-15 Two token values disagree between the old Figma export and the live gate
+- Recovered export (commits 4129f5e/df6a002): `--redbright` rgb(254 0 0), `--greymid` rgb(123 123 123).
+- Live gate (`gate.css`, BUILT) and spec §4.12 contrast figures: `--redbright` rgb(221 5 7), `--greymid` rgb(97 96 101).
+- **Placeholder now:** the live values (no visible change). In `src/styles/tokens.css`, marked `DECISION: D-15`. Ares picks one.
+
+### D-16 Token families whose fonts are not loaded
+- `--display-label` (Bubblegum Superstar) and `--hud-timer` (Earwig Factory) name faces that only exist in `public/fonts/` (untouched per P5) and have no `@font-face`. They fall back to Expose/Impact. Wiring them would add commercial fonts (spec CHANGE-5 / D1), so it waits for Ares.
+
+### D-17 Placeholder grey
+- The BUILT HUD placeholders used `#d9d9d9`, which is not a token. Replaced with `--greylight` (rgb 207 207 207), the nearest token. `DECISION: token-missing-placeholder-grey`.
+
+### D-18 Corner radius token
+- No radius token exists in the export. shadcn needs `--radius`. **Placeholder:** `0px` in `src/styles/shadcn.css` (`DECISION: token-missing-radius`).
+
+### D-19 shadcn role mapping
+- shadcn roles mapped onto tokens in `src/styles/shadcn.css`: background/card black, foreground white, primary redbright, accent and ring accentteal (spec §3.7 "red selection, teal accent", §4.12 teal focus ring), muted greydark/greylight, border greymid, destructive redmid. Ares may remap any role.

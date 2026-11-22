@@ -1,0 +1,48 @@
+/*
+ * Tailwind v4 theme: maps utilities onto the design-system tokens in tokens.css.
+ * `inline` makes utilities read the CSS variable at runtime, so tokens stay the single source.
+ * Tailwind's default palette is cleared so only token colours exist as utilities.
+ */
+@theme inline {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-black: var(--black);
+  --color-white: var(--white);
+  --color-greydark: var(--greydark);
+  --color-greylight: var(--greylight);
+  --color-greymid: var(--greymid);
+  --color-redbright: var(--redbright);
+  --color-redmid: var(--redmid);
+  --color-reddeep: var(--reddeep);
+  --color-accentblue: var(--accentblue);
+  --color-accentgold: var(--accentgold);
+  --color-accentmint: var(--accentmint);
+  --color-accentpink: var(--accentpink);
+  --color-accentteal: var(--accentteal);
+  --color-accentyellow: var(--accentyellow);
+
+  --font-*: initial;
+  --font-body-primary: var(--body-primary-font-family);
+  --font-body-secondary: var(--body-secondary-font-family);
+  --font-display-hero: var(--display-hero-font-family);
+  --font-display-title: var(--display-title-font-family);
+  --font-display-label: var(--display-label-font-family);
+  --font-hud-small: var(--hud-small-font-family);
+  --font-hud-timer: var(--hud-timer-font-family);
+  --font-expose: var(--font-expose);
+  --font-doctorpunk: var(--font-doctorpunk);
+  --font-helvetica: var(--font-helvetica);
+
+  --animate-marquee: marquee 18s linear infinite;
+  --animate-gate-in: gate-in 420ms cubic-bezier(.2,.9,.3,1) both;
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  @keyframes gate-in {
+    0% { opacity: 0; transform: translateY(16px) skewX(-6deg); }
+    100% { opacity: 1; transform: none; }
+  }
+}

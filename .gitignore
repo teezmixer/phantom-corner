@@ -10,3 +10,9 @@ node_modules
 .env.*.local
 npm-debug.log*
 .vercel
+.env*
+
+# vite
+/dist
+/playwright-report
+/test-results

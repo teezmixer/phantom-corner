@@ -54,8 +54,8 @@
       "spec": "§3.2 BUILT",
       "description": "Phone browsers see the BUILT mobile gate instead of the app, unchanged by the migration.",
       "steps": "Playwright with mobile UA/viewport: gate headline visible; desktop: app visible.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/smoke.spec.ts \"phone browsers › see the mobile gate\"; src/screens/Gate/isPhoneBrowser.test.ts (6 cases)"
     },
     {
       "id": "entry-first-visit-arrive",
@@ -1605,8 +1605,8 @@
       "spec": "§4.15",
       "description": "GitHub Actions runs typecheck, lint, unit, build and Playwright smoke on PRs and main.",
       "steps": "Green run on the M1 PR.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "GitHub Actions CI job green on PR teezmixer/phantom-corner#2 (typecheck, lint, unit, build, Playwright smoke)"
     },
     {
       "id": "q-content-tests",
@@ -1627,8 +1627,8 @@
       "spec": "Pre-flight P2",
       "description": "App builds and runs on Vite + TypeScript 5 + Vitest with Tailwind v4 and shadcn initialised (@/ alias).",
       "steps": "npm run build, typecheck, test exit 0.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "npm run typecheck/lint/test/build all exit 0 (13 unit tests) on m1-foundation"
     },
     {
       "id": "found-tokens",
@@ -1638,8 +1638,8 @@
       "spec": "Prompt design rules",
       "description": "Design tokens live in CSS variables + DESIGN.md; shadcn variables map onto them.",
       "steps": "Token lint: no raw hex outside tokens file.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/styles/tokens.css + theme.css (palette cleared) + shadcn.css; DESIGN.md; ADR 0003/0004"
     },
     {
       "id": "found-folders",
@@ -1649,8 +1649,8 @@
       "spec": "§4.3, §4.18",
       "description": "Folder structure follows spec §4.3; CRA leftovers removed; test libs in devDependencies; page title fixed.",
       "steps": "Tree inspection; build.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/{app,hud,widgets,screens,styles,lib}; App.tsx + CRA logos removed; test libs in devDependencies; title \"Phantom Corner\" asserted in e2e/smoke.spec.ts"
     },
     {
       "id": "found-vercel",

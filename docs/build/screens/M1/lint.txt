@@ -1,0 +1,20 @@
+TASTESKILL · LINT   19 file(s)
+
+FAIL
+  [micro-label] Tiny uppercase letter-spaced label.  (1×)
+      src/screens/Gate/MobileGate.tsx:155  flex w-max items-center whitespace-nowrap py-1.5 font-helvetica text-x
+  [shadow] Shadow. Elements at rest carry none; only real overlays (menu, dialog, sticky bar) may.  (7×)
+      src/screens/Gate/MobileGate.tsx:163  shadow
+      src/screens/Gate/MobileGate.tsx:165  shadow-[4px_4px_0_var(--redbright)]
+      src/screens/Gate/MobileGate.tsx:186  drop-shadow(
+      src/screens/Gate/MobileGate.tsx:195  shadow-[6px_6px_0_var(--redbright)]
+      src/screens/Gate/MobileGate.tsx:200  shadow-[5px_5px_0_var(--white)]
+      src/screens/Gate/MobileGate.tsx:206  shadow-[6px_6px_0_var(--black)]
+      … 1 more
+
+WARN
+  [h-screen] 100vh jumps on mobile. Use 100svh / 100dvh.  (1×)
+      src/app/MainScreen.tsx:28  h-screen
+
+RESULT: 8 FAIL, 1 WARN — fix the FAILs before rendering.
+Interface fragments marked data-ui keep their own borders and shadows. Any other line that must keep a flagged pattern for a real reason can carry the comment taste-skill-ignore.
