@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSessionLock } from "@/hooks/useSessionLock";
 import { TabLockScreen } from "@/screens/TabLock/TabLockScreen";
 import { localStorageAdapter } from "@/state/persistence/adapter";
@@ -22,8 +22,9 @@ export function Root({ mode }: { mode: UrlMode }) {
 
 function Session({ mode }: { mode: UrlMode }) {
   const [boot] = useState(() => bootstrap(mode, Date.now(), localStorageAdapter(STORAGE_KEY), () => crypto.randomUUID()));
+  const persistence = useMemo(() => (boot.persistence ? { ...boot.persistence, enabled: true } : undefined), [boot]);
   return (
-    <StoreProvider initial={boot.initial} persistence={boot.persistence ? { ...boot.persistence, enabled: true } : undefined}>
+    <StoreProvider initial={boot.initial} persistence={persistence}>
       <App dev={mode.dev} />
     </StoreProvider>
   );

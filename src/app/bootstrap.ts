@@ -22,7 +22,8 @@ export function bootstrap(mode: UrlMode, now: number, adapter: StorageAdapter, m
     visited: [HOME_LOCATION_ID],
   });
   return {
-    initial: stateFromPersisted(loaded.persisted, now, { recovered: loaded.recovered, storageBlocked: adapter.blocked }),
-    persistence: { adapter, base: loaded.persisted },
+    initial: stateFromPersisted(loaded.persisted, now, { recovered: loaded.recovered, storageBlocked: adapter.blocked || !loaded.safeToWrite }),
+    // Dev mode reads saved progress but never writes it (its grants and resets are throwaway); unsafe data is left alone.
+    persistence: loaded.safeToWrite && !mode.dev ? { adapter, base: loaded.persisted } : null,
   };
 }

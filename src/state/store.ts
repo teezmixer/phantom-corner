@@ -90,6 +90,8 @@ export type Action =
   | { type: "READ_THREAD"; id: string }
   | { type: "SET_PHONE"; open: boolean }
   | { type: "MARK_ALL_UNREAD"; ids: string[] }
+  /** A save did not reach storage: say so instead of letting the user believe progress is kept. */
+  | { type: "STORAGE_FAILED" }
   | { type: "TOGGLE_HUD" }
   | { type: "TOGGLE_MUTE" }
   | { type: "DEV_GRANT"; knowledge: number }
@@ -170,6 +172,8 @@ export function reducer(state: AppState, action: Action): AppState {
       };
     case "READ_THREAD":
       return { ...state, unreadThreads: state.unreadThreads.filter((id) => id !== action.id) };
+    case "STORAGE_FAILED":
+      return state.storageBlocked ? state : { ...state, storageBlocked: true };
     case "MARK_ALL_UNREAD":
       return { ...state, unreadThreads: action.ids };
     case "SET_PHONE":

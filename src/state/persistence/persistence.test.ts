@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MINUTE, initialTimer } from "@/domain/timer";
 import { initialState, type AppState } from "../store";
-import { localStorageAdapter, memoryAdapter } from "./adapter";
+import { MAX_BACKUPS, localStorageAdapter, memoryAdapter } from "./adapter";
 import { isPersisted } from "./guard";
 import { loadPersisted } from "./load";
 import { stateFromPersisted, toPersisted } from "./mapping";
@@ -33,6 +33,22 @@ describe("load path", () => {
     expect(r.persisted).toEqual(stored);
   });
 
+  it("a backup that cannot be verified makes the visit memory-only, so the main key is never overwritten", () => {
+    const adapter = { ...memoryAdapter("{broken"), backup: () => false };
+    const r = loadPersisted(adapter, ISO, () => "client-new", defaults);
+    expect(r).toMatchObject({ recovered: true, safeToWrite: false });
+  });
+
+  it("data from a newer app is backed up but never replaced, even when the backup works", () => {
+    const r = load(JSON.stringify({ ...fresh(), schema: 99 }));
+    expect(r).toMatchObject({ recovered: true, safeToWrite: false });
+    expect(r.adapter.dump().backups).toHaveLength(1);
+  });
+
+  it("ordinary corruption with a verified backup is safe to replace", () => {
+    expect(load("{nope")).toMatchObject({ recovered: true, safeToWrite: true });
+  });
+
   it.each([
     ["broken JSON", "{not json"],
     ["not an object", "[1,2,3]"],
@@ -40,7 +56,6 @@ describe("load path", () => {
     ["wrong shape for schema 1", JSON.stringify({ ...fresh(), todos: "nope" })],
     ["a bad timer", JSON.stringify({ ...fresh(), timer: { status: "running", durationMs: 1 } })],
     ["a bad event", JSON.stringify({ ...fresh(), events: [{ kind: "session", plannedMs: 1 }] })],
-    ["data from a newer app", JSON.stringify({ ...fresh(), schema: 99 })],
   ])("backs up %s and starts fresh with recovered set", (_name, raw) => {
     const r = load(raw);
     expect(r.recovered).toBe(true);
@@ -83,6 +98,15 @@ describe("saver", () => {
     expect(JSON.parse(adapter.dump().raw!).name).toBe("b");
   });
 
+  it("tells the caller when a write does not reach storage", () => {
+    const failing = { ...memoryAdapter(), write: () => false };
+    const onFailure = vi.fn();
+    const saver = createSaver(failing, 250, onFailure);
+    saver.save(fresh());
+    vi.advanceTimersByTime(250);
+    expect(onFailure).toHaveBeenCalledTimes(1);
+  });
+
   it("flush writes immediately and cancel drops a queued write", () => {
     const adapter = memoryAdapter();
     const saver = createSaver(adapter);
@@ -108,14 +132,31 @@ describe("localStorageAdapter", () => {
     expect(window.localStorage.getItem(`${STORAGE_KEY}:backup:${ISO}`)).toBe("old");
   });
 
+  it("keeps only the newest backups so repeated recoveries cannot fill the quota", () => {
+    let t = NOW;
+    const a = localStorageAdapter(STORAGE_KEY, () => (t += 1000));
+    for (let i = 0; i < MAX_BACKUPS + 3; i++) expect(a.backup(`copy-${i}`)).toBe(true);
+    const kept = Object.keys(window.localStorage).filter((k) => k.startsWith(`${STORAGE_KEY}:backup:`)).sort();
+    expect(kept).toHaveLength(MAX_BACKUPS);
+    expect(window.localStorage.getItem(kept[0]!)).toBe(`copy-3`); // the oldest three were dropped
+  });
+
+  it("reports a failed backup and a failed write instead of pretending they worked (quota exceeded)", () => {
+    const a = localStorageAdapter(STORAGE_KEY, () => NOW);
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new DOMException("full", "QuotaExceededError"); });
+    expect(a.backup("x")).toBe(false);
+    expect(a.write("y")).toBe(false);
+    expect(a.blocked).toBe(true);
+  });
+
   it("survives blocked storage: reports it, keeps this visit working from memory, never throws", () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("blocked"); });
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
     const a = localStorageAdapter(STORAGE_KEY, () => NOW);
     expect(a.blocked).toBe(true);
-    expect(() => a.write("kept in memory")).not.toThrow();
+    expect(a.write("kept in memory")).toBe(false);
     expect(a.read()).toBe("kept in memory");
-    expect(() => a.backup("x")).not.toThrow();
+    expect(a.backup("x")).toBe(false);
   });
 });
 

@@ -16,6 +16,21 @@ describe("bootstrap", () => {
     expect(adapter.dump().backups).toEqual([]); // the unreadable data was not even looked at
   });
 
+  it("dev mode reads saved progress but never writes it", () => {
+    const first = bootstrap(parseMode(""), NOW, memoryAdapter(), id);
+    const saved = { ...first.persistence!.base, name: "Ren" };
+    const b = bootstrap(parseMode("?dev=true"), NOW, memoryAdapter(JSON.stringify(saved)), id);
+    expect(b.initial.name).toBe("Ren");
+    expect(b.persistence).toBeNull();
+  });
+
+  it("newer-build data is left alone: memory-only visit and a blocked-storage notice", () => {
+    const first = bootstrap(parseMode(""), NOW, memoryAdapter(), id);
+    const b = bootstrap(parseMode(""), NOW, memoryAdapter(JSON.stringify({ ...first.persistence!.base, schema: 7 })), id);
+    expect(b.persistence).toBeNull();
+    expect(b.initial).toMatchObject({ recovered: true, storageBlocked: true });
+  });
+
   it("a first visit starts at the splash with nothing marked recovered", () => {
     const b = bootstrap(parseMode(""), NOW, memoryAdapter(), id);
     expect(b.initial).toMatchObject({ layer: "splash", entered: false, recovered: false, storageBlocked: false });

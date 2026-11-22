@@ -14,8 +14,9 @@ export interface PersistenceConfig {
 }
 
 /** Save the store to storage: debounced on change, flushed when the tab is hidden or the page closes (spec §4.7). */
-export function usePersistence(state: AppState, config: PersistenceConfig | undefined): void {
-  const saver = useMemo(() => (config ? createSaver(config.adapter) : null), [config]);
+export function usePersistence(state: AppState, config: PersistenceConfig | undefined, onWriteFailed?: () => void): void {
+  // `config` and `onWriteFailed` must be stable (memoised by the caller) so the saver is created once.
+  const saver = useMemo(() => (config ? createSaver(config.adapter, 250, onWriteFailed) : null), [config, onWriteFailed]);
   const last = useRef<Persisted | null>(config?.base ?? null);
 
   useEffect(() => {

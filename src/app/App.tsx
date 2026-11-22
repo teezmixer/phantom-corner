@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { morgana } from "@/content/copy";
 import { BASE_TITLE, tabTitle } from "@/domain/title";
 import { useNow } from "@/hooks/useNow";
 import { isTypingTarget, shortcutAction } from "@/hooks/shortcuts";
@@ -42,6 +43,17 @@ function TabTitle() {
   return null;
 }
 
+/** Shown once saving stops working, so nobody believes progress is kept when it is not (spec §3.11). */
+function StorageNotice() {
+  const { state } = useStore();
+  if (!state.entered || !state.storageBlocked) return null;
+  return (
+    <p role="status" className="fixed bottom-2 left-1/2 z-30 max-w-xl -translate-x-1/2 border-2 border-white bg-black px-3 py-2 text-center font-body-primary text-sm text-white">
+      {morgana.cantWrite}
+    </p>
+  );
+}
+
 /** Composition root: the room is always underneath once entered; one `layer` decides what sits on top. */
 export function App({ dev }: { dev: boolean }) {
   const { state, derived, dispatch } = useStore();
@@ -67,6 +79,7 @@ export function App({ dev }: { dev: boolean }) {
       {state.entered && <MainScreen locked={state.layer !== "main"} />}
       {LAYERS[state.layer]?.()}
       <TabTitle />
+      <StorageNotice />
       {dev && <DevPanel />}
     </>
   );
