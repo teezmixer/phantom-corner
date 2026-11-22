@@ -9,13 +9,15 @@ import { initialTimer, remainingMs, transition, type TimerEvent, type TimerState
 import { knowledgeFor, levelForKnowledge, unlockedIds, type ProgressEvent } from "@/domain/progress";
 
 export type Layer =
-  | "splash" | "main" | "menu" | "map" | "travel" | "phone" | "settings" | "profile"
+  | "splash" | "main" | "menu" | "map" | "travel" | "settings" | "profile"
   | "summary" | "choice" | "break" | "about" | "credits" | "privacy";
 
 export interface Todo { id: number; text: string; done: boolean }
 
 export interface AppState {
   layer: Layer;
+  /** True once the user has pressed through the splash. */
+  entered: boolean;
   name: string;
   locationId: string;
   travelTo: string | null;
@@ -27,6 +29,7 @@ export interface AppState {
   breakEndsAt: number | null;
   events: ProgressEvent[];
   unreadThreads: string[];
+  phoneOpen: boolean;
   hudHidden: boolean;
   muted: boolean;
   /** Dev panel: treat every location as unlocked. */
@@ -39,6 +42,7 @@ export const BREAK_MS = 5 * 60_000;
 
 export const initialState: AppState = {
   layer: "splash",
+  entered: false,
   name: "",
   locationId: HOME_LOCATION_ID,
   travelTo: null,
@@ -50,6 +54,7 @@ export const initialState: AppState = {
   breakEndsAt: null,
   events: [],
   unreadThreads: [],
+  phoneOpen: false,
   hudHidden: false,
   muted: false,
   devUnlockAll: false,
@@ -59,17 +64,23 @@ export const initialState: AppState = {
 export type Action =
   | { type: "SET_LAYER"; layer: Layer }
   | { type: "ENTER" }
+  | { type: "CLOSE_LAYER" }
   | { type: "SET_MISSION"; text: string }
   | { type: "ADD_TODO"; text: string }
   | { type: "TOGGLE_TODO"; id: number }
   | { type: "DELETE_TODO"; id: number }
+  | { type: "SET_TODOS"; todos: Todo[] }
   /** `now` is injected so the reducer stays pure; it is only used to size a cut-short session. */
   | { type: "TIMER"; event: TimerEvent; now: number }
+  | { type: "START_SESSION"; now: number }
+  | { type: "FINISH" }
   | { type: "START_BREAK"; now: number }
   | { type: "END_BREAK" }
   | { type: "START_TRAVEL"; to: string }
   | { type: "ARRIVE" }
   | { type: "READ_THREAD"; id: string }
+  | { type: "SET_PHONE"; open: boolean }
+  | { type: "MARK_ALL_UNREAD"; ids: string[] }
   | { type: "TOGGLE_HUD" }
   | { type: "TOGGLE_MUTE" }
   | { type: "DEV_GRANT"; knowledge: number }
@@ -83,7 +94,10 @@ export function reducer(state: AppState, action: Action): AppState {
     case "SET_LAYER":
       return { ...state, layer: action.layer };
     case "ENTER":
-      return { ...state, layer: "main" };
+      return { ...state, layer: "main", entered: true };
+    case "CLOSE_LAYER":
+      // Closing a screen returns to where the user was: the splash before entering, the room after.
+      return { ...state, layer: state.entered ? "main" : "splash" };
     case "SET_MISSION": {
       const text = action.text.trim();
       const first = text !== "" && !state.events.some((e) => e.kind === "mission_first_set");
@@ -96,6 +110,8 @@ export function reducer(state: AppState, action: Action): AppState {
     }
     case "TOGGLE_TODO":
       return { ...state, todos: state.todos.map((t) => (t.id === action.id ? { ...t, done: !t.done } : t)) };
+    case "SET_TODOS":
+      return { ...state, todos: action.todos };
     case "DELETE_TODO":
       return { ...state, todos: state.todos.filter((t) => t.id !== action.id) };
     case "TIMER": {
@@ -113,6 +129,13 @@ export function reducer(state: AppState, action: Action): AppState {
       }
       return { ...state, timer: after };
     }
+    case "START_SESSION": {
+      // From a finished or idle timer straight into a new session at the same length.
+      const fresh = transition(transition(state.timer, { type: "ACKNOWLEDGE" }), { type: "START", now: action.now });
+      return { ...state, timer: fresh, layer: "main", breakEndsAt: null };
+    }
+    case "FINISH":
+      return { ...state, timer: transition(state.timer, { type: "ACKNOWLEDGE" }), layer: "main", breakEndsAt: null };
     case "START_BREAK":
       return { ...state, layer: "break", breakEndsAt: action.now + BREAK_MS, timer: transition(state.timer, { type: "ACKNOWLEDGE" }) };
     case "END_BREAK":
@@ -130,6 +153,10 @@ export function reducer(state: AppState, action: Action): AppState {
       };
     case "READ_THREAD":
       return { ...state, unreadThreads: state.unreadThreads.filter((id) => id !== action.id) };
+    case "MARK_ALL_UNREAD":
+      return { ...state, unreadThreads: action.ids };
+    case "SET_PHONE":
+      return { ...state, phoneOpen: action.open };
     case "TOGGLE_HUD":
       return { ...state, hudHidden: !state.hudHidden };
     case "TOGGLE_MUTE":

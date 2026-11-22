@@ -1,12 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { derive, initialState, reducer, type Action, type AppState } from "./store";
 
-const run = (actions: Action[], from: AppState = { ...initialState, layer: "main" }) => actions.reduce(reducer, from);
+const run = (actions: Action[], from: AppState = { ...initialState, layer: "main", entered: true }) => actions.reduce(reducer, from);
 const T0 = 1_000_000;
 
 describe("store reducer", () => {
   it("enters from the splash to the main screen", () => {
-    expect(reducer(initialState, { type: "ENTER" }).layer).toBe("main");
+    expect(reducer(initialState, { type: "ENTER" })).toMatchObject({ layer: "main", entered: true });
+  });
+
+  it("closes a screen back to where the user was", () => {
+    const aboutFromSplash = reducer(initialState, { type: "SET_LAYER", layer: "about" });
+    expect(reducer(aboutFromSplash, { type: "CLOSE_LAYER" }).layer).toBe("splash");
+    const entered = reducer(initialState, { type: "ENTER" });
+    const menu = reducer(entered, { type: "SET_LAYER", layer: "menu" });
+    expect(reducer(menu, { type: "CLOSE_LAYER" }).layer).toBe("main");
   });
 
   it("grants first-mission Knowledge once and ignores empty missions", () => {
@@ -63,6 +71,24 @@ describe("store reducer", () => {
     expect(s.layer).toBe("main");
     expect(s.locationId).toBe("ryuji");
     expect(s.visited).toEqual(["leblanc", "ryuji"]);
+  });
+
+  it("starts the next session or finishes from the end-of-session choice", () => {
+    const done = run([
+      { type: "TIMER", event: { type: "START", now: T0 }, now: T0 },
+      { type: "TIMER", event: { type: "TICK", now: T0 + 25 * 60_000 }, now: T0 + 25 * 60_000 },
+    ]);
+    const again = reducer(done, { type: "START_SESSION", now: T0 + 26 * 60_000 });
+    expect(again.layer).toBe("main");
+    expect(again.timer).toMatchObject({ status: "running", endsAt: T0 + 51 * 60_000 });
+    const finished = reducer(done, { type: "FINISH" });
+    expect(finished).toMatchObject({ layer: "main", timer: { status: "idle" } });
+  });
+
+  it("takes five: break layer with a 5-minute end, then back to the choice", () => {
+    const onBreak = reducer(run([]), { type: "START_BREAK", now: T0 });
+    expect(onBreak).toMatchObject({ layer: "break", breakEndsAt: T0 + 5 * 60_000 });
+    expect(reducer(onBreak, { type: "END_BREAK" })).toMatchObject({ layer: "choice", breakEndsAt: null });
   });
 
   it("dev tools: grant Knowledge, unlock everything, reset", () => {
