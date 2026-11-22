@@ -1,4 +1,4 @@
-TASTESKILL · LINT   86 file(s)
+TASTESKILL · LINT   88 file(s)
 
 FAIL
   [micro-label] Tiny uppercase letter-spaced label.  (1×)
@@ -25,7 +25,7 @@ WARN
       src/domain/timer.ts:66  padStart(2, "0")
       src/widgets/DateTime/DateTimeWidget.tsx:8  padStart(2, "0")
   [em-dash] Em-dash habit. Use a full stop or a comma; keep at most one or two on a page.  (1×)
-      (all files):0  8 em dashes
+      (all files):0  7 em dashes
 
 RESULT: 8 FAIL, 14 WARN — fix the FAILs before rendering.
 Interface fragments marked data-ui keep their own borders and shadows. Any other line that must keep a flagged pattern for a real reason can carry the comment taste-skill-ignore.
