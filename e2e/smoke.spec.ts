@@ -1,10 +1,12 @@
 import { devices, expect, test } from "@playwright/test";
 
-test("desktop shows the main screen with all four HUD corners", async ({ page }) => {
+test("desktop opens on the splash, and entering shows the room with all four HUD corners", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(page).toHaveTitle("Phantom Corner");
+  await expect(page.getByText(/fan-made, non-commercial/)).toBeVisible();
+  await page.getByRole("button", { name: "Press to enter" }).click();
   for (const label of ["Top left widgets", "Top right widgets", "Bottom left widgets", "Bottom right widgets"]) {
     await expect(page.getByRole("region", { name: label })).toBeAttached();
   }
@@ -17,7 +19,7 @@ test.describe("phone browsers", () => {
   test.use({ userAgent, viewport, isMobile, hasTouch });
   test("see the mobile gate instead of the app", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("needs a bigger screen")).toBeVisible();
-    await expect(page.getByRole("region", { name: "Top left widgets" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 1, name: /doesn't fit in your pocket/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Press to enter" })).toHaveCount(0);
   });
 });
