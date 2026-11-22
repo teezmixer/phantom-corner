@@ -2,6 +2,8 @@
 
 | Milestone | Round | Readiness | Build quality | Vision fit | Remaining gap |
 | --- | --- | --- | --- | --- | --- |
+| M4 | 2 | 4 | 4 | 4 | none blocking; D-25/D-26/D-27 are Ares's |
+| M4 | 1 | 2 | 3 | 3 | clipped 196 px player, autoplay paths, demo loads YouTube, travel rule false, no retry |
 | M3 | 2 | 4 | 4 | 4 | none blocking; limits and draft copy are Ares's |
 | M3 | 1 | 3 | 3 | 4 | lock-before-read race, backup safety, silent write failures, value validation (all fixed after) |
 | M2 | 2 | 4 | 4 | 3 | timer/todo/phone fit (fixed after); empty slabs, faces, TV placement are Ares's |
@@ -41,3 +43,13 @@ Findings and Tier 3 proposals are recorded under each milestone heading below.
 
 **Round 2**: Readiness 4, Build quality 4, Vision fit 4. Remaining Tier 1 fixed afterwards: a huge stored todo list overflowed the stack on load (lists are now cut before folding and absurd sizes refused); one impossible event reset all progress (now dropped individually); mapping failures are treated as recoveries; bootstrap runs once per page load (StrictMode double-backup); a unit test proves storage is not read until the lock is granted (it fails if the old bug is reintroduced).
 - **Tier 3 for Ares:** the 80-character, 200-todo and 50,000-event limits are provisional; whether "newer build's data kept untouched" deserves its own Morgana line (today it shows the cannot-write notice, though the data is preserved).
+
+## M4 — audio
+
+**Round 1** (fresh Opus reviewer; `screens/M4/`): Readiness 2, Build quality 3, Vision fit 3.
+- Fixed (Tier 1/2): the player box clipped the 200×200 video to 196 px (now 204 outer); YouTube's default chrome restored and the privacy-enhanced host used; the reducer follows the player's own state; a track that ends advances only from playing; travel really stops playback (reset on location); the YouTube script and player wait for the first user gesture (demo mode contacts nothing at load); retry after a failed script, 10 s ready-timeout, abort signal; "blocked" only once a player exists; audio keeps trying to unlock on every gesture and never queues sounds on a suspended context; ambience fades out and shares one noise buffer; caption and mixer step aside while a screen is open; the TV never covers the todo widget on short windows; migration defaults `muted`; blocked storage no longer makes every visit a first visit; select-tick and menu-close no longer double; hard-coded strings moved to copy; several e2e tests that passed for the wrong reason rewritten (each key one confirmed to fail when its bug is reintroduced).
+- **Found by playing the real YouTube player in a browser** (not by any test): pressing Next while playing froze the new track on "Paused" because the real player reports a transient pause between videos. Fixed, the e2e stub now behaves the same way, and a regression test covers it.
+
+**Round 2**: Readiness 4, Build quality 4, Vision fit 4. One blocker fixed afterwards: a player that never became ready was left in place, so a retry could create a second live player (now destroyed, iframe removed, late events ignored; mutation-checked). Also: a pause pressed during loading is honoured if the video starts late; a very short window no longer pushes the player off-screen.
+- **Tier 3 for Ares:** D-27 (the TV stays above screens and keeps playing, instead of the spec's "pause under full-screen layers"; Next/Previous start playback; the TV is not keyboard-reachable while a screen is open; two sets of controls; YouTube wording on the Privacy/About pages), D-26 (which music, per location, and whether a rights-holder upload is acceptable at launch), D-25 (placeholder sounds and default volumes).
+- **Open, documented:** player errors 2/5 skip a track for the rest of the visit; a stale "playing" from the previous video right after travel can briefly mark a cued TV as playing; CSP entries and the weekly oEmbed check are M10.
