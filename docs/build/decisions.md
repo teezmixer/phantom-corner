@@ -97,3 +97,7 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 
 ### D-23 Slot sizes grown to fit their content
 - `timer` 204 → 260 px wide (digits + controls overflowed the Figma 204); `todo` 101 → 120 px tall (shows two items). Positions unchanged; still data in `src/hud/slots.ts`. At 1024×600 the todo bottom (198 px) still clears the TV (top 200 px).
+
+### D-24 Event ids and timestamps before sync (engineering note for M11, Ares may weigh in)
+- Stored events are `{kind, …}` without an `id` or `at`, and todo ids are numbers, unlike spec §4.7 (`id: string`) and §4.9 (sync merges events by `id`). **Plan:** M11 adds `id` and `at` through a schema migration 1→2 (`id = "<clientId>:<index>"` for existing events), the first real use of the migration path. Alternative: add them now. Cost now: every event creator needs a clock and an id source (the reducer is deliberately pure).
+- No heartbeat fallback for browsers without Web Locks (ADR 0006); all evergreen browsers have them.

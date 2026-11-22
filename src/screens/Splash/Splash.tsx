@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
-import { splash } from "@/content/copy";
+import { morgana, splash } from "@/content/copy";
 import { useStore } from "@/state/StoreProvider";
 
 /** Black splash: press to enter (the click also unlocks audio in M4), fan-project line, mute control. */
@@ -20,6 +20,9 @@ export function Splash() {
       >
         {splash.enter}
       </button>
+      {(state.recovered || state.storageBlocked) && (
+        <p role="status" className="max-w-xl border-l-4 border-redbright pl-3 text-left text-sm">{state.storageBlocked ? morgana.cantWrite : morgana.scrambled}</p>
+      )}
       <p className="max-w-xl text-sm text-greylight">{splash.disclaimer}</p>
       <div className="flex items-center gap-6 text-sm">
         <button type="button" aria-pressed={state.muted} onClick={() => dispatch({ type: "TOGGLE_MUTE" })} className="flex items-center gap-2 hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal">

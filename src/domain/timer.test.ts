@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_DURATION_MS, MINUTE, formatClock, initialTimer, remainingMs, transition, type TimerState } from "./timer";
+import { DEFAULT_DURATION_MS, MINUTE, clampCustomMinutes, formatClock, initialTimer, remainingMs, transition, type TimerState } from "./timer";
 
 const T0 = 1_000_000;
 
@@ -66,4 +66,27 @@ describe("remainingMs and formatClock", () => {
     [0, "00:00"],
     [-500, "00:00"],
   ])("formats %i ms as %s", (ms, text) => expect(formatClock(ms)).toBe(text));
+});
+
+describe("clock changes and limits", () => {
+  const running = transition(initialTimer, { type: "START", now: T0 });
+
+  it("never shows more time than the session has, even if the system clock moves back", () => {
+    expect(remainingMs(running, T0 - 60 * MINUTE)).toBe(DEFAULT_DURATION_MS);
+    const paused = transition(running, { type: "PAUSE", now: T0 - 60 * MINUTE });
+    expect(paused).toMatchObject({ status: "paused", remainingMs: DEFAULT_DURATION_MS });
+  });
+
+  it("forces SET_DURATION into the allowed range", () => {
+    expect(transition(initialTimer, { type: "SET_DURATION", durationMs: -5 })).toMatchObject({ durationMs: 5 * MINUTE });
+    expect(transition(initialTimer, { type: "SET_DURATION", durationMs: 0 })).toMatchObject({ durationMs: 5 * MINUTE });
+    expect(transition(initialTimer, { type: "SET_DURATION", durationMs: 99 * 60 * MINUTE })).toMatchObject({ durationMs: 120 * MINUTE });
+    expect(transition(initialTimer, { type: "SET_DURATION", durationMs: Number.NaN })).toMatchObject({ durationMs: 25 * MINUTE });
+  });
+});
+
+describe("clampCustomMinutes", () => {
+  it.each([
+    [25, 25], [5, 5], [120, 120], [4, 5], [0, 5], [-10, 5], [121, 120], [9999, 120], [17.6, 18], [Number.NaN, 25], [Infinity, 25],
+  ])("%s → %s", (input, out) => expect(clampCustomMinutes(input)).toBe(out));
 });

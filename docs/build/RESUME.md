@@ -1,20 +1,19 @@
 # RESUME — checkpoint
 
-- **Updated:** 2026-11-22, M2 in progress
-- **Milestone / branch:** M2 walking skeleton on `m2-walking-skeleton` (not pushed yet; M1 merged to main as faefd3e)
-- **Last commit:** see `git log -1`
-- **In progress:** `src/domain/progress.ts` — `levelForKnowledge` is a TODO(human) for Ares (Learning style); its tests in `src/domain/progress.test.ts` define the behaviour.
+- **Updated:** 2026-11-22, M2 merged (PR #3, 5ccc85e); M3 started
+- **Milestone / branch:** M3 core loop in depth on `m3-core-loop` (branched from main; nothing committed yet except this file)
+- **In progress:** nothing half-edited.
 
-## Next three steps
-1. Once `levelForKnowledge` is implemented and `npx vitest run src/domain` passes, commit it.
-2. `src/state/store.ts` (useReducer + context: layer, locationId, mission, todos, timer, events, flags) and `src/app/App.tsx` composing splash → main + overlay layers.
-3. Widgets as working placeholders in `src/widgets/*` placed with `slotStyle(DEFAULT_SLOTS.x)`; screens in `src/screens/*`; `?dev=true` panel; `?demo=true`.
+## Next three steps (M3)
+1. `src/state/persistence/{adapter.ts,migrate.ts,guard.ts}` per spec §4.7: one key `pc:v1`, schema version, hand-written type guard, backup of unreadable data under a dated key + `recovered` flag, debounced save (~250 ms) with flush on `visibilitychange`/`pagehide`; `memoryAdapter` for demo and tests. Tests for migrations, guard, corrupt data.
+2. Wire persistence into `StoreProvider` (load on start, save on change; demo uses memory only): mission, todos, timer, locationId, events, name, settings, visited, unread. Resume after reload: running timer keeps its `endsAt`, a timer that ended while closed completes (counts as a session) on load.
+3. Tab title countdown (`document.title`), two-tab lock ("LeBlanc's already open in another tab." + takeover) via Web Locks/heartbeat, mission done state, pause/resume Playwright tests with clock; then M3 review loop + PR.
 
 ## Running
-Nothing required. Dev server: preview tool `dev` (5173). `vite preview` may be on 4173 (kill with `lsof -ti:4173 | xargs kill`).
+Nothing required. Preview servers: `lsof -ti:4173 | xargs kill` before `npm run e2e`.
 
 ## Open PRs
-None (M1 #2 merged).
+None.
 
 ## To verify
 `npm run typecheck && npm run lint && npm test && npm run build && npm run e2e`

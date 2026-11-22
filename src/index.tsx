@@ -5,22 +5,17 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import "@/styles/index.css";
-import { App } from "@/app/App";
-import { buildInitialState, parseMode } from "@/app/initialState";
+import { Root } from "@/app/Root";
+import { parseMode } from "@/app/initialState";
 import GateRoute from "@/screens/Gate/GateRoute";
-import { StoreProvider } from "@/state/StoreProvider";
 
 const mode = parseMode(window.location.search);
-const initial = buildInitialState(mode, Date.now());
 
-const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
-root.render(
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <GateRoute>
       <MotionConfig reducedMotion="user">
-        <StoreProvider initial={initial}>
-          <App dev={mode.dev} />
-        </StoreProvider>
+        <Root mode={mode} />
       </MotionConfig>
     </GateRoute>
     <Analytics />

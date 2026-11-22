@@ -186,8 +186,8 @@
       "spec": "§3.1, §3.6",
       "description": "A returning user sees their open mission, or the empty prompt \"What's today's mission?\".",
       "steps": "Playwright: seeded mission shows; empty state shows prompt.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/session.spec.ts \"a return visit shows the open mission…\" (mission visible after reload) and \"the mission has empty, set, editing and done states\" (placeholder \"What's today's mission?\")"
     },
     {
       "id": "entry-return-one-click",
@@ -197,8 +197,8 @@
       "spec": "§3.1",
       "description": "A returning user can start a session with one click (or Space).",
       "steps": "Playwright: returning state, one click on start, timer running.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/session.spec.ts \"a return visit shows the open mission and one click starts a session\" and \"…can also start with Space\""
     },
     {
       "id": "entry-demo",
@@ -219,8 +219,8 @@
       "spec": "§3.12, §4.7",
       "description": "Demo mode uses in-memory state and never touches real saved progress.",
       "steps": "Playwright: seed real state, open demo, act, reopen /, real state unchanged.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/persistence.spec.ts \"demo mode never takes the session lock or writes saved progress\" (a demo page open next to a real session leaves the stored data byte-identical); src/app/bootstrap.test.ts (demo ignores storage)"
     },
     {
       "id": "entry-demo-at-summary",
@@ -318,8 +318,8 @@
       "spec": "§3.6",
       "description": "The user can pick 10, 25, 30 minutes or a custom duration (5–120 provisional).",
       "steps": "Component + Playwright: select each, display updates.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/session.spec.ts \"the session length can be 10, 25 or 30 minutes\"; e2e/persistence.spec.ts custom 5–120 clamp; src/domain/timer.test.ts clampCustomMinutes"
     },
     {
       "id": "timer-pause-resume",
@@ -329,8 +329,8 @@
       "spec": "§4.5",
       "description": "A user can pause the timer and resume with the correct time left.",
       "steps": "Unit with injected time; Playwright with clock control.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/persistence.spec.ts \"pause keeps the time left and resume continues from it\"; src/domain/timer.test.ts (pause/resume with injected time)"
     },
     {
       "id": "timer-accuracy",
@@ -340,8 +340,8 @@
       "spec": "§4.5",
       "description": "Remaining time derives from endsAt (timestamp-based), staying within 1 s over 5 min incl. a background tab.",
       "steps": "Unit: remainingMs with injected now; Playwright clock: hidden tab then visible.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/timer.test.ts (remainingMs derived from endsAt, clamped to [0, duration]); e2e/session.spec.ts \"the countdown stays within a second… after the clock jumps\" (5 minutes in one jump, ±1 s, visible tab). useNow recomputes on visibilitychange; a real hidden-tab test is NOT automated (Playwright cannot throttle a background tab) — see ADR 0005."
     },
     {
       "id": "timer-tab-title",
@@ -351,8 +351,8 @@
       "spec": "§3.6",
       "description": "The tab title shows the countdown while running and restores when idle.",
       "steps": "Playwright: document.title matches mm:ss while running.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/title.test.ts; e2e/persistence.spec.ts \"the tab title counts down while a session runs, says Paused, and resets\""
     },
     {
       "id": "timer-resume-reload",
@@ -362,8 +362,8 @@
       "spec": "§4.5, §3.4",
       "description": "After a reload the timer resumes with the correct remaining time (or completes if it ended).",
       "steps": "Playwright: start, reload, remaining time correct; ended while closed counts.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/persistence.spec.ts: running timer resumes with ~15 min left after a reload; a session that ended while the tab was closed counts exactly once (Profile: 1 session, 25 min, 30 Knowledge); src/state/persistence/persistence.test.ts (resume, paused stays paused, far-future end time pulled back)"
     },
     {
       "id": "timer-complete",
@@ -373,8 +373,8 @@
       "spec": "§4.5",
       "description": "At zero the timer enters complete exactly once and triggers the session-end choice.",
       "steps": "Unit: TICK past endsAt → complete; component: one completion event.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/timer.test.ts (TICK at/after endsAt → complete, not before); src/state/store.test.ts (exactly one completed session event, layer → choice); e2e/loop.spec.ts and e2e/persistence.spec.ts (closed-tab completion counts once: Profile shows 1 session / 25 min / 30 Knowledge)"
     },
     {
       "id": "mission-one-line",
@@ -384,8 +384,8 @@
       "spec": "§3.6",
       "description": "The mission widget holds one line with empty, set, editing and done states, persisted.",
       "steps": "Playwright: set, edit, mark done, reload.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/session.spec.ts \"the mission has empty, set, editing and done states\"; e2e/persistence.spec.ts \"mission can be marked done and that survives a reload\""
     },
     {
       "id": "mission-deadline",
@@ -604,8 +604,8 @@
       "spec": "§3.1, FigJam",
       "description": "At zero the user chooses: go on, take five, change location, or finish.",
       "steps": "Playwright: complete short timer, four options, each routes correctly.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e: Go on (session.spec), Take five (loop.spec), Go somewhere else → map (behaviour.spec), Call it → summary (loop.spec)"
     },
     {
       "id": "session-break-screen",
@@ -615,8 +615,8 @@
       "spec": "FigJam",
       "description": "Take five opens a break screen with its own short timer that returns to the choice.",
       "steps": "Playwright: take five, break timer runs, returns.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/loop.spec.ts \"take five opens a break that returns to the choice\" (5:05 later); src/state/store.test.ts START_BREAK/END_BREAK"
     },
     {
       "id": "session-break-depth",
@@ -637,8 +637,8 @@
       "spec": "§3.6",
       "description": "The summary shows minutes focused and a Knowledge count-up (reduced motion: final value).",
       "steps": "Component with injected values; Playwright.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/loop.spec.ts (25 minutes, mission); e2e/session.spec.ts reduced-motion \"+30\" shown at once"
     },
     {
       "id": "summary-mission-line",
@@ -648,8 +648,8 @@
       "spec": "§3.6",
       "description": "The summary echoes the mission and shows one character line from the location's content.",
       "steps": "Playwright: summary text includes mission.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/loop.spec.ts \"Mission: Finish chapter 3\"; e2e/session.spec.ts Sojiro completion line \"Not bad. Coffee's on me. Once.\""
     },
     {
       "id": "summary-calendar",
@@ -670,8 +670,8 @@
       "spec": "§3.6",
       "description": "The summary offers continue or finish.",
       "steps": "Playwright: each button.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/session.spec.ts \"One more\" starts the next session; e2e/loop.spec.ts \"Done for today\" returns to the room"
     },
     {
       "id": "summary-share-card",
@@ -692,8 +692,8 @@
       "spec": "§4.5",
       "description": "Each session is recorded in an append-only event log (plannedMs, focusedMs, outcome).",
       "steps": "Unit: events appended; fold derives XP.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/state/store.test.ts (completed and cut-short events, paused stop counted); src/state/persistence/persistence.test.ts (events round-trip, guard rejects a bad event)"
     },
     {
       "id": "session-two-tab-lock",
@@ -703,8 +703,8 @@
       "spec": "§3.11",
       "description": "A second tab shows \"LeBlanc's already open in another tab.\" with a takeover button.",
       "steps": "Playwright: two pages, second shows lock copy; takeover works.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/persistence.spec.ts: \"a second tab shows the takeover screen…\" (screens swap) and \"taking over carries the mission and running timer to the new tab, and the old tab stays out\" (new owner sees the mission and running timer; its later edit is what stays stored); lock is acquired before storage is read (src/app/Root.tsx); docs/adr/0006"
     },
     {
       "id": "prog-xp-rules",
@@ -1517,8 +1517,8 @@
       "spec": "§4.7",
       "description": "Storage adapter with schema version, migrations, guard, backup on corrupt data and recovery message.",
       "steps": "Unit: corrupt JSON → backup key + recovered flag.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/state/persistence/persistence.test.ts + src/app/bootstrap.test.ts: load/migrate/guard/backup (verified, capped at 5)/saver/localStorage blocked and quota errors, newer data never overwritten, value guard (11 impossible values), load-time repair; e2e: corrupt data (backup key + Morgana line), blocked storage, failed save mid-session notice; docs/adr/0005"
     },
     {
       "id": "q-error-boundary",

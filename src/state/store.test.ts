@@ -59,6 +59,17 @@ describe("store reducer", () => {
     expect(s.timer.status).toBe("idle");
   });
 
+  it("records a cut-short session when stopped from paused too, so paused minutes are not lost", () => {
+    const s = run([
+      { type: "TIMER", event: { type: "START", now: T0 }, now: T0 },
+      { type: "TIMER", event: { type: "PAUSE", now: T0 + 9 * 60_000 }, now: T0 + 9 * 60_000 },
+      { type: "TIMER", event: { type: "STOP" }, now: T0 + 60 * 60_000 }, // a long time later; pause time does not count
+    ]);
+    expect(s.layer).toBe("summary");
+    expect(derive(s).minutesFocused).toBe(9);
+    expect(derive(s).knowledge).toBe(9);
+  });
+
   it("does not change state for a meaningless timer event", () => {
     const s = run([]);
     expect(reducer(s, { type: "TIMER", event: { type: "PAUSE", now: T0 }, now: T0 })).toBe(s);
@@ -113,6 +124,23 @@ describe("store reducer", () => {
     const entered = run([]);
     expect(reducer({ ...entered, layer: "credits" }, { type: "CLOSE_LAYER" }).layer).toBe("settings");
     expect(reducer({ ...initialState, layer: "about" }, { type: "CLOSE_LAYER" }).layer).toBe("splash");
+  });
+
+  it("caps mission and todo length and the number of todos in the store itself", () => {
+    let s = run([{ type: "SET_MISSION", text: "m".repeat(500) }, { type: "ADD_TODO", text: "t".repeat(500) }]);
+    expect(s.mission).toHaveLength(80);
+    expect(s.todos[0]!.text).toHaveLength(80);
+    for (let i = 0; i < 250; i++) s = reducer(s, { type: "ADD_TODO", text: `todo ${i}` });
+    expect(s.todos).toHaveLength(200);
+  });
+
+  it("never records negative focus when the clock was moved back before stopping", () => {
+    const s = run([
+      { type: "TIMER", event: { type: "START", now: T0 }, now: T0 },
+      { type: "TIMER", event: { type: "STOP" }, now: T0 - 3 * 60 * 60_000 },
+    ]);
+    expect(derive(s).minutesFocused).toBe(0);
+    expect(derive(s).knowledge).toBe(0);
   });
 
   it("keeps demo mode on reset", () => {
