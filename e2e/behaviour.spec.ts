@@ -82,7 +82,7 @@ test("the room behind a dialog is inert", async ({ page }) => {
   const inert = (widget: string) => page.evaluate((w) => document.querySelector(`[data-widget="${w}"]`)?.closest("[inert]") !== null, widget);
   expect(await inert("timer")).toBe(true);
   // …but the TV is deliberately not inert
-  expect(await page.evaluate(() => document.querySelector('[aria-label="TV (placeholder)"]')?.closest("[inert]") !== null)).toBe(false);
+  expect(await page.evaluate(() => document.querySelector('[aria-label="TV"]')?.closest("[inert]") !== null)).toBe(false);
   await page.keyboard.press("Escape");
   expect(await inert("timer")).toBe(false);
 });
@@ -93,7 +93,7 @@ test("the TV is visible, at least 200x200 and never covered, under every screen"
   await page.clock.resume();
   await page.getByRole("button", { name: "Unlock all" }).click();
   const check = async (label: string) => {
-    const tv = page.getByRole("region", { name: "TV (placeholder)" });
+    const tv = page.getByRole("region", { name: "TV" });
     await expect(tv, label).toBeVisible();
     const box = (await tv.boundingBox())!;
     expect(box.width, label).toBeGreaterThanOrEqual(200);

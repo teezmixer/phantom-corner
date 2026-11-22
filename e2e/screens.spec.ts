@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, stubExternal, test } from "./fixtures";
 
 /**
  * Review-loop screenshots (BUILD-PROMPT feedback loops). Skipped in normal runs.
@@ -36,7 +36,7 @@ const SCREENS: Screen[] = [
   { name: "timer-custom", path: "/", since: "M3", ready: async (p) => { await enterRoom(p); await p.getByLabel("Session length").selectOption("custom"); } },
   { name: "splash-recovered", path: "/", since: "M3", before: async (p) => { await p.addInitScript(() => { if (!sessionStorage.getItem("seeded")) { localStorage.setItem("pc:v1", "{nope"); sessionStorage.setItem("seeded", "1"); } }); } },
   { name: "splash-storage-blocked", path: "/", since: "M3", before: async (p) => { await p.addInitScript(() => { const boom = () => { throw new DOMException("blocked", "SecurityError"); }; Storage.prototype.getItem = boom; Storage.prototype.setItem = boom; }); } },
-  { name: "tab-lock", path: "/", since: "M3", ready: async (p, context, { reduced }) => { const second = await context.newPage(); await second.setViewportSize(p.viewportSize()!); await second.emulateMedia({ reducedMotion: reduced ? "reduce" : "no-preference" }); await second.goto("/"); await second.getByRole("alertdialog").waitFor(); return second; } },
+  { name: "tab-lock", path: "/", since: "M3", ready: async (p, context, { reduced }) => { const second = await context.newPage(); await stubExternal(second); await second.setViewportSize(p.viewportSize()!); await second.emulateMedia({ reducedMotion: reduced ? "reduce" : "no-preference" }); await second.goto("/"); await second.getByRole("alertdialog").waitFor(); return second; } },
   { name: "scene-ryuji", path: "/?demo=true&dev=true", ready: async (p) => { await p.getByLabel("Jump to location").selectOption("ryuji"); } },
 ];
 

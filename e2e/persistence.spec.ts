@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, test } from "./fixtures";
+import { expect, stubExternal, test } from "./fixtures";
 
 const KEY = "pc:v1";
 const stored = (page: Page) => page.evaluate((k) => window.localStorage.getItem(k), KEY);
@@ -157,7 +157,7 @@ test("taking over carries the mission and running timer to the new tab, and the 
   await waitForSaved(page, (raw) => raw.includes("Finish chapter 3") && raw.includes('"running"'));
 
   const second = await context.newPage();
-  await second.route("**/_vercel/**", (route) => route.fulfill({ status: 200, contentType: "text/javascript", body: "" }));
+  await stubExternal(second);
   await second.goto("/");
   await second.getByRole("button", { name: "Study here instead" }).click();
   await enter2(second);
@@ -213,7 +213,7 @@ test("a second tab shows the takeover screen and taking over moves the session",
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Press to enter" })).toBeVisible();
   const second = await context.newPage();
-  await second.route("**/_vercel/**", (route) => route.fulfill({ status: 200, contentType: "text/javascript", body: "" }));
+  await stubExternal(second);
   await second.goto("/");
   const message = "LeBlanc's already open in another tab.";
   await expect(second.getByRole("alertdialog", { name: message })).toBeVisible();
@@ -231,7 +231,7 @@ test("demo mode never takes the session lock or writes saved progress", async ({
   await waitForSaved(page, () => true);
   const before = await stored(page);
   const demo = await context.newPage();
-  await demo.route("**/_vercel/**", (route) => route.fulfill({ status: 200, contentType: "text/javascript", body: "" }));
+  await stubExternal(demo);
   await demo.goto("/?demo=true");
   await expect(demo.getByText("Finish chapter 3")).toBeVisible();
   await demo.getByLabel("Add a todo").fill("demo only");
