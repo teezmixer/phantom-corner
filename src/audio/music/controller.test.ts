@@ -26,8 +26,16 @@ describe("music state machine", () => {
     const paused = run([{ type: "PLAY" }, { type: "PLAYER_PLAYING" }, { type: "PAUSE" }]);
     expect(musicReducer(paused, { type: "PLAYER_PLAYING" }).status).toBe("playing");
     expect(run([{ type: "PLAY" }, { type: "PLAYER_PLAYING" }, { type: "PLAYER_PAUSED" }]).status).toBe("paused");
-    expect(run([{ type: "PLAY" }, { type: "PLAYER_PAUSED" }]).status).toBe("paused"); // paused before it even started
+    // YouTube reports a transient "paused" while swapping videos: while loading it must NOT pause the new track
+    expect(run([{ type: "PLAY" }, { type: "PLAYER_PAUSED" }]).status).toBe("loading");
     expect(musicReducer(initialMusic([]), { type: "PLAYER_PLAYING" }).status).toBe("unavailable"); // nothing to play
+  });
+
+  it("pressing next while playing is not undone by the player's transient pause between videos", () => {
+    const s = run([{ type: "PLAY" }, { type: "PLAYER_PLAYING" }, { type: "NEXT" }, { type: "PLAYER_PAUSED" }, { type: "PLAYER_PLAYING" }]);
+    expect(s).toMatchObject({ index: 1, status: "playing" });
+    // and even if the playing event were late, the transient pause alone leaves us loading, not paused
+    expect(run([{ type: "PLAY" }, { type: "PLAYER_PLAYING" }, { type: "NEXT" }, { type: "PLAYER_PAUSED" }]).status).toBe("loading");
   });
 
   it("a track that ends moves on only when it was playing — a paused, off or unavailable TV never starts another track", () => {

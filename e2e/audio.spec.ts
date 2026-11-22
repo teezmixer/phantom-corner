@@ -315,3 +315,19 @@ test.describe("TV rules (review of M4)", () => {
     await expect(button).toBeFocused();
   });
 });
+
+test.describe("switching tracks (found by playing it in a real browser)", () => {
+  test("pressing next while playing keeps playing the new track — the player's transient pause between videos is not a user pause", async ({ page }) => {
+    await page.goto("/");
+    await enter(page);
+    await page.getByRole("button", { name: "Play" }).click();
+    await expect(caption(page)).toHaveText("Beneath the Mask");
+    await page.getByRole("button", { name: "Next track" }).click();
+    await expect(caption(page)).toHaveText("Beneath the Mask (rain)"); // playing, not "Paused — …"
+    await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+    await page.waitForTimeout(400);
+    await expect(caption(page)).toHaveText("Beneath the Mask (rain)");
+    const calls = await ytCalls(page);
+    expect(calls.filter((c) => c[0] === "pause")).toHaveLength(0); // we never told the new track to pause
+  });
+});

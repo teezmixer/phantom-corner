@@ -19,11 +19,12 @@ export const YOUTUBE_STUB = `
     yt.instances.push(self);
     yt.options.push({ width: opts.width, height: opts.height, host: opts.host, playerVars: opts.playerVars });
     function rec() { yt.calls.push([].slice.call(arguments)); }
-    function emit(state) { opts.events.onStateChange({ data: state }); }
+    function emit(state) { self.state = state; opts.events.onStateChange({ data: state }); }
     self._emit = emit;
     self._error = function (code) { opts.events.onError({ data: code }); };
     function start() { if (!yt.noPlay) setTimeout(function () { emit(1); }, yt.playDelay); }
-    self.loadVideoById = function (id) { rec("load", id); self.id = id; emit(3); start(); };
+    // Like the real player: switching videos while one is playing reports "paused" (2) first, then buffering (3), then playing (1).
+    self.loadVideoById = function (id) { rec("load", id); var wasPlaying = self.state === 1; self.id = id; if (wasPlaying) emit(2); emit(3); start(); };
     self.cueVideoById = function (id) { rec("cue", id); self.id = id; emit(5); };
     self.playVideo = function () { rec("play"); start(); };
     self.pauseVideo = function () { rec("pause"); emit(2); };

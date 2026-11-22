@@ -81,7 +81,10 @@ export function musicReducer(state: MusicState, event: MusicEvent): MusicState {
     case "PLAYER_PLAYING":
       return state.status === "unavailable" ? state : { ...state, status: "playing" };
     case "PLAYER_PAUSED":
-      return state.status === "playing" || state.status === "loading" ? { ...state, status: "paused" } : state;
+      // Only a playing TV can be paused by the player. While LOADING a pause event is a transient one: the real YouTube player
+      // reports "paused" as it swaps one video for the next, and treating that as the user pausing froze the new track
+      // (found by playing it in a real browser).
+      return state.status === "playing" ? { ...state, status: "paused" } : state;
     case "PLAYER_ENDED": {
       // A track that ends moves on ONLY if it was playing. A paused, off or unavailable TV never starts another track by itself.
       if (state.status !== "playing") return state;
