@@ -21,14 +21,16 @@ export function useSessionLock(enabled: boolean): { status: LockStatus; takeover
     if (!lockable) return;
     let alive = true;
     let release: (() => void) | undefined;
-    const steal = readAndClearTakeoverFlag();
+    const steal = takeoverRequested();
     const controller = new AbortController();
     const timeout = steal ? undefined : setTimeout(() => controller.abort(), WAIT_MS);
     const options: LockOptions = steal ? { steal: true } : { signal: controller.signal };
     navigator.locks
       .request(LOCK_NAME, options, () => {
         if (timeout) clearTimeout(timeout);
-        if (alive) setStatus("owner");
+        // Granted after this effect was already cleaned up (React StrictMode, or an unmount): give the lock straight back.
+        if (!alive) return Promise.resolve();
+        setStatus("owner");
         return new Promise<void>((resolve) => { release = resolve; });
       })
       // Rejects when we time out waiting, or when another tab steals the lock from us.
@@ -49,12 +51,20 @@ export function useSessionLock(enabled: boolean): { status: LockStatus; takeover
   return { status, takeover };
 }
 
-function readAndClearTakeoverFlag(): boolean {
-  try {
-    const flagged = window.sessionStorage.getItem(TAKEOVER_FLAG) === "1";
-    if (flagged) window.sessionStorage.removeItem(TAKEOVER_FLAG);
-    return flagged;
-  } catch {
-    return false;
+let takeoverDecision: boolean | undefined;
+
+/**
+ * Was this page load started by "Study here instead"? The flag is consumed once per page load and the answer cached,
+ * because React StrictMode (dev) runs effects twice and the second run must see the same answer.
+ */
+function takeoverRequested(): boolean {
+  if (takeoverDecision === undefined) {
+    try {
+      takeoverDecision = window.sessionStorage.getItem(TAKEOVER_FLAG) === "1";
+      if (takeoverDecision) window.sessionStorage.removeItem(TAKEOVER_FLAG);
+    } catch {
+      takeoverDecision = false;
+    }
   }
+  return takeoverDecision;
 }
