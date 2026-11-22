@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { PencilSimple, Target } from "@phosphor-icons/react";
+import { CheckCircle, Circle, PencilSimple, Target } from "@phosphor-icons/react";
 import { widgets } from "@/content/copy";
 import { useStore } from "@/state/StoreProvider";
 import { Slab } from "../Slab";
@@ -34,7 +34,10 @@ export function MissionWidget() {
         </form>
       ) : (
         <div className="flex items-center justify-between gap-1">
-          <p className="min-w-0 truncate text-sm">{state.mission}</p>
+          <button type="button" role="checkbox" aria-checked={state.missionDone} aria-label="Mission done" onClick={() => dispatch({ type: "TOGGLE_MISSION_DONE" })} className="shrink-0 hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
+            {state.missionDone ? <CheckCircle size={18} weight="fill" /> : <Circle size={18} />}
+          </button>
+          <p className={`min-w-0 flex-1 truncate text-sm ${state.missionDone ? "text-greylight line-through" : ""}`}>{state.mission}</p>
           <button type="button" aria-label="Edit mission" onClick={() => { setDraft(state.mission); setEditing(true); }} className="shrink-0 hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
             <PencilSimple size={16} />
           </button>
