@@ -6,11 +6,8 @@
 @import "./theme.css";
 @import "./shadcn.css";
 
-*, *::before, *::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* No global margin/padding reset here: Tailwind's preflight (in @layer base) already does it. An unlayered
+   `* { margin: 0; padding: 0 }` would beat every Tailwind utility, which live in @layer utilities. */
 
 html, body, #root {
   width: 100%;

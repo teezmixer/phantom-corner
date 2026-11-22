@@ -46,6 +46,7 @@
     "eslint-plugin-react-refresh": "^0.5.8",
     "globals": "^17.14.0",
     "jsdom": "^29.1.1",
+    "opentype.js": "^2.0.0",
     "tailwindcss": "^4.3.5",
     "typescript": "~5.9",
     "typescript-eslint": "^8.73.0",
