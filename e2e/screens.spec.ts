@@ -13,10 +13,13 @@ const SIZES = [
 ] as const;
 
 type Page = import("@playwright/test").Page;
-type Screen = { name: string; path: string; clock?: boolean; ready?: (page: Page) => Promise<void> };
+type Context = import("@playwright/test").BrowserContext;
+/** `before` runs before navigation (init scripts); `ready` may return another page to photograph instead. */
+type Screen = { name: string; path: string; clock?: boolean; since?: string; before?: (page: Page) => Promise<void>; ready?: (page: Page, context: Context) => Promise<Page | void> };
 const fromMenu = (item: RegExp) => async (page: Page) => {
   await page.getByRole("button", { name: item }).click();
 };
+const enterRoom = async (p: Page) => { await p.getByRole("button", { name: "Press to enter" }).click(); };
 const SCREENS: Screen[] = [
   { name: "splash", path: "/" },
   { name: "main", path: "/?demo=true" },
@@ -29,6 +32,11 @@ const SCREENS: Screen[] = [
   { name: "session-end", path: "/?demo=true", clock: true, ready: async (p) => { await p.clock.fastForward("17:30"); } },
   { name: "break", path: "/?demo=true", clock: true, ready: async (p) => { await p.clock.fastForward("17:30"); await p.getByRole("button", { name: "Take five" }).click(); } },
   { name: "travel", path: "/?demo=true&dev=true", ready: async (p) => { await p.getByRole("button", { name: "Unlock all" }).click(); await p.getByLabel("Jump to screen").selectOption("map"); await p.getByRole("button", { name: /School rooftop/ }).click(); } },
+  { name: "main-fresh", path: "/", since: "M3", ready: enterRoom },
+  { name: "timer-custom", path: "/", since: "M3", ready: async (p) => { await enterRoom(p); await p.getByLabel("Session length").selectOption("custom"); } },
+  { name: "splash-recovered", path: "/", since: "M3", before: async (p) => { await p.addInitScript(() => { if (!sessionStorage.getItem("seeded")) { localStorage.setItem("pc:v1", "{nope"); sessionStorage.setItem("seeded", "1"); } }); } },
+  { name: "splash-storage-blocked", path: "/", since: "M3", before: async (p) => { await p.addInitScript(() => { const boom = () => { throw new DOMException("blocked", "SecurityError"); }; Storage.prototype.getItem = boom; Storage.prototype.setItem = boom; }); } },
+  { name: "tab-lock", path: "/", since: "M3", ready: async (_p, context) => { const second = await context.newPage(); await second.goto("/"); await second.getByRole("alertdialog").waitFor(); return second; } },
   { name: "scene-ryuji", path: "/?demo=true&dev=true", ready: async (p) => { await p.getByLabel("Jump to location").selectOption("ryuji"); } },
 ];
 
@@ -41,14 +49,15 @@ test.describe("review screenshots", () => {
         const suffix = `${width}x${height}${reduced ? "-reduced" : ""}`;
         test(`${screen.name} ${suffix}`, async ({ page }) => {
           if (screen.clock) { await page.clock.install(); }
+          await screen.before?.(page);
           await page.emulateMedia({ reducedMotion: reduced ? "reduce" : "no-preference" });
           await page.setViewportSize({ width, height });
           await page.goto(screen.path);
           if (screen.clock) await page.clock.resume();
-          await screen.ready?.(page);
+          const target = (await screen.ready?.(page, page.context())) ?? page;
           await page.waitForTimeout(600); // let entrance animations settle
           await expect(page.locator("body")).toBeVisible();
-          await page.screenshot({ path: `docs/build/screens/${MILESTONE}/${screen.name}-${suffix}.jpg`, type: "jpeg", quality: 70 });
+          await target.screenshot({ path: `docs/build/screens/${MILESTONE}/${screen.name}-${suffix}.jpg`, type: "jpeg", quality: 70 });
         });
       }
     }
