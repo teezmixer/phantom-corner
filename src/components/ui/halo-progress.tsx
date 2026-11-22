@@ -29,7 +29,7 @@ function IndeterminateBar({
   return (
     <div
       className={cn(
-        "pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]",
+        "pointer-events-none absolute inset-0 overflow-hidden",
         className
       )}
     >
@@ -42,7 +42,7 @@ function IndeterminateBar({
               }
         }
         aria-hidden
-        className="absolute inset-y-0 left-0 h-full w-2/5 rounded-[inherit] bg-gradient-to-r from-primary/25 via-primary to-primary/25"
+        className="absolute inset-y-0 left-0 h-full w-2/5 bg-primary"
         style={{ willChange: reduceMotion ? undefined : "transform" }}
         transition={{
           duration: reduceMotion ? 0.01 : 1.15,
@@ -60,8 +60,6 @@ export interface HaloProgressProps
   label?: ReactNode
   /** Show formatted percentage from Base UI (`tabular-nums`). */
   showValue?: boolean
-  /** Frosted track + gradient rim (matches segmented / button polish). */
-  translucent?: boolean
   trackClassName?: string
   indicatorClassName?: string
 }
@@ -70,7 +68,6 @@ export function HaloProgress({
   className,
   label,
   showValue,
-  translucent = true,
   trackClassName,
   indicatorClassName,
   value,
@@ -123,15 +120,9 @@ export function HaloProgress({
       >
         <ProgressPrimitive.Track
           className={cn(
-            "relative h-2 w-full overflow-hidden rounded-full border border-border/80",
-            translucent && "backdrop-blur-md backdrop-saturate-150",
+            "relative h-2 w-full overflow-hidden border border-border bg-muted",
             trackClassName
           )}
-          style={{
-            background: translucent
-              ? "linear-gradient(to bottom, color-mix(in oklch, var(--muted) 55%, transparent) 0%, color-mix(in oklch, var(--muted) 40%, transparent) 100%)"
-              : "var(--muted)",
-          }}
         >
           {isIndeterminate ? (
             <IndeterminateBar reduceMotion={reduceMotion} />
@@ -140,7 +131,7 @@ export function HaloProgress({
               animate={{ scaleX: pct }}
               aria-hidden
               className={cn(
-                "absolute inset-y-0 left-0 h-full w-full origin-left rounded-[inherit]",
+                "absolute inset-y-0 left-0 h-full w-full origin-left",
                 "bg-primary",
                 indicatorClassName
               )}
