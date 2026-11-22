@@ -143,6 +143,18 @@ describe("store reducer", () => {
     expect(derive(s).knowledge).toBe(0);
   });
 
+  it("sets a bus volume or a layer level, always inside 0–1 (junk becomes silent)", () => {
+    const s = run([
+      { type: "SET_VOLUME", bus: "music", value: 0.8 },
+      { type: "SET_VOLUME", bus: "ambience", value: 5 },
+      { type: "SET_VOLUME", bus: "ui", value: -3 },
+      { type: "SET_LAYER_VOLUME", id: "leblanc-rain", value: 0.4 },
+      { type: "SET_LAYER_VOLUME", id: "leblanc-murmur", value: Number.NaN },
+    ]);
+    expect(s.volumes).toEqual({ music: 0.8, ambience: 1, ui: 0 });
+    expect(s.ambienceMix).toEqual({ "leblanc-rain": 0.4, "leblanc-murmur": 0 });
+  });
+
   it("keeps demo mode on reset", () => {
     expect(reducer({ ...initialState, demo: true, entered: true }, { type: "RESET" })).toMatchObject({ demo: true, layer: "splash", entered: false });
   });

@@ -1,10 +1,18 @@
 /**
  * Schema migrations (spec §4.7): an array of functions, one per version step. `MIGRATIONS[i]` upgrades schema
- * `i + 1` to `i + 2`. Version 1 is the first schema, so there are none yet. Write the first one the first time a
- * field changes (M5 adds settings fields).
+ * `i + 1` to `i + 2`.
  */
 export type Migration = (data: Record<string, unknown>) => Record<string, unknown>;
-export const MIGRATIONS: readonly Migration[] = [];
+export const MIGRATIONS: readonly Migration[] = [
+  // 1 → 2 (M4 audio): settings gain per-bus volumes and a per-layer ambience mix. Existing users keep everything else.
+  (data) => {
+    const settings = (typeof data.settings === "object" && data.settings !== null ? data.settings : {}) as Record<string, unknown>;
+    return {
+      ...data,
+      settings: { ...settings, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {} },
+    };
+  },
+];
 
 /** Stored data written by a NEWER build of the app. It must never be overwritten by an older one. */
 export class NewerSchemaError extends Error {}

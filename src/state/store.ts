@@ -6,6 +6,7 @@ import { LOCATIONS, HOME_LOCATION_ID } from "@/content/registry";
 import { THREADS } from "@/content/threads";
 import { MAP_UNLOCK_LEVEL } from "@/content/progression";
 import { clampText, MAX_TODOS } from "@/domain/limits";
+import { DEFAULT_VOLUMES, type Volumes } from "./persistence/schema";
 import { initialTimer, remainingMs, transition, type TimerEvent, type TimerState } from "@/domain/timer";
 import { knowledgeFor, levelForKnowledge, unlockedIds, type ProgressEvent } from "@/domain/progress";
 
@@ -34,6 +35,9 @@ export interface AppState {
   phoneOpen: boolean;
   hudHidden: boolean;
   muted: boolean;
+  volumes: Volumes;
+  /** Per-ambience-layer level, 0–1, keyed by layer id; a missing layer plays at full (the bus volume still applies). */
+  ambienceMix: Record<string, number>;
   /** Dev panel: treat every location as unlocked. */
   devUnlockAll: boolean;
   /** Demo mode never touches saved progress. */
@@ -64,6 +68,8 @@ export const initialState: AppState = {
   phoneOpen: false,
   hudHidden: false,
   muted: false,
+  volumes: { ...DEFAULT_VOLUMES },
+  ambienceMix: {},
   devUnlockAll: false,
   demo: false,
   recovered: false,
@@ -95,11 +101,18 @@ export type Action =
   | { type: "STORAGE_FAILED" }
   | { type: "TOGGLE_HUD" }
   | { type: "TOGGLE_MUTE" }
+  | { type: "SET_VOLUME"; bus: keyof Volumes; value: number }
+  | { type: "SET_LAYER_VOLUME"; id: string; value: number }
   | { type: "DEV_GRANT"; knowledge: number }
   | { type: "DEV_UNLOCK_ALL" }
   | { type: "DEV_JUMP_LOCATION"; id: string }
   | { type: "LOAD"; state: AppState }
   | { type: "RESET" };
+
+/** A volume forced into 0–1; junk becomes 0 (silent is the safe failure). */
+function unit(value: number): number {
+  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
+}
 
 export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -181,6 +194,10 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, phoneOpen: action.open };
     case "TOGGLE_HUD":
       return { ...state, hudHidden: !state.hudHidden };
+    case "SET_VOLUME":
+      return { ...state, volumes: { ...state.volumes, [action.bus]: unit(action.value) } };
+    case "SET_LAYER_VOLUME":
+      return { ...state, ambienceMix: { ...state.ambienceMix, [action.id]: unit(action.value) } };
     case "TOGGLE_MUTE":
       return { ...state, muted: !state.muted };
     case "DEV_GRANT":

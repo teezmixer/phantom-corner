@@ -64,6 +64,42 @@ describe("load path", () => {
   });
 });
 
+describe("the real 1 → 2 migration (existing users keep their progress)", () => {
+  // Exactly what M3 wrote to localStorage.
+  const v1 = {
+    schema: 1, clientId: "old-client", name: "Ren", settings: { muted: true },
+    mission: { text: "Finish chapter 3", setAt: ISO, done: false },
+    todos: [{ id: 1, text: "read", done: false }], nextTodoId: 2,
+    timer: { status: "idle", durationMs: 25 * 60_000 }, locationId: "ryuji", visited: ["leblanc", "ryuji"],
+    events: [{ kind: "mission_first_set" }, { kind: "session", plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed" }],
+    unreadThreads: ["ann"], stamps: { settings: ISO, mission: ISO, todos: ISO },
+  };
+
+  it("loads a schema-1 save as schema 2 without treating it as unreadable, keeping everything", () => {
+    const r = load(JSON.stringify(v1));
+    expect(r.recovered).toBe(false);
+    expect(r.adapter.dump().backups).toEqual([]);
+    expect(r.persisted).toMatchObject({ schema: 2, clientId: "old-client", name: "Ren", locationId: "ryuji", visited: ["leblanc", "ryuji"], unreadThreads: ["ann"] });
+    expect(r.persisted.events).toHaveLength(2);
+    expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {} });
+  });
+
+  it("rejects out-of-range volumes and mix levels", () => {
+    const ok = fresh();
+    expect(isPersisted({ ...ok, settings: { ...ok.settings, volumes: { music: 1.5, ambience: 0.3, ui: 0.7 } } })).toBe(false);
+    expect(isPersisted({ ...ok, settings: { ...ok.settings, volumes: { music: -1, ambience: 0.3, ui: 0.7 } } })).toBe(false);
+    expect(isPersisted({ ...ok, settings: { ...ok.settings, ambienceMix: { rain: 2 } } })).toBe(false);
+    expect(isPersisted({ ...ok, settings: { ...ok.settings, ambienceMix: { rain: 0.4 } } })).toBe(true);
+  });
+
+  it("round-trips volumes and the ambience mix through the app state", () => {
+    const state: AppState = { ...initialState, volumes: { music: 0.2, ambience: 0.9, ui: 0.1 }, ambienceMix: { "leblanc-rain": 0.25 } };
+    const back = stateFromPersisted(toPersisted(state, fresh(), ISO), NOW, { recovered: false, storageBlocked: false });
+    expect(back.volumes).toEqual(state.volumes);
+    expect(back.ambienceMix).toEqual(state.ambienceMix);
+  });
+});
+
 describe("migrations", () => {
   const up: Migration = (d) => ({ ...d, added: true });
   const up2: Migration = (d) => ({ ...d, addedAgain: (d.added as boolean) === true });
