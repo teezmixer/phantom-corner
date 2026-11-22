@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useReducer, type Dispatch, type ReactNode } from "react";
 import { derive, reducer, type Action, type AppState, type Derived } from "./store";
+import { usePersistence, type PersistenceConfig } from "./persistence/usePersistence";
 
 interface StoreValue {
   state: AppState;
@@ -9,8 +10,9 @@ interface StoreValue {
 
 const StoreContext = createContext<StoreValue | null>(null);
 
-export function StoreProvider({ initial, children }: { initial: AppState; children: ReactNode }) {
+export function StoreProvider({ initial, persistence, children }: { initial: AppState; persistence?: PersistenceConfig; children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initial);
+  usePersistence(state, persistence);
   const value = useMemo(() => ({ state, derived: derive(state), dispatch }), [state]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

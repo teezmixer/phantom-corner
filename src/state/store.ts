@@ -23,6 +23,7 @@ export interface AppState {
   travelTo: string | null;
   visited: string[];
   mission: string;
+  missionDone: boolean;
   todos: Todo[];
   nextTodoId: number;
   timer: TimerState;
@@ -36,6 +37,10 @@ export interface AppState {
   devUnlockAll: boolean;
   /** Demo mode never touches saved progress. */
   demo: boolean;
+  /** Stored data was unreadable this visit, so we started fresh (spec §3.11). */
+  recovered: boolean;
+  /** The browser would not let us store anything; progress lasts only for this visit (spec §3.11). */
+  storageBlocked: boolean;
 }
 
 export const BREAK_MS = 5 * 60_000;
@@ -48,6 +53,7 @@ export const initialState: AppState = {
   travelTo: null,
   visited: [HOME_LOCATION_ID],
   mission: "",
+  missionDone: false,
   todos: [],
   nextTodoId: 1,
   timer: initialTimer,
@@ -59,6 +65,8 @@ export const initialState: AppState = {
   muted: false,
   devUnlockAll: false,
   demo: false,
+  recovered: false,
+  storageBlocked: false,
 };
 
 export type Action =
@@ -66,6 +74,7 @@ export type Action =
   | { type: "ENTER" }
   | { type: "CLOSE_LAYER" }
   | { type: "SET_MISSION"; text: string }
+  | { type: "TOGGLE_MISSION_DONE" }
   | { type: "ADD_TODO"; text: string }
   | { type: "TOGGLE_TODO"; id: number }
   | { type: "DELETE_TODO"; id: number }
@@ -94,7 +103,8 @@ export function reducer(state: AppState, action: Action): AppState {
     case "SET_LAYER":
       return { ...state, layer: action.layer };
     case "ENTER":
-      return { ...state, layer: "main", entered: true };
+      // A session that ended while the tab was closed is waiting for its choice (see persistence/mapping).
+      return { ...state, layer: state.timer.status === "complete" ? "choice" : "main", entered: true };
     case "CLOSE_LAYER":
       // Closing a screen returns to where the user was: the splash before entering, the room after.
       // The info pages hang off Settings once the user is in the room.
@@ -103,8 +113,10 @@ export function reducer(state: AppState, action: Action): AppState {
     case "SET_MISSION": {
       const text = action.text.trim();
       const first = text !== "" && !state.events.some((e) => e.kind === "mission_first_set");
-      return { ...state, mission: text, events: first ? [...state.events, { kind: "mission_first_set" }] : state.events };
+      return { ...state, mission: text, missionDone: false, events: first ? [...state.events, { kind: "mission_first_set" }] : state.events };
     }
+    case "TOGGLE_MISSION_DONE":
+      return state.mission ? { ...state, missionDone: !state.missionDone } : state;
     case "ADD_TODO": {
       const text = action.text.trim();
       if (!text) return state;
@@ -175,7 +187,7 @@ export function reducer(state: AppState, action: Action): AppState {
       return action.state;
     case "RESET":
       // Demo mode stays demo, so a reset can never turn into writing real progress later (M3 persistence).
-      return { ...initialState, layer: "splash", demo: state.demo };
+      return { ...initialState, layer: "splash", demo: state.demo, storageBlocked: state.storageBlocked };
   }
 }
 

@@ -1,0 +1,44 @@
+import { describe, expect, it } from "vitest";
+import { MINUTE } from "@/domain/timer";
+import { memoryAdapter } from "@/state/persistence/adapter";
+import { bootstrap } from "./bootstrap";
+import { parseMode } from "./initialState";
+
+const NOW = Date.UTC(2026, 10, 22, 12);
+const id = () => "client-test";
+
+describe("bootstrap", () => {
+  it("demo mode ignores storage completely and persists nothing", () => {
+    const adapter = memoryAdapter(JSON.stringify({ schema: 1, garbage: true }));
+    const b = bootstrap(parseMode("?demo=true"), NOW, adapter, id);
+    expect(b.persistence).toBeNull();
+    expect(b.initial.demo).toBe(true);
+    expect(adapter.dump().backups).toEqual([]); // the unreadable data was not even looked at
+  });
+
+  it("a first visit starts at the splash with nothing marked recovered", () => {
+    const b = bootstrap(parseMode(""), NOW, memoryAdapter(), id);
+    expect(b.initial).toMatchObject({ layer: "splash", entered: false, recovered: false, storageBlocked: false });
+    expect(b.persistence?.base.clientId).toBe("client-test");
+  });
+
+  it("unreadable data starts fresh, backs the old data up and says so", () => {
+    const adapter = memoryAdapter("{nope");
+    const b = bootstrap(parseMode(""), NOW, adapter, id);
+    expect(b.initial.recovered).toBe(true);
+    expect(adapter.dump().backups).toEqual(["{nope"]);
+  });
+
+  it("restores saved progress, including a timer that finished while the tab was closed", () => {
+    const first = bootstrap(parseMode(""), NOW, memoryAdapter(), id);
+    const saved = {
+      ...first.persistence!.base,
+      mission: { text: "Read", setAt: new Date(NOW).toISOString(), done: false },
+      timer: { status: "running", durationMs: 25 * MINUTE, endsAt: NOW + MINUTE },
+    };
+    const b = bootstrap(parseMode(""), NOW + 5 * MINUTE, memoryAdapter(JSON.stringify(saved)), id);
+    expect(b.initial.mission).toBe("Read");
+    expect(b.initial.timer.status).toBe("complete");
+    expect(b.initial.events).toHaveLength(1);
+  });
+});
