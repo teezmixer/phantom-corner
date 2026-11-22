@@ -1,5 +1,6 @@
 import { clampText, MAX_TODOS } from "@/domain/limits";
 import { isEvent } from "./guard";
+import { repairDeadline, repairSettings } from "./repair";
 import { initialState, type AppState, type Todo } from "../store";
 import type { Persisted } from "./schema";
 
@@ -39,20 +40,21 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     events = [...events, { kind: "session", plannedMs: timer.durationMs, focusedMs: timer.durationMs, outcome: "completed" }];
     timer = { status: "complete", durationMs: timer.durationMs };
   }
+  const settings = repairSettings(p.settings);
   return {
     ...initialState,
     name: p.name ?? "",
-    muted: p.settings.muted,
-    volumes: p.settings.volumes,
-    ambienceMix: p.settings.ambienceMix,
+    muted: settings.muted,
+    volumes: settings.volumes,
+    ambienceMix: settings.ambienceMix,
     mission: clampText(p.mission?.text ?? ""),
     missionDone: p.mission?.done ?? false,
-    missionDeadline: p.mission?.deadline ?? null,
-    hiddenWidgets: p.settings.hidden,
-    hudSize: p.settings.hudSize,
-    motion: p.settings.motion,
-    analytics: p.settings.analytics,
-    todoCollapsed: p.settings.todoCollapsed,
+    missionDeadline: repairDeadline(p.mission?.deadline),
+    hiddenWidgets: settings.hidden,
+    hudSize: settings.hudSize,
+    motion: settings.motion,
+    analytics: settings.analytics,
+    todoCollapsed: settings.todoCollapsed,
     ...repairTodos(p.todos, p.nextTodoId),
     timer,
     locationId: p.locationId,

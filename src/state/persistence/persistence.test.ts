@@ -112,29 +112,6 @@ describe("the real migrations 1 → 2 → 3 (existing users keep their progress)
     expect(twice).toEqual(once);
   });
 
-  it("rejects out-of-range volumes and mix levels", () => {
-    const ok = fresh();
-    expect(isPersisted({ ...ok, settings: { ...ok.settings, volumes: { music: 1.5, ambience: 0.3, ui: 0.7 } } })).toBe(false);
-    expect(isPersisted({ ...ok, settings: { ...ok.settings, volumes: { music: -1, ambience: 0.3, ui: 0.7 } } })).toBe(false);
-    expect(isPersisted({ ...ok, settings: { ...ok.settings, ambienceMix: { rain: 2 } } })).toBe(false);
-    expect(isPersisted({ ...ok, settings: { ...ok.settings, ambienceMix: { rain: 0.4 } } })).toBe(true);
-  });
-
-  it("rejects impossible preferences", () => {
-    const ok = fresh();
-    const bad = (patch: object) => isPersisted({ ...ok, settings: { ...ok.settings, ...patch } });
-    expect(bad({ hudSize: 2 })).toBe(false);
-    expect(bad({ hudSize: 1.15 })).toBe(true);
-    expect(bad({ motion: "loud" })).toBe(false);
-    expect(bad({ analytics: "yes" })).toBe(false);
-    expect(bad({ hidden: ["music"] })).toBe(false); // the TV can never be hidden
-    expect(bad({ hidden: ["buttonBar"] })).toBe(false); // nor the button bar
-    expect(bad({ hidden: ["nope"] })).toBe(false);
-    expect(bad({ hidden: ["timer", "todo"] })).toBe(true);
-    expect(isPersisted({ ...ok, mission: { text: "x", setAt: ISO, done: false, deadline: "not a date" } })).toBe(false);
-    expect(isPersisted({ ...ok, mission: { text: "x", setAt: ISO, done: false, deadline: ISO } })).toBe(true);
-  });
-
   it("round-trips the preferences and the mission deadline through the app state", () => {
     const state: AppState = { ...initialState, mission: "x", missionDeadline: ISO, hiddenWidgets: ["timer", "level"], hudSize: 1.3, motion: "reduced", analytics: false, todoCollapsed: true };
     const stored = toPersisted(state, fresh(), ISO);
@@ -328,6 +305,53 @@ describe("values the guard must refuse", () => {
   });
   it("still accepts a normal log", () => {
     expect(isPersisted({ ...ok, events: [{ kind: "mission_first_set" }, { kind: "session", plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed" }] })).toBe(true);
+  });
+});
+
+describe("one bad preference does not cost the user their save", () => {
+  const stored = (patch: object, mission?: object) => ({ ...fresh(), name: "Ren", events: [{ kind: "mission_first_set" }], settings: { ...fresh().settings, ...patch }, ...(mission ? { mission } : {}) });
+  const loadState = (data: unknown) => {
+    const r = load(JSON.stringify(data));
+    return { r, state: stateFromPersisted(r.persisted, NOW, { recovered: r.recovered, storageBlocked: false }) };
+  };
+
+  it.each([
+    ["an impossible HUD size", { hudSize: 2 }, "hudSize", 1],
+    ["a negative HUD size", { hudSize: -1 }, "hudSize", 1],
+    ["an unknown motion value", { motion: "loud" }, "motion", "system"],
+    ["a non-boolean analytics switch", { analytics: "yes" }, "analytics", true],
+    ["a non-boolean collapsed todo", { todoCollapsed: 5 }, "todoCollapsed", false],
+  ])("loads the save and falls back to the default for %s", (_name, patch, field, expected) => {
+    const { r, state } = loadState(stored(patch));
+    expect(r.recovered).toBe(false); // not treated as unreadable data
+    expect(r.adapter.dump().backups).toEqual([]);
+    expect((state as unknown as Record<string, unknown>)[field]).toEqual(expected);
+    expect(state.name).toBe("Ren"); // progress survives
+    expect(state.events).toHaveLength(1);
+  });
+
+  it("drops widgets that may not be hidden (the TV, the button bar, unknown ids) and duplicates, keeping the valid ones", () => {
+    const { state } = loadState(stored({ hidden: ["timer", "music", "buttonBar", "nope", "timer", "todo", 7] }));
+    expect(state.hiddenWidgets).toEqual(["timer", "todo"]);
+    expect(loadState(stored({ hidden: "everything" })).state.hiddenWidgets).toEqual([]);
+  });
+
+  it("clamps out-of-range volumes and mix levels, and drops unreadable ones", () => {
+    const { state } = loadState(stored({ volumes: { music: 1.5, ambience: -1, ui: "loud" }, ambienceMix: { rain: 2, murmur: "x", wind: 0.4 } }));
+    expect(state.volumes).toEqual({ music: 1, ambience: 0, ui: 0.7 }); // clamped, clamped, default
+    expect(state.ambienceMix).toEqual({ rain: 1, wind: 0.4 });
+  });
+
+  it("keeps the mission but drops a deadline that is not a date", () => {
+    const { state } = loadState(stored({}, { text: "Keep me", setAt: ISO, done: false, deadline: "not a date" }));
+    expect(state.mission).toBe("Keep me");
+    expect(state.missionDeadline).toBeNull();
+    expect(loadState(stored({}, { text: "x", setAt: ISO, done: false, deadline: ISO })).state.missionDeadline).toBe(ISO);
+  });
+
+  it("still refuses a save that is structurally broken", () => {
+    expect(load(JSON.stringify({ ...stored({}), settings: "oops" })).recovered).toBe(true);
+    expect(load(JSON.stringify({ ...stored({}), settings: { ...fresh().settings, volumes: 5 } })).recovered).toBe(true);
   });
 });
 
