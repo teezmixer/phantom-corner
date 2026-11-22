@@ -76,8 +76,6 @@ export const sessionEnd = {
 export const ui = {
   hideUi: "Hide UI",
   showUi: "Show UI",
-  resetAll: "Reset all data",
-  resetConfirm: "Press again to erase everything",
   stamped: "Today is stamped.",
   defaultName: "Student Ren",
   placeholderMarker: "placeholder",

@@ -116,12 +116,12 @@ test("the TV is visible, at least 200x200 and never covered, under every screen"
   await check("travel");
 });
 
-test("Reset all data needs a second press and keeps demo mode", async ({ page }) => {
+test("Delete my data needs a second press and keeps demo mode", async ({ page }) => {
   await page.goto("/?demo=true&at=menu");
   await page.getByRole("button", { name: /SETTINGS/ }).click();
-  await page.getByRole("button", { name: "Reset all data" }).click();
-  await expect(page.getByRole("button", { name: "Press again to erase everything" })).toBeVisible();
-  await page.getByRole("button", { name: "Press again to erase everything" }).click();
+  await page.getByRole("button", { name: "Delete my data" }).click();
+  await expect(page.getByRole("button", { name: "Press again to delete everything" })).toBeVisible();
+  await page.getByRole("button", { name: "Press again to delete everything" }).click();
   await expect(page.getByRole("button", { name: "Press to enter" })).toBeVisible();
 });
 

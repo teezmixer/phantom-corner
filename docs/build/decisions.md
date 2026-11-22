@@ -116,3 +116,12 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **Keyboard access to the TV while a screen is open:** a screen traps focus inside itself, so the TV's buttons can be reached by mouse but not by Tab until the screen closes.
 - **YouTube's default player chrome stays on the video** (spec §4.8), so there are two sets of controls (ours beside the video, YouTube's on it). If you prefer only ours, that needs the owner's sign-off against the "do not alter the player" rule.
 - **Privacy / About pages say nothing about YouTube yet.** Embedding YouTube means YouTube may set cookies/collect data even with the privacy-enhanced host; the wording belongs in your voice (D-14).
+
+### D-28 Settings rules I chose (provisional — Ares decides)
+- **Widget toggles:** every widget except the **TV** (YouTube rule, spec §4.8) and the **button bar** (the way into the menu) can be hidden. Hiding the bar would strand mouse users; keyboard users could still press M.
+- **HUD size** steps 0.85 / 1 / 1.15 / 1.3 (spec author's numbers) multiply the corner scaling; the TV's 200×200 inner player is unaffected.
+- **Motion:** "Reduce motion" overrides the operating system for animation libraries and for CSS (`data-motion="reduced"` collapses all animation and transition durations). "Follow my system" is the default. There is no "full motion even if the OS says reduce" option, on purpose.
+- **Analytics (D-14):** the switch exists and gates the Vercel scripts; **default ON** (provisional — you already had Analytics installed). Turning it off takes effect the next time the page loads, because a loaded script cannot be unloaded. Decide the real default and the privacy wording.
+- **Export** downloads progress and preferences as JSON (schema 3, no UI state). **Delete** removes every `pc:` key including backups, then resets to the splash; the browser may still hold a copy in its own history/back-forward cache until reloaded. Both are one-click/two-press with no sign-in (accounts: M11).
+- **Menu style** shows only "Hideout (text)" for now; the illustrated Student Ren style is M12.
+- **Mission deadline** counts in whole minutes (rounded up), is optional, belongs to the mission, and disappears when the mission is done. The wording ("due in 2 h 15 min", "overdue by 45 min") is a draft (D-10).
