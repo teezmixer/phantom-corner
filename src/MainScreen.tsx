@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import LocationWidget from "./LocationWidget";
+import LocationWidget from "@/widgets/Location/LocationWidget";
 import screenshot20260614At93936Pm1 from "./screenshot-2026-06-14-at-9-39-36-PM-1.png";
 
 // The HUD is designed on a 1440x900 reference screen, then scaled to the real screen.

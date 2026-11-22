@@ -1,6 +1,6 @@
 import React from "react";
 
-import leblancLocation from "./assets/location-leblanc.png";
+import leblancLocation from "@/assets/location-leblanc.png";
 
 type SpaceId = "leblanc" | "ryuji";
 
