@@ -84,6 +84,7 @@ export const ui = {
   lockedPlace: (n: number) => `Place ${n}`,
   lockedAt: (level: number) => `Locked · reach level ${level}`,
   youAreHere: "You are here",
+  banner: { knowledge: (n: number) => `+${n} Knowledge`, level: (n: number) => `Level ${n}` },
   mixer: "Mixer",
   tv: { region: "TV", previous: "Previous track", next: "Next track", play: "Play", pause: "Pause" },
   mixerBuses: { music: "Music", ambience: "Ambience", ui: "Interface" },

@@ -15,6 +15,7 @@ import { SettingsScreen } from "@/screens/Settings/SettingsScreen";
 import { Splash } from "@/screens/Splash/Splash";
 import { SummaryScreen } from "@/screens/Summary/SummaryScreen";
 import { TravelScreen } from "@/screens/Travel/TravelScreen";
+import { Banner } from "./Banner";
 import { DevPanel } from "./DevPanel";
 import MainScreen from "./MainScreen";
 
@@ -80,6 +81,7 @@ export function App({ dev }: { dev: boolean }) {
       {LAYERS[state.layer]?.()}
       <TabTitle />
       <StorageNotice />
+      {state.entered && <Banner />}
       {dev && <DevPanel />}
     </>
   );
