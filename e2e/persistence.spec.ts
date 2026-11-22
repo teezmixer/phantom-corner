@@ -10,6 +10,7 @@ const waitForSaved = (page: Page, check: (raw: string) => boolean) =>
 async function enter(page: Page) {
   await page.getByRole("button", { name: "Press to enter" }).click();
 }
+const enter2 = enter;
 
 test("progress survives a reload: mission, todos, location, Knowledge and a running timer", async ({ page }) => {
   await page.clock.install();
@@ -52,6 +53,14 @@ test("a session that ended while the tab was closed still counts and waits at th
   await expect(page.getByRole("dialog", { name: "Time." })).toBeVisible();
   await page.getByRole("button", { name: "Call it" }).click();
   await expect(page.getByRole("dialog", { name: "Session complete" })).toContainText("25");
+  await page.getByRole("button", { name: "Done for today" }).click();
+  // Counted exactly once: one session, 25 minutes, 30 Knowledge (25 + 5 bonus). A double count would show 2 / 50 / 60.
+  await page.keyboard.press("m");
+  await page.getByRole("button", { name: /PROFILE/ }).click();
+  const profile = page.getByRole("dialog", { name: "Profile" });
+  await expect(profile.locator("dt:has-text('Sessions') + dd")).toHaveText("1");
+  await expect(profile.locator("dt:has-text('Minutes focused') + dd")).toHaveText("25");
+  await expect(profile.locator("dt:has-text('Knowledge') + dd")).toHaveText("30");
 });
 
 test("unreadable saved data is backed up and the visit starts fresh, with Morgana saying so", async ({ page }) => {
@@ -137,6 +146,67 @@ test("the mission can be marked done and that survives a reload", async ({ page 
   await page.reload();
   await enter(page);
   await expect(page.getByRole("checkbox", { name: "Mission done" })).toBeChecked();
+});
+
+test("taking over carries the mission and running timer to the new tab, and the old tab stays out", async ({ page, context }) => {
+  await page.goto("/");
+  await enter(page);
+  await page.getByLabel("Today's mission").fill("Finish chapter 3");
+  await page.getByRole("button", { name: "Set" }).click();
+  await page.getByRole("button", { name: "Start" }).click();
+  await waitForSaved(page, (raw) => raw.includes("Finish chapter 3") && raw.includes('"running"'));
+
+  const second = await context.newPage();
+  await second.route("**/_vercel/**", (route) => route.fulfill({ status: 200, contentType: "text/javascript", body: "" }));
+  await second.goto("/");
+  await second.getByRole("button", { name: "Study here instead" }).click();
+  await enter2(second);
+  await expect(second.getByText("Finish chapter 3")).toBeVisible();
+  await expect(second.getByRole("timer").first()).toContainText(/2[45]:\d\d/); // the running timer came across
+  await expect(page.getByRole("alertdialog")).toBeVisible(); // the first tab gave way
+
+  // The new owner's changes are what ends up stored; the locked tab cannot overwrite them
+  await second.getByRole("button", { name: "Edit mission" }).click();
+  await second.getByLabel("Today's mission").fill("Second tab mission");
+  await second.getByRole("button", { name: "Set" }).click();
+  await expect.poll(() => page.evaluate((k) => localStorage.getItem(k), KEY).then((r) => r?.includes("Second tab mission"))).toBe(true);
+  await page.waitForTimeout(800);
+  expect(await page.evaluate((k) => localStorage.getItem(k), KEY)).toContain("Second tab mission");
+  await second.close();
+});
+
+test("dev mode shows saved progress but never writes it", async ({ page }) => {
+  await page.goto("/");
+  await enter(page);
+  await page.getByLabel("Today's mission").fill("Real mission");
+  await page.getByRole("button", { name: "Set" }).click();
+  await waitForSaved(page, (raw) => raw.includes("Real mission"));
+  const before = await stored(page);
+  await page.goto("/?dev=true");
+  await enter(page);
+  await expect(page.getByText("Real mission")).toBeVisible(); // reads the real progress
+  await page.getByRole("button", { name: "+50 Knowledge" }).click();
+  await page.getByRole("button", { name: "Reset all data" }).click();
+  await page.waitForTimeout(600);
+  expect(await stored(page)).toBe(before); // nothing written
+});
+
+test("a save that fails mid-session tells the user instead of pretending progress is kept", async ({ page }) => {
+  await page.addInitScript(() => {
+    const real = Storage.prototype.setItem;
+    (window as unknown as { __failWrites: boolean }).__failWrites = false;
+    Storage.prototype.setItem = function (k: string, v: string) {
+      if ((window as unknown as { __failWrites: boolean }).__failWrites) throw new DOMException("full", "QuotaExceededError");
+      return real.call(this, k, v);
+    };
+  });
+  await page.goto("/");
+  await enter(page);
+  await expect(page.getByRole("status").filter({ hasText: "can't write anything down" })).toHaveCount(0);
+  await page.evaluate(() => { (window as unknown as { __failWrites: boolean }).__failWrites = true; });
+  await page.getByLabel("Today's mission").fill("This will not save");
+  await page.getByRole("button", { name: "Set" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "can't write anything down" })).toBeVisible();
 });
 
 test("a second tab shows the takeover screen and taking over moves the session", async ({ page, context }) => {

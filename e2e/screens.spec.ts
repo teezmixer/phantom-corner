@@ -15,7 +15,7 @@ const SIZES = [
 type Page = import("@playwright/test").Page;
 type Context = import("@playwright/test").BrowserContext;
 /** `before` runs before navigation (init scripts); `ready` may return another page to photograph instead. */
-type Screen = { name: string; path: string; clock?: boolean; since?: string; before?: (page: Page) => Promise<void>; ready?: (page: Page, context: Context) => Promise<Page | void> };
+type Screen = { name: string; path: string; clock?: boolean; since?: string; before?: (page: Page) => Promise<void>; ready?: (page: Page, context: Context, opts: { reduced: boolean }) => Promise<Page | void> };
 const fromMenu = (item: RegExp) => async (page: Page) => {
   await page.getByRole("button", { name: item }).click();
 };
@@ -36,7 +36,7 @@ const SCREENS: Screen[] = [
   { name: "timer-custom", path: "/", since: "M3", ready: async (p) => { await enterRoom(p); await p.getByLabel("Session length").selectOption("custom"); } },
   { name: "splash-recovered", path: "/", since: "M3", before: async (p) => { await p.addInitScript(() => { if (!sessionStorage.getItem("seeded")) { localStorage.setItem("pc:v1", "{nope"); sessionStorage.setItem("seeded", "1"); } }); } },
   { name: "splash-storage-blocked", path: "/", since: "M3", before: async (p) => { await p.addInitScript(() => { const boom = () => { throw new DOMException("blocked", "SecurityError"); }; Storage.prototype.getItem = boom; Storage.prototype.setItem = boom; }); } },
-  { name: "tab-lock", path: "/", since: "M3", ready: async (_p, context) => { const second = await context.newPage(); await second.goto("/"); await second.getByRole("alertdialog").waitFor(); return second; } },
+  { name: "tab-lock", path: "/", since: "M3", ready: async (p, context, { reduced }) => { const second = await context.newPage(); await second.setViewportSize(p.viewportSize()!); await second.emulateMedia({ reducedMotion: reduced ? "reduce" : "no-preference" }); await second.goto("/"); await second.getByRole("alertdialog").waitFor(); return second; } },
   { name: "scene-ryuji", path: "/?demo=true&dev=true", ready: async (p) => { await p.getByLabel("Jump to location").selectOption("ryuji"); } },
 ];
 
@@ -54,7 +54,7 @@ test.describe("review screenshots", () => {
           await page.setViewportSize({ width, height });
           await page.goto(screen.path);
           if (screen.clock) await page.clock.resume();
-          const target = (await screen.ready?.(page, page.context())) ?? page;
+          const target = (await screen.ready?.(page, page.context(), { reduced })) ?? page;
           await page.waitForTimeout(600); // let entrance animations settle
           await expect(page.locator("body")).toBeVisible();
           await target.screenshot({ path: `docs/build/screens/${MILESTONE}/${screen.name}-${suffix}.jpg`, type: "jpeg", quality: 70 });
