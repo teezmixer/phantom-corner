@@ -62,7 +62,7 @@ export const THREADS: readonly Thread[] = [
   },
   character("ryuji", "Ryuji"),
   // Spec §3.1: on arrival at Ryuji's place, in Morgana's voice. Only offered when accounts are on and the player has none.
-  { id: "save", title: "Morgana", from: "morgana", trigger: { on: "save_offer" }, steps: [say(morgana.savePrompt), { ask: "save_progress" }, say(morgana.saveAfter)] },
+  { id: "save", title: "Save progress", from: "morgana", trigger: { on: "save_offer" }, steps: [say(morgana.savePrompt), { ask: "save_progress" }, say(morgana.saveAfter)] },
   character("ann", "Ann"),
   character("yusuke", "Yusuke"),
   character("makoto", "Makoto"),
