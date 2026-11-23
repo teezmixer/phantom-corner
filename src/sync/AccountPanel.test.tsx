@@ -18,11 +18,11 @@ const base = freshPersisted("c1", "2026-11-20T10:00:00.000Z", { timer: initialTi
 const adapter: StorageAdapter = { read: () => null, write: () => true, backup: () => true, blocked: false };
 
 /** One "device": a store with some local progress, the account provider over a shared fake server, and the panel. */
-function device(server: FakeServer, patch: Partial<AppState> = {}) {
+function device(server: FakeServer, patch: Partial<AppState> = {}, backendFor: (s: FakeServer) => FakeBackend = (s) => new FakeBackend(s)) {
   let send!: (a: Action) => void;
   let latest!: AppState;
   function Grab() { const s = useStore(); useEffect(() => { send = s.dispatch; latest = s.state; }); return null; }
-  const api = new FakeBackend(server);
+  const api = backendFor(server);
   const view = render(
     <StoreProvider initial={{ ...initialState, layer: "settings", entered: true, clientId: "c1", accountsEnabled: true, ...patch }}>
       <AccountProvider backend={{ api, fake: true }} adapter={adapter} base={base}><AccountPanel /><SyncDot /><Grab /></AccountProvider>
@@ -127,6 +127,24 @@ describe("the account panel", () => {
     await waitFor(() => expect(server.users.size).toBe(0));
     expect(await screen.findByText(t.deleted)).toBeInTheDocument();
     expect(d.state().mission).toBe("Still here");
+  });
+
+  it("a change made while a sync is still on its way, when the pause before syncing is over, is synced as soon as that one ends", async () => {
+    const server = new FakeServer();
+    let release!: () => void;
+    let gate: Promise<void> = Promise.resolve();
+    class Slow extends FakeBackend { override async pullEvents() { await gate; return super.pullEvents(); } }
+    const d = device(server, { events: [{ kind: "mission_first_set", id: "c1:1" }] }, (s) => new Slow(s));
+    const user = await signIn();
+    await screen.findByText(new RegExp(t.signedInAs));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.syncedPractice));
+    gate = new Promise<void>((resolve) => { release = resolve; });
+    await user.click(screen.getByRole("button", { name: t.syncNow })); // a sync begins and waits on the network
+    d.send({ type: "SET_MISSION", text: "Written during the sync" });
+    await act(async () => { vi.advanceTimersByTime(2500); }); // the pause is over while the first sync is still waiting: that request is queued, not dropped
+    expect(server.userFor("ren@example.com").docs.mission?.data).toBeNull(); // nothing of the new mission is on the server yet
+    release();
+    await waitFor(() => expect(server.userFor("ren@example.com").docs.mission?.data?.text).toBe("Written during the sync"), { timeout: 1200 });
   });
 
   it("when the server is down it says progress is safe, and tries again when asked", async () => {

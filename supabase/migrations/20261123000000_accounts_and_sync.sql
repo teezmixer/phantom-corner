@@ -43,10 +43,21 @@ create table public.progress_events (
   -- The first mission carries nothing: no free text can be stored through the event log.
   constraint mission_payload check (kind <> 'mission_first_set' or payload = '{}'::jsonb),
   constraint payload_size check (pg_column_size(payload) < 1024),
-  -- Not in the future (a minute of clock slack), and not older than the app has existed.
-  constraint not_in_future check (occurred_at <= now() + interval '1 minute'),
-  constraint not_ancient check (occurred_at > now() - interval '5 years')
+  -- Not in the future (a minute of clock slack). A row only gets older, so this stays true for ever.
+  constraint not_in_future check (occurred_at <= now() + interval '1 minute')
 );
+
+-- "Not older than five years" depends on the clock going forward, so it cannot be a check (a restore years later would reject
+-- old rows); it is enforced when a row is inserted.
+create function public.progress_events_not_ancient() returns trigger language plpgsql as $$
+begin
+  if new.occurred_at <= now() - interval '5 years' then
+    raise exception 'not_ancient: occurred_at is older than the app has existed' using errcode = '23514';
+  end if;
+  return new;
+end $$;
+create trigger progress_events_not_ancient before insert on public.progress_events
+  for each row execute function public.progress_events_not_ancient();
 create index progress_events_user_time on public.progress_events (user_id, occurred_at);
 
 create table public.user_docs (

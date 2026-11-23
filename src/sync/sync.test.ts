@@ -178,6 +178,26 @@ describe("applying a sync to the state", () => {
     expect(next.mission).toBe("Changed meanwhile"); // not overwritten by the older copy; it goes up on the next sync
   });
 
+  it("keeps a settings change or a todo made during the sync, just as it keeps a mission (each document has its own check)", () => {
+    const began = reducer(room, { type: "SET_MISSION", text: "Read" });
+    const basis = basisOf(began);
+    const merged = plan(snapshotFromState(began, base, T2), [], {
+      settings: { data: settings(true), updatedAt: T3 },
+      todos: { data: { todos: [{ id: 1, text: "from elsewhere", done: false }], nextTodoId: 2 }, updatedAt: T3 },
+    }).merged;
+    // Without a change meanwhile both are taken…
+    const taken = reducer(began, { type: "SYNC_APPLY", patch: patchFromSnapshot(merged), basis });
+    expect(taken.muted).toBe(true);
+    expect(taken.todos.map((t) => t.text)).toEqual(["from elsewhere"]);
+    // …with a change meanwhile to each, neither is overwritten.
+    let now = reducer(began, { type: "SET_HUD_SIZE", size: 1.3 }); // a settings change meanwhile (the remote copy says muted)…
+    now = reducer(now, { type: "ADD_TODO", text: "added meanwhile" });
+    const kept = reducer(now, { type: "SYNC_APPLY", patch: patchFromSnapshot(merged), basis });
+    expect(kept.todos.map((t) => t.text)).toEqual(["added meanwhile"]);
+    expect(kept.muted).toBe(false); // the remote settings were not taken over the meanwhile change
+    expect(kept.hudSize).toBe(1.3);
+  });
+
   it("keeps the time a document had where it came from, so a stale copy cannot later pass as new (review of M11)", () => {
     const s = reducer(room, { type: "SET_MISSION", text: "Mine" });
     const remote = snap(s.events, T1, { mission: { data: { text: "Theirs", setAt: T1, done: false }, updatedAt: T3 } });
