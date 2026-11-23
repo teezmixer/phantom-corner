@@ -1,10 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { lazy, Suspense, useEffect, useMemo } from "react";
 import { MotionConfig } from "motion/react";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useStore } from "@/state/StoreProvider";
 import { useAnalyticsEvents } from "./useAnalyticsEvents";
-import { analyticsGate, readOptOut, rememberOptOut, setAnalyticsAllowed } from "./telemetry";
+import { readOptOut, rememberOptOut, setAnalyticsAllowed } from "./telemetry";
 import { useSessionLock } from "@/hooks/useSessionLock";
 import { TabLockScreen } from "@/screens/TabLock/TabLockScreen";
 import { localStorageAdapter } from "@/state/persistence/adapter";
@@ -14,6 +12,10 @@ import { AudioProvider } from "@/audio/AudioProvider";
 import { App } from "./App";
 import { bootstrap, type Bootstrap } from "./bootstrap";
 import type { UrlMode } from "./initialState";
+
+// Sync and sign-in are only loaded when accounts are switched on, so everyone else never downloads them.
+const VercelScripts = lazy(() => import("./VercelScripts"));
+const AccountsRoot = lazy(() => import("@/sync/AccountsRoot"));
 
 /**
  * One tab owns the session (spec §4.7). Saved data is read only AFTER the lock is held, inside <Session>, so a tab
@@ -44,7 +46,11 @@ function Session({ mode }: { mode: UrlMode }) {
     <StoreProvider initial={boot.initial} persistence={persistence}>
       <Preferences events={!mode.dev}>
         <AudioProvider>
-          <App dev={mode.dev} />
+          {boot.initial.accountsEnabled && boot.persistence ? (
+            <Suspense fallback={null}><AccountsRoot adapter={boot.persistence.adapter} base={boot.persistence.base}><App dev={mode.dev} /></AccountsRoot></Suspense>
+          ) : (
+            <App dev={mode.dev} />
+          )}
         </AudioProvider>
       </Preferences>
     </StoreProvider>
@@ -71,12 +77,7 @@ function Preferences({ children, events }: { children: React.ReactNode; events: 
   return (
     <MotionConfig reducedMotion={reduced ? "always" : "user"}>
       {children}
-      {state.analytics && (
-        <>
-          <Analytics beforeSend={analyticsGate} />
-          <SpeedInsights beforeSend={analyticsGate} />
-        </>
-      )}
+      {state.analytics && <Suspense fallback={null}><VercelScripts /></Suspense>}
     </MotionConfig>
   );
 }

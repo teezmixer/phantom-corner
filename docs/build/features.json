@@ -1374,8 +1374,8 @@
       "spec": "§3.1",
       "description": "On arrival at Ryuji's location, Morgana's save prompt appears: \"Hold up — want to save your progress?\"",
       "steps": "Playwright: first arrival at ryuji shows prompt.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/state/savePrompt.test.ts: with accounts on and the player signed out, arriving at Ryuji's place starts Morgana's thread with the verbatim line; Yes opens Settings and closes the phone, Not now stays and never asks again; not offered before arrival, with accounts off, signed in, or in the demo. e2e/accounts.spec.ts runs it from a real session and trip."
     },
     {
       "id": "acct-email-code",
@@ -1385,8 +1385,8 @@
       "spec": "§4.9",
       "description": "Email-code sign-in UI behind a flag, working against the local fake.",
       "steps": "Component with fake auth.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/sync/AccountPanel.test.tsx (component with the fake): a bad address and a wrong code each say so in words; the right code signs in. e2e/accounts.spec.ts signs in through the panel. Behind ?accounts=true; real emails wait for B-10. Words for a wrong code and a bad address live in content/copy."
     },
     {
       "id": "acct-sync-fake",
@@ -1396,8 +1396,8 @@
       "spec": "§4.9",
       "description": "Sync module behind an interface merges events by id and docs by newest stamp (local fake).",
       "steps": "Unit: merge rules.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/sync/sync.test.ts: events merge by id (this device's order first, idempotent, a first mission on two devices counts once), documents by newest stamp (tie keeps this device), equal data is not pushed, developer grants never leave, a failed pull writes nothing, guest-to-account uploads once, a second device ends with both histories, one account cannot see another's; SYNC_APPLY cannot touch the timer, place or story and drops bad events. Mutation-checked (tie rule, id de-duplication). After review: SYNC_APPLY merges with the state as it is after the round trip (a mission, event or todo made during a sync is kept), keeps the remote time of a document it adopts, and never carries the analytics choice; one refused event does not stop the rest (all mutation-checked)."
     },
     {
       "id": "acct-sync-live",
@@ -1408,7 +1408,7 @@
       "description": "Live Supabase sync (blocked per pre-flight P4 until credentials exist).",
       "steps": "n/a until credentials.",
       "status": "blocked",
-      "evidence": "docs/build/blocked.md B-02 (pre-flight P4)"
+      "evidence": "B-10: no Supabase project or keys yet (pre-flight P4). The contract is src/sync/types.ts; the fake and the SQL are done."
     },
     {
       "id": "acct-rls",
@@ -1418,8 +1418,8 @@
       "spec": "§4.9",
       "description": "SQL migrations, RLS policies and the four RLS tests are in the repo.",
       "steps": "Files present; tests runnable against a Supabase project (live run blocked).",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "supabase/migrations/20261123000000_accounts_and_sync.sql and src/sync/rls.test.ts (15 cases): the spec's four tests (B cannot read A's events; signed-out reads nothing; a forged user_id is rejected; an event cannot be updated or deleted), the same event id for two accounts, no truncate, own-row documents and profiles, an older document ignored and a far-future one refused, payload checks that do not pass on a missing key, free text refused in the first mission, size and age limits, account delete. Run against an in-process Postgres (PGlite) set up with Supabase's default grants; mutation-checked on the grants, the key, the coalesce and the trigger. NOT run against a real Supabase project: B-10."
     },
     {
       "id": "acct-sign-out",
@@ -1429,8 +1429,8 @@
       "spec": "§4.9",
       "description": "Signing out keeps local progress.",
       "steps": "Unit with fake.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/sync/AccountPanel.test.tsx: after sign out the mission and events are unchanged and the server keeps its copy; e2e/accounts.spec.ts: the mission and the place stay after signing out."
     },
     {
       "id": "acct-export-delete",
@@ -1440,8 +1440,8 @@
       "spec": "§4.9",
       "description": "Account export and account delete flows (local fake; live delete blocked).",
       "steps": "Component tests.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/sync/AccountPanel.test.tsx: export downloads the account's email, events and documents as JSON; delete takes two presses, removes the account in the fake and leaves local progress; the SQL delete_my_account is tested in rls.test.ts. The live delete waits for B-10."
     },
     {
       "id": "comm-presence",
@@ -1506,8 +1506,8 @@
       "spec": "§3.11",
       "description": "Every §3.11 state exists: first paint, travel loading, unreadable data, storage blocked, music blocked/unavailable, offline, sync down, app error, second tab.",
       "steps": "Playwright per state (forced via dev tools).",
-      "status": "todo",
-      "evidence": "PARTIAL (stays todo until M11): first paint (black, no skeleton), travel loading, unreadable data, storage blocked, second tab, music blocked/unavailable (earlier milestones, each with a test), offline (e2e/states.spec.ts: mission, timer and todos work, the TV says the tape is gone) and app error (e2e/states.spec.ts) are done. Missing: \"sync down\" (the V1b dot) needs accounts and sync (M11)."
+      "status": "pass",
+      "evidence": "All nine of §3.11: first paint (black, no skeleton), travel loading, unreadable data, storage blocked, second tab, music blocked or unavailable (earlier milestones, each tested), offline and app error (e2e/states.spec.ts), and sync down (the corner dot and the Settings sentence, src/sync/AccountPanel.test.tsx; behind ?accounts=true until B-10)."
     },
     {
       "id": "q-storage-adapter",

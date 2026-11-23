@@ -11,7 +11,8 @@ import { answer, pendingAsk, post, skip, stepAll, type Facts, type Progress } fr
 import { HUD_SIZES, type HudSize, type WidgetId, TOGGLEABLE_WIDGETS } from "@/hud/slots";
 import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MotionSetting, type Volumes } from "./persistence/schema";
 import { initialTimer, remainingMs, transition, type TimerEvent, type TimerState } from "@/domain/timer";
-import type { ProgressEvent } from "@/domain/progress";
+import { stampEventIds, type ProgressEvent } from "@/domain/progress";
+import { mergeEvents } from "@/sync/merge";
 import { bannersFor, type BannerMessage } from "./banners";
 import { derive } from "./derive";
 
@@ -40,6 +41,14 @@ export interface AppState {
   timer: TimerState;
   breakEndsAt: number | null;
   events: ProgressEvent[];
+  /** Accounts are on for this visit (?accounts=true until the live backend exists, B-10). Not saved. */
+  accountsEnabled: boolean;
+  /** Signed in to an account right now. Not saved: the backend keeps its own session. */
+  signedIn: boolean;
+  /** Documents just taken from a sync, with the time they carry and the state they produced; the saver uses the time while the document is unchanged. Not saved. */
+  adopted?: Partial<Record<"settings" | "mission" | "todos", { stamp: string; key: string }>>;
+  /** This device's id, the prefix of its event ids (D-24). Empty in the demo and dev mode, which never sync. Not part of any visible state. */
+  clientId: string;
   /** Days studied, each with the stamp design earned at the time (calendar, spec §3.4). */
   studiedDays: readonly StampedDay[];
   unreadThreads: string[];
@@ -94,6 +103,9 @@ export const initialState: AppState = {
   timer: initialTimer,
   breakEndsAt: null,
   events: [],
+  clientId: "",
+  accountsEnabled: false,
+  signedIn: false,
   studiedDays: [],
   unreadThreads: [],
   story: {},
@@ -168,6 +180,9 @@ export type Action =
   | { type: "SET_VOLUME"; bus: keyof Volumes; value: number }
   | { type: "SET_LAYER_VOLUME"; id: string; value: number }
   | { type: "DEV_GRANT"; knowledge: number }
+  /** The result of a sync: the merged event log and documents (built in sync/apply.ts). */
+  | { type: "SYNC_APPLY"; patch: SyncPatch; basis: { settings: string; mission: string; todos: string } }
+  | { type: "SET_SIGNED_IN"; signedIn: boolean }
   | { type: "DEV_UNLOCK_ALL" }
   | { type: "DEV_JUMP_LOCATION"; id: string }
   | { type: "LOAD"; state: AppState }
@@ -197,6 +212,7 @@ export function factsFor(state: AppState): Facts {
     sessionsCompleted: state.events.filter((e) => e.kind === "session" && e.outcome === "completed").length,
     visited: state.visited,
     unlocked: derive(state).unlocked,
+    saveOffer: state.accountsEnabled && !state.signedIn && state.visited.includes("ryuji"),
     release: RELEASE_VERSION,
     defaultName: ui.defaultName,
   };
@@ -220,13 +236,65 @@ export function settle(state: AppState): AppState {
   return { ...state, story: result.progress, events, unreadThreads: unread, ...(startedOnboarding ? { phoneOpen: true, phoneThread: "morgana" } : {}) };
 }
 
+/** The state fields behind each synced document. The analytics choice is deliberately not among them: consent stays on the device. */
+type SettingsFields = Pick<AppState, "muted" | "volumes" | "ambienceMix" | "hiddenWidgets" | "hudSize" | "motion" | "todoCollapsed">;
+type MissionFields = Pick<AppState, "mission" | "missionDone" | "missionDeadline">;
+type TodosFields = Pick<AppState, "todos" | "nextTodoId">;
+
+/** What a sync may set: the event log and the three synced documents, nothing else. */
+export interface SyncPatch {
+  events: ProgressEvent[];
+  settings: SettingsFields;
+  mission: MissionFields;
+  todos: TodosFields;
+  /** When each document last changed on the side it came from (ISO), so the saver keeps that time instead of "now". */
+  stamps: { settings: string; mission: string; todos: string };
+}
+
+/** The synced documents of a state, each as a comparable string. Equal strings mean the document has not changed. */
+export function syncGroups(s: AppState): { settings: string; mission: string; todos: string } {
+  return {
+    settings: JSON.stringify([s.muted, s.volumes, s.ambienceMix, s.hiddenWidgets, s.hudSize, s.motion, s.todoCollapsed]),
+    mission: JSON.stringify([s.mission, s.missionDone, s.missionDeadline]),
+    todos: JSON.stringify([s.todos, s.nextTodoId]),
+  };
+}
+
+/**
+ * Applies a finished sync to the state as it is NOW, not as it was when the sync began (the round trip takes time and the
+ * player keeps playing). Events are unioned by id, so one recorded meanwhile is never lost. A document is taken from the sync
+ * only if it has not changed since the sync began (`basis`); one the player changed meanwhile is kept and goes up next time.
+ * A document that is taken keeps the time it had where it came from, so the saver does not re-date it to now.
+ */
+function applySync(state: AppState, patch: SyncPatch, basis: { settings: string; mission: string; todos: string }): AppState {
+  const now = syncGroups(state);
+  let next: AppState = { ...state, events: mergeEvents(state.events, patch.events) };
+  const adopted: NonNullable<AppState["adopted"]> = { ...state.adopted };
+  if (now.settings === basis.settings) { next = { ...next, ...patch.settings }; adopted.settings = { stamp: patch.stamps.settings, key: syncGroups(next).settings }; }
+  if (now.mission === basis.mission) { next = { ...next, ...patch.mission }; adopted.mission = { stamp: patch.stamps.mission, key: syncGroups(next).mission }; }
+  if (now.todos === basis.todos) { next = { ...next, ...patch.todos }; adopted.todos = { stamp: patch.stamps.todos, key: syncGroups(next).todos }; }
+  return { ...next, adopted };
+}
+
 /** The reducer proper plus the story and the banners each change deserves (pure rules in domain/story.ts and banners.ts). */
 export function reducer(state: AppState, action: Action): AppState {
   const raw = coreReducer(state, action);
   // A session that has started ends the stretch of idling: the place may speak again next time.
   const core = raw.idleSaid && raw.timer.status !== "idle" ? { ...raw, idleSaid: false } : raw;
   const next = action.type === "DISMISS_BANNER" || action.type === "RESET" ? core : settle(core);
-  if (action.type === "DISMISS_BANNER" || action.type === "RESET" || action.type === "LOAD") return next;
+  // A sync brings in history, not news: no banners for levels and places earned on another device.
+  if (action.type === "DISMISS_BANNER" || action.type === "RESET" || action.type === "LOAD" || action.type === "SYNC_APPLY") return next;
+  return withBanners(state, withEventIds(state, next));
+}
+
+/** Every event appended by this action gets its id here, in one place, so no reducer branch needs a clock or an id source. */
+function withEventIds(prev: AppState, next: AppState): AppState {
+  if (next.events === prev.events || next.clientId === "") return next;
+  const events = stampEventIds(next.events, next.clientId);
+  return events === next.events ? next : { ...next, events };
+}
+
+function withBanners(state: AppState, next: AppState): AppState {
   const fresh = bannersFor(state, next);
   if (fresh.length === 0) return next;
   // The greeting comes first: Sojiro says hello, then the news waiting from a session that ended while the tab was closed.
@@ -343,6 +411,10 @@ function coreReducer(state: AppState, action: Action): AppState {
       return state.banners.length === 0 ? state : { ...state, banners: state.banners.slice(1) };
     case "STORAGE_FAILED":
       return state.storageBlocked ? state : { ...state, storageBlocked: true };
+    case "SET_SIGNED_IN":
+      return state.signedIn === action.signedIn ? state : { ...state, signedIn: action.signedIn };
+    case "SYNC_APPLY":
+      return applySync(state, action.patch, action.basis);
     case "MARK_ALL_UNREAD":
       return { ...state, unreadThreads: action.ids };
     case "SET_PHONE":
@@ -360,7 +432,9 @@ function coreReducer(state: AppState, action: Action): AppState {
       const said = clampText(action.text);
       const nextProgress = answer(thread, progress, said, asked === "name" ? said : state.name || ui.defaultName);
       if (nextProgress === progress) return state;
-      return { ...state, story: { ...state.story, [action.id]: nextProgress }, name: asked === "name" ? said : state.name };
+      // "Yes" to the save prompt takes the player to where accounts live (Settings); "Not now" leaves them in the room.
+      const toSettings = asked === "save_progress" && action.text === ui.thread.saveYes;
+      return { ...state, story: { ...state.story, [action.id]: nextProgress }, name: asked === "name" ? said : state.name, ...(toSettings ? { layer: "settings" as const, phoneOpen: false } : {}) };
     }
     case "POST_MESSAGE": {
       const thread = THREADS.find((t) => t.id === action.id);
@@ -400,7 +474,7 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "RESET":
       // Demo mode stays demo, so a reset can never turn into writing real progress later (M3 persistence).
       // Demo stays demo, and the analytics choice is never silently undone by a reset.
-      return { ...initialState, layer: "splash", demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
+      return { ...initialState, layer: "splash", clientId: state.clientId, accountsEnabled: state.accountsEnabled, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
   }
 }
 

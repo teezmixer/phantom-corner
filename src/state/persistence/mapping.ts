@@ -1,9 +1,10 @@
 import { recordSession, repairStampedDays } from "@/domain/calendar";
 import { clampText, MAX_TODOS } from "@/domain/limits";
+import { stampEventIds } from "@/domain/progress";
 import { isEvent } from "./guard";
 import { repairDeadline, repairSettings, repairStory } from "./repair";
 import { bannersFor } from "../banners";
-import { MAX_BANNERS, initialState, type AppState, type Todo } from "../store";
+import { MAX_BANNERS, initialState, syncGroups, type AppState, type Todo } from "../store";
 import type { Persisted } from "./schema";
 
 /**
@@ -35,7 +36,8 @@ export function repairTodos(todos: readonly Todo[], nextTodoId: number): { todos
 export function stateFromPersisted(p: Persisted, now: number, flags: { recovered: boolean; storageBlocked: boolean; firstVisit?: boolean }): AppState {
   let timer = p.timer;
   // A single impossible event is dropped; the rest of the history is kept.
-  let events = p.events.filter(isEvent);
+  // Saves from before ids get theirs here (D-24): "<clientId>:<n>" in log order.
+  let events = stampEventIds(p.events.filter(isEvent), p.clientId);
   // An end time further away than the whole session (a corrupt value, or the clock moved) is pulled back to a full session.
   if (timer.status === "running") timer = { ...timer, endsAt: Math.min(timer.endsAt, now + timer.durationMs) };
   let studiedDays = repairStampedDays(p.studiedDays);
@@ -69,6 +71,7 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     locationId: p.locationId,
     visited: p.visited,
     events,
+    clientId: p.clientId,
     studiedDays,
     banners: offlineBanners.slice(-MAX_BANNERS),
     unreadThreads: p.unreadThreads,
@@ -77,6 +80,12 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     recovered: flags.recovered,
     storageBlocked: flags.storageBlocked,
   };
+}
+
+/** A changed document is dated now, unless it is exactly what a sync just brought in: then it keeps the time it came with. */
+function stampFor(state: AppState, doc: "settings" | "mission" | "todos", nowIso: string): string {
+  const adopted = state.adopted?.[doc];
+  return adopted && adopted.key === syncGroups(state)[doc] ? adopted.stamp : nowIso;
 }
 
 /**
@@ -113,9 +122,9 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
     unreadThreads: state.unreadThreads,
     story: { ...state.story },
     stamps: {
-      settings: settingsChanged ? nowIso : prev.stamps.settings,
-      mission: missionChanged ? nowIso : prev.stamps.mission,
-      todos: todosChanged ? nowIso : prev.stamps.todos,
+      settings: settingsChanged ? stampFor(state, "settings", nowIso) : prev.stamps.settings,
+      mission: missionChanged ? stampFor(state, "mission", nowIso) : prev.stamps.mission,
+      todos: todosChanged ? stampFor(state, "todos", nowIso) : prev.stamps.todos,
     },
   };
 }

@@ -5,6 +5,8 @@ import { HUD_SIZES, TOGGLEABLE_WIDGETS, type WidgetId } from "@/hud/slots";
 import { buildExport } from "@/state/persistence/exportData";
 import { STORAGE_KEY } from "@/state/persistence/schema";
 import { useStore } from "@/state/StoreProvider";
+import { useAccount } from "@/sync/AccountProvider";
+import { AccountPanel } from "@/sync/AccountPanel";
 import { Overlay, buttonClass } from "../Overlay";
 
 const group = "flex flex-col gap-2 border border-white p-3";
@@ -22,6 +24,7 @@ function readStored(): string | null {
  */
 export function SettingsScreen() {
   const { state, dispatch, persistent, wipe } = useStore();
+  const accounts = useAccount();
   // Two presses to delete: the first arms the button, and it disarms when focus leaves it — no timer to race against
   // (WCAG 2.2.1). ("Are you sure?" is a banned phrase.)
   const [armed, setArmed] = useState(false);
@@ -112,7 +115,7 @@ export function SettingsScreen() {
 
       <fieldset className={group}>
         <legend className={legend}>{copy.account}</legend>
-        <p className="text-sm">{copy.accountNote}</p>
+        {accounts ? <AccountPanel /> : <p className="text-sm">{copy.accountNote}</p>}
       </fieldset>
 
       <fieldset className={group}>

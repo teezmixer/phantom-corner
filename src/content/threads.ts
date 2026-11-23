@@ -6,7 +6,7 @@
  * arrival exchange plays (once, because a thread only runs once).
  */
 import type { Step, Thread } from "@/domain/story";
-import { invitations, noticeboard, onboarding, widgets } from "./copy";
+import { invitations, morgana, noticeboard, onboarding, widgets } from "./copy";
 import { LOCATIONS } from "./registry";
 
 /**
@@ -61,6 +61,8 @@ export const THREADS: readonly Thread[] = [
     ],
   },
   character("ryuji", "Ryuji"),
+  // Spec §3.1: on arrival at Ryuji's place, in Morgana's voice. Only offered when accounts are on and the player has none.
+  { id: "save", title: "Save progress", from: "morgana", trigger: { on: "save_offer" }, steps: [say(morgana.savePrompt), { ask: "save_progress" }, say(morgana.saveAfter)] },
   character("ann", "Ann"),
   character("yusuke", "Yusuke"),
   character("makoto", "Makoto"),

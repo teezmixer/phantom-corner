@@ -32,6 +32,7 @@ function isTimer(v: unknown): boolean {
 /** One event is valid. Exported so the loader can DROP a bad event and keep the rest instead of resetting everything. */
 export function isEvent(v: unknown): boolean {
   if (!isRec(v)) return false;
+  if (v.id !== undefined && !(isStr(v.id) && v.id.length <= 100)) return false;
   if (v.kind === "mission_first_set") return true;
   if (v.kind === "story_grant") return isStr(v.key) && v.key.length <= 100 && isNum(v.knowledge) && v.knowledge >= 0 && v.knowledge <= 1000;
   if (v.kind === "dev_grant") return isNum(v.knowledge) && v.knowledge >= 0 && v.knowledge <= 1_000_000;

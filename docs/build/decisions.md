@@ -186,5 +186,17 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **Analytics (D-14):** the named events (ten today; the two `save_prompt_*` events wait for accounts) fire only while the Settings switch is on and never in dev mode or the demo; the page-view script still loads in the demo when the switch is on. The default is still **on** (provisional); say if it should be off until the player chooses.
 - **Timer announcements:** a screen reader hears "N minutes left" in five-minute steps, "Less than a minute left", and "Paused". The steps are my choice.
 - **Controls get a 24 px target on screen** at any HUD scale; the look is unchanged but a few small controls now take a little more room.
-- **Performance budgets** (120 kB initial JS gzipped, 800 kB first load, 250 kB per image with the B-05 screenshot exempt by name) are the spec's numbers; initial JS is at 118 kB, so there is little room left in the entry.
+- **Performance budgets** (120 kB initial JS gzipped, 800 kB first load, 250 kB per image with the B-05 screenshot exempt by name) are the spec's numbers; initial JS is at 115 kB, so there is little room left in the entry.
 - **Not built:** the weekly check that each YouTube track still exists (needs a scheduled job); say if you want it.
+
+### D-35 Accounts and sync choices that are yours (provisional — Ares decides)
+- **Event ids:** every progress event now has an id, `<clientId>:<n>`, stamped in one place (D-24's plan). The server column is `text`, not the spec sketch's `uuid`, and `story_grant` joined the allowed kinds (it did not exist when the spec was written). Events carry no time (D-24): when pushed, `occurred_at` is the time of the push, so a long guest history all dates from its first sign-in.
+- **What syncs:** the event log, and three documents (settings, mission, todos), newest stamp wins, as the spec says. **What does not:** your name, the calendar of studied days, which places you have visited, and how far each thread has got. So on a new device a returning player gets their Knowledge and level back but would start the story and the calendar again. Tell me if the calendar and story should sync too (a small change: two more documents and their stamps).
+- **Developer grants** never sync; the server refuses them.
+- **The save prompt** is a separate thread, "Save progress", from Morgana: her verbatim line, then Yes (opens Settings) and Not now, then one draft closing line. It appears on arrival at Ryuji's place only when accounts are on and the player is signed out. The wording of the buttons and the closing line are drafts.
+- **Sign in** is the first sync: the guest's whole history goes up at once, and the server's comes down. Signing out keeps everything on the device. Deleting the account removes what is stored online and keeps what is on the device; a separate Delete my data removes that.
+- **Sync down** shows as a small red dot in the bottom-left corner of the window plus a sentence in Settings; the dot's look and place are placeholders.
+- **The panel's words** (practice-mode note, "Send code", "Sign in", "Sync now" and so on) are plain drafts, not in a character's voice.
+- **Not synced on purpose:** your analytics choice (consent is per device).
+- **The save prompt** also appears for a player who reached Ryuji's place before accounts were switched on, the first time they are on, wherever they are, rather than only on a fresh arrival.
+- **Practice mode:** until the live backend exists the account lives in memory, so a reload ends the practice session; the code is always 123456.

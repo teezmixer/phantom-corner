@@ -118,6 +118,13 @@ function ThreadView({ title, messages, asking, compose, onboarding, onBack, onSe
           </p>
         ))}
       </div>
+      {asking === "save_progress" && (
+        <div className="mt-2 flex gap-1">
+          {[ui.thread.saveYes, ui.thread.saveNo].map((choice) => (
+            <button key={choice} type="button" onClick={() => { onSend(choice); back.current?.focus(); /* the choices are about to disappear */ }} className="flex-1 border border-white px-2 py-1 hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">{choice}</button>
+          ))}
+        </div>
+      )}
       {canWrite && (
         <form onSubmit={submit} className="mt-2 flex gap-1">
           <input value={text} onChange={(e) => setText(e.target.value)} maxLength={asking === "name" ? 80 : 500} aria-label={asking === "name" ? ui.thread.yourName : ui.thread.writeFeedback}

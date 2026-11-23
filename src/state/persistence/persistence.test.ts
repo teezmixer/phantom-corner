@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MINUTE, initialTimer } from "@/domain/timer";
 import { initialState, reducer, type AppState } from "../store";
 import { MAX_BACKUPS, localStorageAdapter, memoryAdapter } from "./adapter";
-import { isPersisted } from "./guard";
+import { isEvent, isPersisted } from "./guard";
 import { loadPersisted } from "./load";
 import { repairTodos, stateFromPersisted, toPersisted } from "./mapping";
 import { THREADS } from "@/content/threads";
@@ -401,7 +401,21 @@ describe("one bad event does not cost the user their history", () => {
     const r = load(JSON.stringify(stored));
     expect(r.recovered).toBe(false); // not treated as unreadable data
     const state = stateFromPersisted(r.persisted, NOW, { recovered: false, storageBlocked: false });
-    expect(state.events).toEqual([good, { kind: "mission_first_set" }]);
+    const id = r.persisted.clientId;
+    expect(state.events).toEqual([{ ...good, id: `${id}:1` }, { kind: "mission_first_set", id: `${id}:2` }]); // saves from before ids get theirs on load (D-24)
+  });
+
+  it("gives events already carrying ids no new ones, and numbers new ones after the highest this device used", () => {
+    const id = fresh().clientId;
+    const stored = { ...fresh(), events: [{ kind: "mission_first_set", id: `${id}:7` }, { kind: "dev_grant", knowledge: 1, id: "other-device:3" }, good] };
+    const state = stateFromPersisted(load(JSON.stringify(stored)).persisted, NOW, { recovered: false, storageBlocked: false });
+    expect(state.events.map((e) => e.id)).toEqual([`${id}:7`, "other-device:3", `${id}:8`]);
+  });
+
+  it("refuses an event whose id is not a short string", () => {
+    expect(isEvent({ kind: "mission_first_set", id: 5 })).toBe(false);
+    expect(isEvent({ kind: "mission_first_set", id: "x".repeat(101) })).toBe(false);
+    expect(isEvent({ kind: "mission_first_set", id: "a:1" })).toBe(true);
   });
 });
 
