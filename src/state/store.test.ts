@@ -254,3 +254,51 @@ describe("the calendar of studied days", () => {
     expect(reducer(session(at(23, 12), 25, "tick"), { type: "RESET" }).studiedDays).toEqual([]);
   });
 });
+
+describe("travel and the arriving sign", () => {
+  it("the reveal makes the destination the current place while travel is still going", () => {
+    const s = run([{ type: "START_TRAVEL", to: "ryuji" }, { type: "TRAVEL_REVEAL" }]);
+    expect(s.locationId).toBe("ryuji");
+    expect(s.visited).toContain("ryuji");
+    expect(s.layer).toBe("travel"); // not over yet: the wipe is still uncovering the room
+    expect(s.travelTo).toBe("ryuji");
+  });
+
+  it("arriving ends travel, and still works when no reveal came first", () => {
+    const revealed = run([{ type: "START_TRAVEL", to: "ryuji" }, { type: "TRAVEL_REVEAL" }, { type: "ARRIVE" }]);
+    expect(revealed).toMatchObject({ layer: "main", locationId: "ryuji", travelTo: null });
+    const direct = run([{ type: "START_TRAVEL", to: "ryuji" }, { type: "ARRIVE" }]);
+    expect(direct).toMatchObject({ layer: "main", locationId: "ryuji", travelTo: null });
+    expect(direct.visited.filter((v) => v === "ryuji")).toHaveLength(1); // remembered once
+  });
+
+  it("a reveal with nowhere to go changes nothing", () => {
+    const s = run([{ type: "SET_PHONE", open: false }]);
+    expect(reducer(s, { type: "TRAVEL_REVEAL" })).toBe(s);
+  });
+
+  it("the sign arrives big on the first visit to a place, once, however travel ends", () => {
+    expect(run([{ type: "START_TRAVEL", to: "ryuji" }, { type: "TRAVEL_REVEAL" }]).signArriving).toBe(true);
+    expect(run([{ type: "START_TRAVEL", to: "ryuji" }, { type: "ARRIVE" }]).signArriving).toBe(true);
+    // Reveal then arrive: it arrived at the reveal and is not re-armed by the end.
+    const settledMidway = run([{ type: "START_TRAVEL", to: "ryuji" }, { type: "TRAVEL_REVEAL" }, { type: "SIGN_SETTLED" }, { type: "ARRIVE" }]);
+    expect(settledMidway.signArriving).toBe(false);
+  });
+
+  it("going back to a place already visited does not bring the sign in big again", () => {
+    const back = run([{ type: "START_TRAVEL", to: "ryuji" }, { type: "ARRIVE" }, { type: "SIGN_SETTLED" }, { type: "START_TRAVEL", to: "leblanc" }, { type: "ARRIVE" }]);
+    expect(back.signArriving).toBe(false);
+  });
+
+  it("entering the room for the first time brings the sign in big; a return does not", () => {
+    expect(reducer({ ...initialState, firstVisit: true }, { type: "ENTER" }).signArriving).toBe(true);
+    expect(reducer({ ...initialState, firstVisit: false }, { type: "ENTER" }).signArriving).toBe(false);
+  });
+
+  it("settling clears it, and settling when it is not big changes nothing", () => {
+    const big = run([{ type: "START_TRAVEL", to: "ryuji" }, { type: "ARRIVE" }]);
+    expect(reducer(big, { type: "SIGN_SETTLED" }).signArriving).toBe(false);
+    const quiet = reducer(big, { type: "SIGN_SETTLED" });
+    expect(reducer(quiet, { type: "SIGN_SETTLED" })).toBe(quiet);
+  });
+});

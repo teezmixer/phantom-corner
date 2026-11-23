@@ -47,6 +47,8 @@ export interface AppState {
   story: Progress;
   /** The thread open in the phone, or null for the list. Not persisted. */
   phoneThread: string | null;
+  /** The location sign is big, in the middle of the room, holding before it settles into its corner. Not persisted. */
+  signArriving: boolean;
   /** The place has said its idle line for this stretch of idling. Not persisted; cleared when a session starts. */
   idleSaid: boolean;
   phoneOpen: boolean;
@@ -97,6 +99,7 @@ export const initialState: AppState = {
   story: {},
   phoneThread: null,
   idleSaid: false,
+  signArriving: false,
   phoneOpen: false,
   hudHidden: false,
   muted: false,
@@ -137,7 +140,11 @@ export type Action =
   | { type: "START_BREAK"; now: number }
   | { type: "END_BREAK" }
   | { type: "START_TRAVEL"; to: string }
+  /** The reveal begins: the destination is now the current place (so the wipe shows its room), though travel is not over yet. */
+  | { type: "TRAVEL_REVEAL" }
   | { type: "ARRIVE" }
+  /** The arrival sign has held and goes to its corner. */
+  | { type: "SIGN_SETTLED" }
   | { type: "READ_THREAD"; id: string }
   /** Open a thread in the phone (or go back to the list with null). */
   | { type: "OPEN_THREAD"; id: string | null }
@@ -228,13 +235,22 @@ export function reducer(state: AppState, action: Action): AppState {
   return { ...next, banners: [...greeting, ...next.banners, ...rest].slice(-MAX_BANNERS) };
 }
 
+/**
+ * Make `id` the current place: remember the visit, and let the location sign arrive big when it is the first time there.
+ * Idempotent, so the reveal and the end of travel can both call it (the sign arrives once, at the first of them).
+ */
+function arriveAt(state: AppState, id: string): AppState {
+  const first = !state.visited.includes(id);
+  return { ...state, locationId: id, visited: first ? [...state.visited, id] : state.visited, signArriving: state.signArriving || first };
+}
+
 function coreReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "SET_LAYER":
       return { ...state, layer: action.layer };
     case "ENTER":
       // A session that ended while the tab was closed is waiting for its choice (see persistence/mapping).
-      return { ...state, layer: state.timer.status === "complete" ? "choice" : "main", entered: true };
+      return { ...state, layer: state.timer.status === "complete" ? "choice" : "main", entered: true, signArriving: state.firstVisit };
     case "CLOSE_LAYER":
       // Closing a screen returns to where the user was: the splash before entering, the room after.
       // The info pages hang off Settings once the user is in the room.
@@ -307,15 +323,15 @@ function coreReducer(state: AppState, action: Action): AppState {
       // Travelling is allowed mid-session and never stops a running timer (provisional rule, decision D-22).
       // A finished timer is acknowledged so it does not sit at 00:00 with no controls.
       return { ...state, layer: "travel", travelTo: action.to, timer: transition(state.timer, { type: "ACKNOWLEDGE" }) };
-    case "ARRIVE":
+    case "TRAVEL_REVEAL":
+      return state.travelTo ? arriveAt(state, state.travelTo) : state;
+    case "ARRIVE": {
       if (!state.travelTo) return { ...state, layer: "main" };
-      return {
-        ...state,
-        layer: "main",
-        locationId: state.travelTo,
-        travelTo: null,
-        visited: state.visited.includes(state.travelTo) ? state.visited : [...state.visited, state.travelTo],
-      };
+      const there = arriveAt(state, state.travelTo);
+      return { ...there, layer: "main", travelTo: null };
+    }
+    case "SIGN_SETTLED":
+      return state.signArriving ? { ...state, signArriving: false } : state;
     case "READ_THREAD":
       return { ...state, unreadThreads: state.unreadThreads.filter((id) => id !== action.id) };
     case "DISMISS_BANNER":
