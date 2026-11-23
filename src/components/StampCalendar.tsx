@@ -45,7 +45,7 @@ export function StampCalendar({ days, now }: { days: readonly StampedDay[]; now:
                 const StampIcon = style === undefined ? null : STAMP_ICONS[STAMP_STYLES[style] ?? STAMP_STYLES[0]];
                 return (
                   <td key={i} aria-current={key === todayKey ? "date" : undefined} data-day={key} data-stamp={style === undefined ? undefined : STAMP_STYLES[style] ?? STAMP_STYLES[0]}
-                    className={cn("h-8 border border-greydark align-middle", key === todayKey && "border-2 border-white", StampIcon ? "bg-redbright text-white" : "text-greylight")}>
+                    className={cn("h-7 border border-greydark align-middle", key === todayKey && "border-2 border-white", StampIcon ? "bg-redbright text-white" : "text-greylight")}>
                     {StampIcon ? <StampIcon size={18} weight="fill" className="mx-auto" aria-hidden="true" /> : day}
                     {StampIcon && <span className="sr-only">{day}, {ui.calendar.studied}</span>}
                   </td>

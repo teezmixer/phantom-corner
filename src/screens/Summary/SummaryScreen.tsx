@@ -34,11 +34,12 @@ export function SummaryScreen() {
       <p className="font-body-primary text-2xl">{line}</p>
       {/* Only said when today really was stamped: a session cut short under five minutes counts for nothing, and the screen must not claim otherwise. */}
       {state.studiedDays.some((d) => d.day === dayKey(now)) && <p className="flex items-center gap-2 text-sm text-greylight"><Calendar size={18} aria-hidden="true" />{ui.stamped}</p>}
-      <StampCalendar days={state.studiedDays} now={now} />
       <div className="grid gap-2 sm:grid-cols-2">
         <button type="button" onClick={() => dispatch({ type: "START_SESSION", now: Date.now() })} className={buttonClass}>{sessionEnd.summaryContinue}</button>
         <button type="button" onClick={() => dispatch({ type: "FINISH" })} className={buttonClass}>{sessionEnd.summaryFinish}</button>
       </div>
+      {/* After the two buttons, so the choices never sit below the fold on a small window. */}
+      <StampCalendar days={state.studiedDays} now={now} />
     </Overlay>
   );
 }

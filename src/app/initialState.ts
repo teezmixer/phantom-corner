@@ -1,3 +1,4 @@
+import { dayKey } from "@/domain/calendar";
 import { MINUTE, transition, initialTimer } from "@/domain/timer";
 import { initialState, type AppState, type Layer } from "@/state/store";
 
@@ -41,5 +42,8 @@ export function buildInitialState(mode: UrlMode, now: number): AppState {
   const layer = mode.at ? DEMO_AT[mode.at] : undefined;
   if (!layer) return base;
   const done = { kind: "session", plannedMs: 25 * MINUTE, focusedMs: 25 * MINUTE, outcome: "completed" } as const;
-  return { ...base, layer, timer: layer === "summary" ? { status: "idle", durationMs: 25 * MINUTE } : base.timer, events: layer === "summary" ? [...base.events, done] : base.events };
+  if (layer !== "summary") return { ...base, layer };
+  // The demo summary shows a lived-in calendar: today, and a few earlier days with the designs earned over time.
+  const studiedDays = [-9, -8, -6, -5, -2, -1, 0].map((back, i) => ({ day: dayKey(now + back * 24 * 60 * MINUTE), style: i < 4 ? 0 : 1 }));
+  return { ...base, layer, timer: { status: "idle", durationMs: 25 * MINUTE }, events: [...base.events, done], studiedDays };
 }
