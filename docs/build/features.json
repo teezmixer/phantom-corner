@@ -1165,8 +1165,8 @@
       "spec": "§3.7",
       "description": "The hideout menu has STUDY, MAP, MESSAGES, PROFILE, SETTINGS, CLOSE and each works.",
       "steps": "Playwright: each item opens its layer.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/menu.spec.ts \"each label does what it says\" (STUDY starts a session, MAP/PROFILE/SETTINGS open their screens, MESSAGES opens the phone, CLOSE returns to the room); src/screens/Menu/Menu.test.tsx (the six labels, MAP selectable once the map is open)"
     },
     {
       "id": "menu-motion",
@@ -1176,8 +1176,8 @@
       "spec": "§3.7, §3.10",
       "description": "Menu opens with a clip-path diagonal wipe and staggered kinetic labels; only transform/opacity/clip-path animate.",
       "steps": "Screenshot sequence; CSS audit of animated properties.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/menu.spec.ts \"opens with a 200 ms diagonal wipe that animates only clip-path…\" reads the live CSS animations in the browser: the wipe is 200 ms on clip-path only, the six labels are 420 ms on opacity and transform only, delayed 0/60/…/300 ms in list order. Screenshot sequence: docs/build/screens/M6/menu-wipe-mid-*. src/motion/tokens.test.ts keeps the TypeScript and CSS numbers equal. This audits the menu's animations, not every animation in the app."
     },
     {
       "id": "menu-keyboard",
@@ -1187,8 +1187,8 @@
       "spec": "§3.7, §4.12",
       "description": "Arrow keys move the highlight, Enter selects, Esc closes; focus is trapped and returned.",
       "steps": "Playwright keyboard test.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/menu.spec.ts \"arrow keys move the highlight (wrapping) with a sound, Enter selects, Esc closes…\", \"Esc closes the menu and returns focus…\", \"a mouse resting over the list does not take the highlight…\" (mutation-checked); e2e/behaviour.spec.ts \"focus stays inside an open dialog and returns to the button that opened it\"; Menu.test.tsx (wrap, Home/End, Enter)"
     },
     {
       "id": "menu-sound",
@@ -1198,8 +1198,8 @@
       "spec": "§3.7, §3.9",
       "description": "Menu open/close and select play synthesised placeholder tones.",
       "steps": "Unit: sfx calls on actions.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/audio/triggers.test.ts (menuOpen on opening, menuClose on leaving the menu); Menu.test.tsx (one select sound per highlight move, none when the highlight cannot move); e2e/menu.spec.ts (the 880 Hz select tick is scheduled in the browser on an arrow key). All tones are synthesised placeholders (D-25)."
     },
     {
       "id": "menu-reduced-motion",
@@ -1209,8 +1209,8 @@
       "spec": "§3.10",
       "description": "Reduced motion turns wipes into 100 ms cuts.",
       "steps": "Playwright with reducedMotion.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/menu.spec.ts \"with the system asking for reduced motion, the wipe and the flying labels become one 100 ms cut\" (every menu animation is menu-cut, 100 ms, no delay, opacity only; mutation-checked). Note: the Settings \"Reduce motion\" override collapses all animation to ~0 ms instead of the 100 ms cut (D-30)."
     },
     {
       "id": "menu-not-yet",
@@ -1220,8 +1220,8 @@
       "spec": "§3.7",
       "description": "Unbuilt items show the struck-through 'not yet' state.",
       "steps": "Component test with an unbuilt flag.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/screens/Menu/Menu.test.tsx (struck through, says \"Not yet.\", focusable, aria-disabled, does nothing; mutation-checked); e2e/menu.spec.ts \"a label that is not built yet can be focused, says so, and does nothing when pressed\""
     },
     {
       "id": "menu-timer-continues",
@@ -1231,8 +1231,8 @@
       "spec": "§3.7",
       "description": "Opening the menu does not pause the timer.",
       "steps": "Playwright: running timer, open menu, still running.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/menu.spec.ts \"opening the menu does not pause a running timer\" (a minute passes behind the menu and counts)"
     },
     {
       "id": "menu-illustrated",

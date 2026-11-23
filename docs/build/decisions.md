@@ -135,3 +135,10 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **Overdue** is white text on a red slab, not red text (small red on black is 4.1:1, below spec §4.12).
 - **A session ends even if its timer cannot be seen.** The completion check lives in an always-mounted clock, not in the Timer widget, so hiding the Timer (or the whole HUD) can no longer stop the "Time." screen from appearing.
 - **Banners** render above every screen (z-index 58, below only the dev panel), and the "Ah, you're back." greeting is skipped on a recovered visit, which gets the recovery notice instead.
+
+### D-30 Menu motion and behaviour placeholders (provisional — Ares decides)
+- **Numbers:** snap 120 ms, wipe 200 ms, enter 420 ms, stagger 60 ms, hold 900 ms, travel 1.4 s, reduced cut 100 ms (spec §3.10; only the wipe is DECIDED, the rest are proposals). One source of truth in `src/styles/tokens.css`, mirrored in `src/motion/tokens.ts`, kept equal by a test.
+- **Look:** the diagonal wipe's slant, the label angles (±1–2°) and the fly-in direction are plain placeholders until you draw the menu (spec §3.7 says "text labels fly in at angles").
+- **Reduced motion:** the operating-system setting turns the wipe and the flying labels into one 100 ms hard cut (hidden for 100 ms, then shown, no fade). The in-app "Reduce motion" setting is stricter: it collapses every animation to about 0 ms (D-28). Alternative: make both use the 100 ms cut.
+- **Highlight:** keyboard and mouse share one highlight (focus). A resting mouse never moves it; moving the mouse does. Not-yet labels (MAP before it unlocks) can be highlighted but do nothing and say "Not yet."
+- **PROFILE** stays in the menu although spec §3.7 lists only STUDY, MAP, MESSAGES, SETTINGS, CLOSE.
