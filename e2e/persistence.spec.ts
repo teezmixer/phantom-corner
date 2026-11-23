@@ -39,15 +39,17 @@ test("a session that ended while the tab was closed still counts and waits at th
   await enter(page);
   await page.getByRole("button", { name: "Start" }).click();
   await waitForSaved(page, (raw) => raw.includes('"running"'));
-  // Pretend the tab was closed and the timer ran out meanwhile
-  await page.evaluate((k) => {
-    const data = JSON.parse(window.localStorage.getItem(k)!);
+  // Pretend the tab was closed and the timer ran out meanwhile. The edit is made by a script that runs when the NEXT page loads: by then
+  // the old page is gone (its unload save has happened), so nothing can write over it, and the app has not started reading yet.
+  await page.addInitScript((k) => {
+    if (window.sessionStorage.getItem("expired")) return; // once: the app's own later saves must not be edited again
+    const raw = window.localStorage.getItem(k);
+    if (!raw) return;
+    const data = JSON.parse(raw);
     data.timer.endsAt = Date.now() - 1000;
     window.localStorage.setItem(k, JSON.stringify(data));
+    window.sessionStorage.setItem("expired", "1");
   }, KEY);
-  // Navigating away runs the old page's pagehide flush; give the stored data a beat to settle, then load fresh
-  await page.goto("about:blank");
-  await page.evaluate(() => undefined).catch(() => undefined);
   await page.goto("/");
   await enter(page);
   await expect(page.getByRole("dialog", { name: "Time." })).toBeVisible();
