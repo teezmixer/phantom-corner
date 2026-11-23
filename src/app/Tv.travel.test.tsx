@@ -13,10 +13,11 @@ const PLAYLISTS: Record<string, TrackRef[]> = {
   ryuji: [track("roof1", "Rooftop theme"), track("roof2", "Rooftop two")],
 };
 // Two locations with different playlists, standing in for the real per-location music Ares will choose.
-vi.mock("@/content/registry", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/content/registry")>()),
-  getLocation: (id: string) => ({ playlist: PLAYLISTS[id] ?? [], ambience: [] }),
-}));
+vi.mock("@/content/registry", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/content/registry")>();
+  // Everything else about the location (lines, threads) stays real; only the music is swapped.
+  return { ...real, getLocation: (id: string) => ({ ...real.getLocation(id), playlist: PLAYLISTS[id] ?? [], ambience: [] }) };
+});
 
 describe("TV: a playlist per location", () => {
   it("travelling swaps the playlist and stops playback; the new first track is cued, not played", async () => {

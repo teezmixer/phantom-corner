@@ -51,3 +51,26 @@ describe("shortcutAction", () => {
     expect(press("m", room, open, { meta: true })).toBeNull();
   });
 });
+
+describe("S skips onboarding", () => {
+  const running: AppState = { ...room, story: { morgana: { cursor: 2, messages: [], done: false } } };
+
+  it("while onboarding is running, in the room", () => {
+    expect(press("s", running)).toEqual({ type: "SKIP_ONBOARDING" });
+    expect(press("S", running)).toEqual({ type: "SKIP_ONBOARDING" });
+  });
+
+  it("never when there is nothing to skip: before it starts, after it has ended, or outside the room", () => {
+    expect(press("s")).toBeNull();
+    expect(press("s", { ...room, story: { morgana: { cursor: 11, messages: [], done: true } } })).toBeNull();
+    expect(press("s", { ...running, layer: "menu" })).toBeNull();
+  });
+
+  it("not while the player is typing (their name has an S in it)", () => {
+    expect(press("s", running, open, { typing: true })).toBeNull();
+  });
+
+  it("not with a modifier held (Ctrl+S is the browser's)", () => {
+    expect(press("s", running, open, { ctrl: true })).toBeNull();
+  });
+});

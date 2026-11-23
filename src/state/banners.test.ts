@@ -125,3 +125,27 @@ describe("the banner queue the player actually sees", () => {
     expect(s.banners.at(-1)!.id).toContain(`knowledge-${derive(s).knowledge}`);
   });
 });
+
+describe("place lines (spec §3.3)", () => {
+  it("a session starting brings one of the place's start lines, a different one each session", () => {
+    const first = texts(room, run([{ type: "START_SESSION", now: 0 }]));
+    expect(first).toEqual(["Quiet hours. Good."]);
+    const afterOne = run([{ type: "START_SESSION", now: 0 }, { type: "TIMER", event: { type: "TICK", now: 25 * MINUTE }, now: 25 * MINUTE }]);
+    expect(texts(afterOne, run([{ type: "START_SESSION", now: 26 * MINUTE }], afterOne))).toContain("Go on, then. I'll be here."); // the next line
+  });
+
+  it("pausing and resuming is not a new start, and the demo stays quiet", () => {
+    const running = run([{ type: "START_SESSION", now: 0 }]);
+    const paused = run([{ type: "TIMER", event: { type: "PAUSE", now: MINUTE }, now: MINUTE }], running);
+    expect(texts(paused, run([{ type: "TIMER", event: { type: "RESUME", now: 2 * MINUTE }, now: 2 * MINUTE }], paused))).toEqual([]);
+    expect(texts({ ...room, demo: true }, run([{ type: "START_SESSION", now: 0 }], { ...room, demo: true }))).toEqual([]);
+  });
+
+  it("a first arrival at a place with no character thread says that place's arrival line; a character's place leaves it to the phone", () => {
+    const toBonus = run([{ type: "DEV_JUMP_LOCATION", id: "mementos" }]);
+    expect(texts(room, toBonus)).toContain("Stay close. The tunnels go on forever.");
+    const toRyuji = run([{ type: "DEV_JUMP_LOCATION", id: "ryuji" }]);
+    expect(texts(room, toRyuji)).toEqual([]);
+    expect(texts(toBonus, run([{ type: "DEV_JUMP_LOCATION", id: "mementos" }], toBonus))).toEqual([]); // not again
+  });
+});
