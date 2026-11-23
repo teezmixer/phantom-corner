@@ -89,6 +89,7 @@ function ThreadView({ title, messages, asking, compose, onboarding, onBack, onSe
 }) {
   const [text, setText] = useState("");
   const log = useRef<HTMLDivElement>(null);
+  const back = useRef<HTMLButtonElement>(null);
   const [first] = useState(messages.length); // lines already on screen when this view opened: only newer ones animate in
   useEffect(() => { log.current?.scrollTo?.({ top: log.current.scrollHeight }); }, [messages.length]);
   const canWrite = asking === "name" || compose;
@@ -98,13 +99,15 @@ function ThreadView({ title, messages, asking, compose, onboarding, onBack, onSe
     if (!text.trim()) return;
     onSend(text);
     setText("");
+    // Answering the name removes the box, so focus would fall to the page: put it on the thread's back button instead.
+    if (asking === "name") back.current?.focus();
   };
 
   return (
     <div className="w-80">
       <div className="mb-2 flex items-center justify-between">
-        <button type="button" onClick={onBack} className="flex items-center gap-1 text-white focus-visible:outline-2 focus-visible:outline-accentteal"><ArrowLeft size={14} aria-hidden="true" />{title}</button>
-        {onboarding && <button type="button" onClick={onSkip} className="border border-white px-1 text-xs hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">{ui.thread.skip}</button>}
+        <button type="button" ref={back} onClick={onBack} className="flex items-center gap-1 text-white focus-visible:outline-2 focus-visible:outline-accentteal"><ArrowLeft size={14} aria-hidden="true" />{title}</button>
+        {onboarding && <button type="button" onClick={() => { onSkip(); back.current?.focus(); /* the skip button is about to disappear */ }} className="border border-white px-1 text-xs hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">{ui.thread.skip}</button>}
       </div>
       {/* The log is the part that scrolls, so the header and the box to write in are always in view. It has no focusable child, so current browsers make it keyboard-focusable themselves. */}
       <div ref={log} role="log" aria-label={title} className="flex max-h-44 flex-col gap-1 overflow-y-auto">
@@ -117,7 +120,7 @@ function ThreadView({ title, messages, asking, compose, onboarding, onBack, onSe
       </div>
       {canWrite && (
         <form onSubmit={submit} className="mt-2 flex gap-1">
-          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={500} aria-label={asking === "name" ? ui.thread.yourName : ui.thread.writeFeedback}
+          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={asking === "name" ? 80 : 500} aria-label={asking === "name" ? ui.thread.yourName : ui.thread.writeFeedback}
             placeholder={asking === "name" ? ui.thread.yourName : ui.thread.writeFeedback} className="min-w-0 flex-1 border border-white bg-black px-2 py-1 focus-visible:outline-2 focus-visible:outline-accentteal" />
           <button type="submit" className="border border-white px-2 hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">{ui.thread.send}</button>
         </form>
