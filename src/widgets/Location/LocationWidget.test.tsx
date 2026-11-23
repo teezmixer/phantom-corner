@@ -47,7 +47,7 @@ describe("LocationWidget", () => {
     it("comes in big, holds for the hold time, then settles", () => {
       const s = show("leblanc", { signArriving: true });
       expect(sign()).toHaveAttribute("data-sign", "arriving");
-      expect(sign().style.transform).toMatch(/scale\(2\.4\)/);
+      expect(sign().style.transform).toMatch(/scale\(1\.9\)/);
       act(() => { vi.advanceTimersByTime(motion.hold - 1); });
       expect(sign()).toHaveAttribute("data-sign", "arriving"); // still holding
       act(() => { vi.advanceTimersByTime(2); });
