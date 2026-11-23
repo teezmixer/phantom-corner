@@ -17,6 +17,10 @@ export const motion = {
   hold: 900,
   /** Wipe out, title card, wipe in (spec: 1.2–1.6 s). PROPOSED. */
   travel: 1400,
+  /** The three parts of travel, which add up to `travel` (a test keeps it so): the red wipe that covers the screen, the least the title card is held (the next place's images load inside it), and the wipe that reveals the room. PROPOSED. */
+  travelCover: 300,
+  travelHold: 800,
+  travelReveal: 300,
   /** What a wipe becomes when motion is reduced. */
   reducedCut: 100,
 } as const;

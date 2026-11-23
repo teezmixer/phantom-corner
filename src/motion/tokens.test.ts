@@ -24,4 +24,8 @@ describe("motion tokens", () => {
     expect(motion.travel).toBeGreaterThanOrEqual(1200);
     expect(motion.travel).toBeLessThanOrEqual(1600);
   });
+
+  it("the three parts of travel add up to the whole", () => {
+    expect(motion.travelCover + motion.travelHold + motion.travelReveal).toBe(motion.travel);
+  });
 });

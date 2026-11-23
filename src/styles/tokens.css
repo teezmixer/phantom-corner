@@ -78,5 +78,8 @@
   --motion-stagger: 60ms;
   --motion-hold: 900ms;
   --motion-travel: 1400ms;
+  --motion-travel-cover: 300ms;
+  --motion-travel-hold: 800ms;
+  --motion-travel-reveal: 300ms;
   --motion-reduced-cut: 100ms;
 }
