@@ -165,7 +165,7 @@
       "description": "Onboarding runs only on the first visit (persisted flag).",
       "steps": "Playwright: complete onboarding, reload, no onboarding.",
       "status": "pass",
-      "evidence": "e2e/story.spec.ts \"it runs once: after a reload there is no onboarding, the phone stays shut…\"; src/state/persistence/persistence.test.ts (progress is saved, a return does not restart it; an existing player on a schema-4 save is not onboarded)"
+      "evidence": "e2e/story.spec.ts \"it runs once: after a reload there is no onboarding, the phone stays shut…\"; src/state/persistence/persistence.test.ts (progress is saved, a return does not restart it; an existing player on a schema-4 save is not onboarded). \"First visit\" means no save existed. Consequences, by design (D-32): with storage blocked, or after a reset, a visit counts as a return (no onboarding, \"Ah, you're back.\", the release note), tested in src/state/story.test.ts"
     },
     {
       "id": "entry-return-sojiro",
@@ -758,8 +758,8 @@
       "spec": "§3.4",
       "description": "Each unlock is revealed by an IM from that character, with no progress bar toward it.",
       "steps": "Playwright via dev grant: unlock → unread thread from character.",
-      "status": "pass",
-      "evidence": "e2e/story.spec.ts \"the whole conversation…\" (the session reaches level 3 and Ryuji's message arrives unread) and \"unlocking everything brings an unread message from each character\"; src/state/story.test.ts (nothing before the unlock, nothing telegraphing the next). The level widget still shows a bar toward the next LEVEL; whether that conflicts with \"never a progress bar toward the next unlock\" is a question for Ares (D-32)"
+      "status": "blocked",
+      "evidence": "Built and tested: each unlock is revealed by an IM from that character, unread, and nothing in the phone telegraphs the next one (e2e/story.spec.ts, src/state/story.test.ts). BLOCKED on one clause, \"no progress bar toward it\": the level widget shows a bar toward the next level and unlocks sit on levels, so it hints at them. See B-09 and D-32."
     },
     {
       "id": "prog-calendar",
@@ -803,7 +803,7 @@
       "description": "LeBlanc (Sojiro, Morgana): arrival exchange, idle, start and complete lines (drafts in voice; Ares's lines verbatim).",
       "steps": "Content test: ≥3 lines per group; Playwright: arrive shows exchange.",
       "status": "pass",
-      "evidence": "src/content/content.test.ts (\"onboarding opens with Sojiro's own arrival line at LeBlanc\"); e2e/story.spec.ts (Sojiro's line then Morgana); the content validator in CI (three lines per group); start and completion lines as for the other places. Idle lines have no place to show yet (D-32)"
+      "evidence": "src/content/content.test.ts (\"onboarding opens with Sojiro's own arrival line at LeBlanc\"); e2e/story.spec.ts (Sojiro's line then Morgana); the content validator in CI (three lines per group); start and completion lines as for the other places. Idle lines: after 90 seconds idling in the room the place says one (e2e/story.spec.ts \"idle lines\"; src/state/banners.test.ts)"
     },
     {
       "id": "loc-ryuji-manifest",
@@ -825,7 +825,7 @@
       "description": "Ryuji: arrival exchange, idle, start and complete lines (drafts in voice; Ares's lines verbatim).",
       "steps": "Content test: ≥3 lines per group; Playwright: arrive shows exchange.",
       "status": "pass",
-      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"ryuji: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines are written but have no place to show yet (D-32)"
+      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"ryuji: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines: after 90 seconds idling in the room the place says one (e2e/story.spec.ts \"idle lines\", mutation-checked; src/state/banners.test.ts)"
     },
     {
       "id": "loc-ryuji-unlock-thread",
@@ -858,7 +858,7 @@
       "description": "Ann: arrival exchange, idle, start and complete lines (drafts in voice; Ares's lines verbatim).",
       "steps": "Content test: ≥3 lines per group; Playwright: arrive shows exchange.",
       "status": "pass",
-      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"ann: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines are written but have no place to show yet (D-32)"
+      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"ann: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines: after 90 seconds idling in the room the place says one (e2e/story.spec.ts \"idle lines\", mutation-checked; src/state/banners.test.ts)"
     },
     {
       "id": "loc-ann-unlock-thread",
@@ -891,7 +891,7 @@
       "description": "Yusuke: arrival exchange, idle, start and complete lines (drafts in voice; Ares's lines verbatim).",
       "steps": "Content test: ≥3 lines per group; Playwright: arrive shows exchange.",
       "status": "pass",
-      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"yusuke: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines are written but have no place to show yet (D-32)"
+      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"yusuke: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines: after 90 seconds idling in the room the place says one (e2e/story.spec.ts \"idle lines\", mutation-checked; src/state/banners.test.ts)"
     },
     {
       "id": "loc-yusuke-unlock-thread",
@@ -924,7 +924,7 @@
       "description": "Makoto: arrival exchange, idle, start and complete lines (drafts in voice; Ares's lines verbatim).",
       "steps": "Content test: ≥3 lines per group; Playwright: arrive shows exchange.",
       "status": "pass",
-      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"makoto: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines are written but have no place to show yet (D-32)"
+      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"makoto: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines: after 90 seconds idling in the room the place says one (e2e/story.spec.ts \"idle lines\", mutation-checked; src/state/banners.test.ts)"
     },
     {
       "id": "loc-makoto-unlock-thread",
@@ -957,7 +957,7 @@
       "description": "Futaba: arrival exchange, idle, start and complete lines (drafts in voice; Ares's lines verbatim).",
       "steps": "Content test: ≥3 lines per group; Playwright: arrive shows exchange.",
       "status": "pass",
-      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"futaba: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines are written but have no place to show yet (D-32)"
+      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"futaba: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines: after 90 seconds idling in the room the place says one (e2e/story.spec.ts \"idle lines\", mutation-checked; src/state/banners.test.ts)"
     },
     {
       "id": "loc-futaba-unlock-thread",
@@ -990,7 +990,7 @@
       "description": "Haru: arrival exchange, idle, start and complete lines (drafts in voice; Ares's lines verbatim).",
       "steps": "Content test: ≥3 lines per group; Playwright: arrive shows exchange.",
       "status": "pass",
-      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"haru: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines are written but have no place to show yet (D-32)"
+      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"haru: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines: after 90 seconds idling in the room the place says one (e2e/story.spec.ts \"idle lines\", mutation-checked; src/state/banners.test.ts)"
     },
     {
       "id": "loc-haru-unlock-thread",
@@ -1023,7 +1023,7 @@
       "description": "Akechi: arrival exchange, idle, start and complete lines (drafts in voice; Ares's lines verbatim).",
       "steps": "Content test: ≥3 lines per group; Playwright: arrive shows exchange.",
       "status": "pass",
-      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"akechi: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines are written but have no place to show yet (D-32)"
+      "evidence": "src/content/content.test.ts + the content validator in CI (all five line groups, at least three lines each); src/state/story.test.ts \"akechi: arriving plays that place's arrival lines, in order, once\"; the start line shows as a banner when a session begins (src/state/banners.test.ts) and the completion line in the summary. Idle lines: after 90 seconds idling in the room the place says one (e2e/story.spec.ts \"idle lines\", mutation-checked; src/state/banners.test.ts)"
     },
     {
       "id": "loc-akechi-unlock-thread",
@@ -1155,7 +1155,7 @@
       "description": "The first visit to each location plays its arrival exchange once.",
       "steps": "Playwright: first travel shows exchange; second does not.",
       "status": "pass",
-      "evidence": "e2e/story.spec.ts \"the whole conversation…\" (the arrival exchange plays on arriving at the rooftop, and arriving again adds nothing); src/state/story.test.ts (all seven characters, in order, once)"
+      "evidence": "e2e/story.spec.ts \"the whole conversation…\" (the arrival exchange plays on arriving at the rooftop, and arriving again adds nothing); src/state/story.test.ts (all seven characters, in order, once). A place with no character thread (the four bonus places) shows only its first arrival line, as a banner (src/state/banners.test.ts)"
     },
     {
       "id": "menu-items",
@@ -1265,7 +1265,7 @@
       "description": "Messages lists every thread: Morgana, each character, \"what's new\", feedback.",
       "steps": "Playwright: thread list complete.",
       "status": "pass",
-      "evidence": "e2e/modes.spec.ts \"the phone lists the threads that have started, reveals a character's only when they unlock, adds the release note when onboarding ends…\" (all ten threads once everything is unlocked and onboarding is skipped). By design a thread is listed only once it has started, so nothing telegraphs what unlocks (spec §3.4)"
+      "evidence": "e2e/modes.spec.ts \"the phone lists the threads that have started, reveals a character's only when they unlock, adds the release note when onboarding ends…\" (all ten threads once everything is unlocked and onboarding is skipped). The description says \"every thread\": by design the phone lists a thread only once it has started (so nothing telegraphs what unlocks, spec §3.4), and all ten are there once everything is unlocked and onboarding is over, so nothing telegraphs what unlocks (spec §3.4)"
     },
     {
       "id": "profile-fields",
@@ -1485,7 +1485,7 @@
       "description": "A \"what's new\" release thread crediting requesters.",
       "steps": "Content test + Playwright.",
       "status": "pass",
-      "evidence": "e2e/story.spec.ts (the release note shows, crediting everyone who asked); src/state/story.test.ts (a returning player gets it at once, a first-time player only after onboarding ends or is skipped); src/content/content.test.ts. The wording is a draft (D-32)"
+      "evidence": "e2e/story.spec.ts (the release note shows, crediting everyone who asked); src/state/story.test.ts (a returning player gets it at once, a first-time player only after onboarding ends or is skipped); src/content/content.test.ts. The wording is a draft (D-32). Each release has its own thread (whats-new-<version>), so bumping RELEASE_VERSION shows a new note to returning players and keeps the old one (src/domain/story.test.ts)"
     },
     {
       "id": "comm-share-card",

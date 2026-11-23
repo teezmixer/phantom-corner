@@ -87,8 +87,8 @@ test("the phone lists the threads that have started, reveals a character's only 
   await page.goto("/?demo=true&dev=true");
   await page.getByRole("button", { name: "Phone, 1 unread" }).click();
   const phone = page.getByRole("region", { name: "Phone" });
-  for (const title of ["Morgana", "Feedback"]) await expect(phone.getByRole("button", { name: title })).toBeVisible();
-  for (const title of ["Ryuji", "Ann", "Yusuke", "Makoto", "Futaba", "Haru", "Akechi", "What's new"]) await expect(phone.getByRole("button", { name: title })).toHaveCount(0); // nothing telegraphs what unlocks; the note waits for onboarding
+  await expect(phone.getByRole("button", { name: "Morgana" })).toBeVisible();
+  for (const title of ["Ryuji", "Ann", "Yusuke", "Makoto", "Futaba", "Haru", "Akechi", "What's new", "Feedback"]) await expect(phone.getByRole("button", { name: title })).toHaveCount(0); // nothing telegraphs what unlocks; the note and feedback wait for onboarding
   await page.getByRole("button", { name: "Unlock all" }).click();
   for (const title of ["Ryuji", "Ann", "Yusuke", "Makoto", "Futaba", "Haru", "Akechi"]) await expect(phone.getByRole("button", { name: title })).toBeVisible();
   await expect(phone.getByRole("button", { name: "What's new" })).toHaveCount(0);

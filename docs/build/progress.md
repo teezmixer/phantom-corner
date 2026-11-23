@@ -62,3 +62,4 @@
 - M8 on `m8-story`: pure thread interpreter, thread content (onboarding, seven characters, what's new, feedback), thread progress in the store and storage (schema 5), the phone as a real thread view, S to skip, replay in the dev panel, start and arrival banners. 29 features marked pass.
 - Found while looking at screenshots: at 1024×600 the thread's log was not the scrolling element (auto-scroll did nothing and the name box was below the fold), the thread list wrapped and clipped, and long invitations made the panel too wide; all fixed.
 - The spec's "Ryuji's and Futaba's unlock messages" are not in the handoff files; every unlock message is a draft (D-32).
+- 2026-11-23: M8 review round 1 R3/BQ3/V4 → fixes (see taste-review.md). Mutation-checking caught two e2e tests that passed against broken code (idle lines); both rewritten.

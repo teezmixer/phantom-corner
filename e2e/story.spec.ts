@@ -56,7 +56,7 @@ test.describe("onboarding", () => {
     await page.getByRole("button", { name: "Start" }).click();
     await page.clock.fastForward("25:05");
     await expect(page.getByRole("dialog", { name: "Time." })).toBeVisible();
-    await expect(log(page, "Morgana")).toContainText("Someone's been waiting to hear from you");
+    await expect(log(page, "Morgana")).toContainText("Keep that up and people will start to notice");
     await page.getByRole("button", { name: "Call it" }).click();
     await page.getByRole("button", { name: "Done for today" }).click();
 
@@ -125,6 +125,30 @@ test.describe("onboarding", () => {
   });
 });
 
+test.describe("the phone panel at every supported window size", () => {
+  for (const [width, height] of [[1024, 600], [1440, 900], [2560, 1440]] as const) {
+    test(`${width}×${height}: the name box and every line are inside the panel and the screen, and nothing runs under the level widget`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await firstVisit(page, false);
+      const field = phone(page).getByRole("textbox", { name: "Your name" });
+      await expect(field).toBeVisible();
+      const box = async (l: ReturnType<Page["locator"]>) => (await l.boundingBox())!;
+      const inside = (inner: { x: number; y: number; width: number; height: number }, outer: { x: number; y: number; width: number; height: number }) =>
+        inner.x >= outer.x - 1 && inner.y >= outer.y - 1 && inner.x + inner.width <= outer.x + outer.width + 1 && inner.y + inner.height <= outer.y + outer.height + 1;
+      // The panel's height is an animation: wait until it has stopped moving, then look.
+      let last = -1;
+      await expect.poll(async () => { const h = (await box(phone(page))).height; const settled = Math.abs(h - last) < 0.5; last = h; return settled; }, { timeout: 5000, intervals: [300] }).toBe(true);
+      const panel = await box(phone(page));
+      expect(inside(await box(field), panel), "the name box is inside the panel").toBe(true);
+      expect(inside(await box(field), { x: 0, y: 0, width, height }), "and on the screen").toBe(true);
+      expect(inside(await box(phone(page).getByText("What do I call you?")), panel), "the question is inside the panel").toBe(true);
+      const level = await box(page.getByRole("group", { name: "Level and Knowledge" }));
+      const overlaps = panel.y < level.y + level.height && panel.y + panel.height > level.y && panel.x < level.x + level.width && panel.x + panel.width > level.x;
+      expect(overlaps, "the panel does not run under the level widget").toBe(false);
+    });
+  }
+});
+
 test.describe("what's new and feedback", () => {
   test("a returning player has the release note and a feedback thread; feedback is kept on this device", async ({ page }) => {
     await firstVisit(page, false);
@@ -162,5 +186,42 @@ test.describe("dev tools", () => {
     await expect(page.getByRole("button", { name: /^Phone, \d+ unread/ })).toBeVisible();
     await page.getByRole("button", { name: /^Phone/ }).click();
     for (const title of ["Ryuji", "Ann", "Yusuke", "Makoto", "Futaba", "Haru", "Akechi"]) await expect(phone(page).getByRole("button", { name: new RegExp(title) }).getByRole("img", { name: "unread" })).toBeVisible();
+  });
+});
+
+test.describe("idle lines", () => {
+  const LEBLANC_IDLE = [/Coffee's not going to drink itself/, /clock's not going to stop for you/, /staring at the cup/];
+  /** Remember every banner that ever shows, so a banner that has come and gone by the time we look still counts. (`runFor`, not `fastForward`: a jump fires each due timer only once, so a queue of banners would not drain.) */
+  const watchBanners = (page: Page) => page.evaluate(() => {
+    const w = window as unknown as { __banners: string[] };
+    w.__banners = [];
+    new MutationObserver(() => document.querySelectorAll("div[role=status] p").forEach((p) => { const t = p.textContent ?? ""; if (t && !w.__banners.includes(t)) w.__banners.push(t); })).observe(document.body, { subtree: true, childList: true, characterData: true });
+  });
+  const idleLines = async (page: Page) => (await page.evaluate(() => (window as unknown as { __banners: string[] }).__banners)).filter((t) => LEBLANC_IDLE.some((r) => r.test(t)));
+
+  test("after a while idling in the room the place says one line, not before 90 seconds, and not again", async ({ page }) => {
+    await firstVisit(page);
+    await page.keyboard.press("s"); // skip onboarding so the first banners are out of the way
+    await watchBanners(page);
+    await page.clock.runFor(85_000);
+    expect(await idleLines(page)).toEqual([]); // not yet
+    await page.clock.runFor(20_000); // 105 seconds in: past the 90, with room for the seconds it took to get here
+    expect(await idleLines(page)).toHaveLength(1);
+    await page.clock.runFor(600_000); // ten more minutes of idling
+    expect(await idleLines(page)).toHaveLength(1); // still just the one
+  });
+
+  test("a screen open or a session running cancels the wait", async ({ page }) => {
+    await firstVisit(page);
+    await page.keyboard.press("s");
+    await watchBanners(page);
+    await page.clock.runFor(60_000);
+    await page.keyboard.press("m"); // open the menu: the wait is cancelled
+    await page.clock.runFor(100_000);
+    await page.keyboard.press("Escape");
+    expect(await idleLines(page)).toEqual([]);
+    await page.getByRole("button", { name: "Start" }).click();
+    await page.clock.runFor(100_000);
+    expect(await idleLines(page)).toEqual([]); // a session is running: nothing idle about it
   });
 });
