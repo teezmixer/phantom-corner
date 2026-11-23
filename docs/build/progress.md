@@ -70,3 +70,9 @@
 - Found by looking at screenshots: a big arriving sign scaled around the whole HUD slot drifted up into the TV area; now only the visible sign scales, and an e2e checks it never reaches the TV at three window sizes. Screenshot harness: freeze the clock first, then step it with `runFor`.
 - 2026-11-23: M9 review round 1 R4/BQ4/V4 → fixes (see taste-review.md): finish-mid-trip, focus after travel, reducer guards, tighter e2e, tokens. An older e2e had gone vacuous because of chained timers; found by the reviewer, fixed with `runFor` and a wait for the card to unmount.
 
+
+## 2026-11-23 — M9 merged, M10 hardening
+- M9 merged (PR #10, e94f2a67) after round 1 (R4/BQ4/V4).
+- M10 on `m10-hardening`: security headers (CSP etc. in vercel.json, also served by preview so every e2e runs under the real policy), meta and share tags, the twelve analytics events behind the Settings switch, an error boundary (root and per screen) with Sojiro's card, offline and crash e2e, About/Credits/Privacy text that matches what the app does, the demo tag, the share card PNG, axe and keyboard checks, polite timer announcements, 24 px targets (six HUD controls were smaller), code-split chunks and budgets in CI, README and three ADRs, D-34.
+- Found on the way: splitting every screen into chunks broke the travel timing and a focus hand-over that assumed the next screen appears in the same tick; menu, map and travel went back into the entry, and the carried opener no longer depends on a timeout. Per-icon Phosphor imports changed nothing (the library already tree-shakes), so they were reverted.
+- Left open: `q-states` needs "sync down" (M11); `q-security-headers` needs the deployed preview checked with `vercel curl`; the weekly YouTube track check is not built (asked in D-34).
