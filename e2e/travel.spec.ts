@@ -37,6 +37,12 @@ const log = (page: Page) => page.evaluate(() => (window as unknown as { __log: E
 const values = async (page: Page, kind: "phase" | "sign") => (await log(page)).filter((e) => e.kind === kind).map((e) => e.value);
 
 const T0 = new Date(2026, 10, 23, 12);
+
+/** Freeze the fake clock where it is, so what follows is stepped by hand with `runFor` and measured in fake milliseconds: the numbers then do not depend on how busy the machine is. */
+async function freeze(page: Page) {
+  await page.clock.pauseAt(new Date((await page.evaluate(() => Date.now())) + 1000));
+}
+
 async function toTheMap(page: Page) {
   await page.clock.install({ time: T0 });
   await page.goto("/?demo=true&dev=true");
@@ -44,6 +50,7 @@ async function toTheMap(page: Page) {
   await page.getByRole("button", { name: "Unlock all" }).click();
   await page.keyboard.press("n");
   await expect(page.getByRole("dialog", { name: "Map" })).toBeVisible();
+  await freeze(page); // from here the trip runs on fake time only
 }
 
 test.describe("travel", () => {
@@ -135,13 +142,14 @@ test.describe("the location sign", () => {
     await page.clock.install({ time: T0 });
     await page.goto("/");
     await page.clock.resume();
+    await freeze(page);
     await page.getByRole("button", { name: "Press to enter" }).click();
     await page.clock.runFor(2000);
     const signs = (await log(page)).filter((e) => e.kind === "sign");
     expect(signs.map((e) => e.value)).toEqual(["arriving", "settled"]);
     const held = signs[1]!.at - signs[0]!.at;
-    expect(held).toBeGreaterThanOrEqual(850); // about 900 ms, allowing for timer jitter
-    expect(held).toBeLessThan(1100);
+    expect(held).toBeGreaterThanOrEqual(880); // 900 ms of fake time
+    expect(held).toBeLessThan(960);
   });
 
   test("with reduced motion it is never drawn big", async ({ page }) => {
