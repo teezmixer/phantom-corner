@@ -4,9 +4,9 @@ import { expect, test } from "./fixtures";
 const KNOWN_CODE = "123456"; // the practice backend's code, shown on the panel
 
 /** A first visit, skipped onboarding, one 25-minute session (Ryuji opens at level 3), and a trip to his rooftop. */
-async function reachRyuji(page: Page) {
+async function reachRyuji(page: Page, query: string) {
   await page.clock.install({ time: new Date(2026, 10, 23, 12) });
-  await page.goto("/?accounts=true");
+  await page.goto(`/${query}`);
   await page.clock.resume();
   await page.getByRole("button", { name: "Press to enter" }).click();
   await page.keyboard.press("s");
@@ -24,7 +24,7 @@ async function reachRyuji(page: Page) {
 
 test.describe("accounts (behind ?accounts=true, against the practice backend)", () => {
   test("on arrival at Ryuji's place Morgana asks to save; Yes opens Settings, where an emailed code signs in; sign out keeps progress", async ({ page }) => {
-    await reachRyuji(page);
+    await reachRyuji(page, "?accounts=true");
     const phone = page.getByRole("button", { name: /^Phone/ });
     if ((await phone.getAttribute("aria-expanded")) !== "true") await phone.click(); // an arrival may already have opened it
     await expect(phone).toHaveAttribute("aria-expanded", "true");
@@ -41,8 +41,8 @@ test.describe("accounts (behind ?accounts=true, against the practice backend)", 
     await settings.getByRole("button", { name: "Send code" }).click();
     await settings.getByLabel("Six-digit code").fill(KNOWN_CODE);
     await settings.getByRole("button", { name: "Sign in" }).click();
-    await expect(settings.getByText("Saved to ren@example.com")).toBeVisible();
-    await expect(settings.getByRole("status").first()).toContainText("Everything is saved to your account.");
+    await expect(settings.getByText("Signed in as ren@example.com")).toBeVisible();
+    await expect(settings.getByRole("status").first()).toContainText("Saved to the practice account");
 
     await settings.getByRole("button", { name: "Sign out" }).click();
     await expect(settings.getByLabel("Email")).toBeVisible();
@@ -51,17 +51,18 @@ test.describe("accounts (behind ?accounts=true, against the practice backend)", 
     await expect(page.getByLabel("Current location: School rooftop")).toBeVisible();
   });
 
-  test("without the switch there is no account panel and no save prompt", async ({ page }) => {
-    await page.goto("/?dev=true");
-    await page.getByRole("button", { name: "Press to enter" }).click();
-    await page.getByLabel("Jump to screen").selectOption("settings");
+  test("without the switch the same trip brings no save prompt, and Settings shows no account panel", async ({ page }) => {
+    await reachRyuji(page, ""); // a normal visit: Ryuji's place is reached, and nothing of accounts shows
+    const phone = page.getByRole("button", { name: /^Phone/ });
+    if ((await phone.getAttribute("aria-expanded")) !== "true") await phone.click();
+    const backToList = page.getByRole("log").first();
+    if (await backToList.count()) await page.getByRole("region", { name: "Phone" }).getByRole("button", { name: "Morgana" }).first().click();
+    await expect(page.getByRole("button", { name: /Ryuji/ })).toBeVisible(); // the list is showing, and Ryuji is in it…
+    await expect(page.getByRole("button", { name: /Save progress/ })).toHaveCount(0); // …but not the save thread
+    await page.keyboard.press("m");
+    await page.getByRole("button", { name: /SETTINGS/ }).click();
     const settings = page.getByRole("dialog", { name: "Settings" });
     await expect(settings.getByText("Accounts: not yet.")).toBeVisible();
     await expect(settings.getByLabel("Email")).toHaveCount(0);
-    await page.getByRole("button", { name: "Unlock all" }).click();
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("button", { name: /^Phone/ })).toBeVisible();
-    await page.getByRole("button", { name: /^Phone/ }).click();
-    await expect(page.getByRole("button", { name: /Save progress/ })).toHaveCount(0);
   });
 });
