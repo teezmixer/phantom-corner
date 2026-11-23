@@ -201,6 +201,12 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **The save prompt** also appears for a player who reached Ryuji's place before accounts were switched on, the first time they are on, wherever they are, rather than only on a fresh arrival.
 - **Practice mode:** until the live backend exists the account lives in memory, so a reload ends the practice session; the code is always 123456.
 
+### D-37 After the report: your instructions of 2026-11-23
+- **Unlock levels and messages:** you told me to draft them without your input, so the schedule and the seven messages in `docs/build/unlock-schedule.md` stand as the working copy (they were already in place as provisional drafts; the table makes them readable at once). Replace any line or number whenever you like; D-06, D-08, D-31 and D-32 stay open as questions only in the sense that you may still change them.
+- **Places' backgrounds:** every place except LeBlanc keeps the solid placeholder with its name, as you asked.
+- **LeBlanc's background** is now the silent loop you supplied (`src/bu1weaikjewy.mp4`, a placeholder). The borrowed screenshot is no longer shipped (B-05 is therefore no longer a performance problem or a takedown risk in the live app); the old PNG file is still in the repo, untouched and unused, until you say to delete it. With reduced motion the loop does not play (it shows its first frame).
+- **The TV** can take a YouTube link you paste: it plays in the player's window when you press Play, is listed to play again or remove (up to ten, kept on this device, never synced), and is named "Your link 1", "Your link 2" (YouTube titles would need a request the page's security policy forbids). The "TV's off." box is now only as wide as its words.
+
 ### D-36 M12 choices that are yours (provisional — Ares decides)
 - **Mission-complete moment:** a banner "Mission complete." and a small rising two-note sound, clearly quieter than the session fanfare (spec §3.9: one loud moment). Wording and sound are drafts.
 - **The break:** five minutes by default; you can pick 5, 10 or 15 while it runs (choosing restarts it from now); "Skip the rest" returns to the choice; when it runs out there is a soft two-note bell and "Break's over. Back to it when you're ready." Skipping makes no sound. All provisional, in a neutral voice, not Sojiro's or Morgana's.
