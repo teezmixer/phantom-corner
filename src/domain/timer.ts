@@ -102,5 +102,6 @@ export function timerAnnouncement(timer: TimerState, now: number): string {
   if (left <= 0) return "";
   if (left < MINUTE) return "Less than a minute left";
   const minutes = Math.ceil(left / MINUTE);
-  return `${Math.ceil(minutes / 5) * 5} minutes left`;
+  // Never more than the session is long: a 23-minute session starts at "23 minutes left", not "25".
+  return `${Math.min(Math.ceil(minutes / 5) * 5, Math.ceil(timer.durationMs / MINUTE))} minutes left`;
 }

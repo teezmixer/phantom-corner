@@ -112,6 +112,12 @@ describe("timerAnnouncement", () => {
     expect(at(MINUTE)).toBe("5 minutes left");
   });
 
+  it("never says more than the session is long, so a 23-minute session starts at 23", () => {
+    const short: TimerState = { status: "running", durationMs: 23 * MINUTE, endsAt: 10_000_000 + 23 * MINUTE };
+    expect(timerAnnouncement(short, 10_000_000)).toBe("23 minutes left");
+    expect(timerAnnouncement(short, 10_000_000 + 3 * MINUTE)).toBe("20 minutes left");
+  });
+
   it("switches to one sentence for the last minute, and to nothing at zero", () => {
     expect(at(MINUTE - 1)).toBe("Less than a minute left");
     expect(at(1000)).toBe("Less than a minute left");
