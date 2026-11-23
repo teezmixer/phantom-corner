@@ -109,6 +109,7 @@ export const widgets = {
   pausedLong: "Still on it, or calling it a night?", // draft (spec §3.6 sample)
   secondTab: "LeBlanc's already open in another tab.", // draft (spec §3.11)
   secondTabTakeover: "Study here instead", // draft
+  reload: "Reload", // draft (the one button on the app-error card)
   notYet: "Not yet.", // draft — menu items that aren't built (spec §3.7)
 } as const;
 

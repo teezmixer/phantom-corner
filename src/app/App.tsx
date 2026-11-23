@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { morgana } from "@/content/copy";
 import { BASE_TITLE, tabTitle } from "@/domain/title";
 import { useNow } from "@/hooks/useNow";
@@ -17,6 +17,7 @@ import { SummaryScreen } from "@/screens/Summary/SummaryScreen";
 import { TravelScreen } from "@/screens/Travel/TravelScreen";
 import { Banner } from "./Banner";
 import { DevPanel } from "./DevPanel";
+import { ErrorBoundary } from "./ErrorBoundary";
 import MainScreen from "./MainScreen";
 
 const LAYERS: Partial<Record<Layer, () => ReactNode>> = {
@@ -88,8 +89,14 @@ function StorageNotice() {
 }
 
 /** Composition root: the room is always underneath once entered; one `layer` decides what sits on top. */
+/** Dev tools only: renders and throws, to see the crash card for real (DevPanel "Crash a screen / the app"). */
+function DevBoom(): never {
+  throw new Error("Forced crash from the developer tools");
+}
+
 export function App({ dev }: { dev: boolean }) {
   const { state, derived, dispatch } = useStore();
+  const [devCrash, setDevCrash] = useState<"screen" | "app" | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -107,16 +114,21 @@ export function App({ dev }: { dev: boolean }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [state, derived, dispatch]);
 
+  if (devCrash === "app") return <DevBoom />;
+
   return (
     <>
       {state.entered && <MainScreen locked={state.layer !== "main"} />}
-      {LAYERS[state.layer]?.()}
+      {/* One boundary per screen layer: a bug in one screen shows the crash card instead of a blank page. Keyed so changing layer starts clean. */}
+      <ErrorBoundary key={state.layer}>
+        {devCrash === "screen" ? <DevBoom /> : LAYERS[state.layer]?.()}
+      </ErrorBoundary>
       <SessionClock />
       <IdleVoice />
       <TabTitle />
       <StorageNotice />
       {state.entered && <Banner />}
-      {dev && <DevPanel />}
+      {dev && <DevPanel onCrash={setDevCrash} />}
     </>
   );
 }

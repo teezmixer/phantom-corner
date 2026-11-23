@@ -14,7 +14,7 @@ const btn = "border border-white bg-black px-2 py-1 text-xs hover:bg-redbright f
  * Dev tools, only with ?dev=true: reach everything without grinding. Off by default and invisible to users.
  * Grant Knowledge, unlock everything, jump to any location / screen / thread, reset all data.
  */
-export function DevPanel() {
+export function DevPanel({ onCrash }: { onCrash: (what: "screen" | "app") => void }) {
   const { state, dispatch } = useStore();
   const [open, setOpen] = useState(true);
   return (
@@ -38,6 +38,8 @@ export function DevPanel() {
           <button type="button" className={btn} onClick={() => dispatch({ type: "SET_PHONE", open: true })}>Open phone</button>
           <button type="button" className={btn} onClick={() => dispatch({ type: "MARK_ALL_UNREAD", ids: THREADS.map((t) => t.id) })}>All threads unread</button>
           <button type="button" className={btn} onClick={() => { dispatch({ type: "REPLAY_ONBOARDING" }); }}>Replay onboarding</button>
+          <button type="button" className={btn} onClick={() => onCrash("screen")}>Crash a screen</button>
+          <button type="button" className={btn} onClick={() => onCrash("app")}>Crash the app</button>
           <button type="button" className={btn} onClick={() => dispatch({ type: "RESET" })}>Reset all data</button>
         </div>
       )}
