@@ -81,3 +81,9 @@
 - M10 merged (PR #11, fe453e52) after round 1 (R4/BQ4/V4).
 - M11 on `m11-accounts-sync`: event ids (`<clientId>:<n>`), the sync module behind `SyncBackend` with pure merge rules, an in-memory fake and `SYNC_APPLY`; the SQL migration with RLS, constraints and `delete_my_account`, tested in an in-process Postgres (PGlite) with mutation checks; Morgana's save prompt at Ryuji's arrival; sign-in with a code, sync, sign out, export, delete and the sync-down dot, all behind `?accounts=true`. Live parts blocked (B-10).
 - Found on the way: a form with `type=email` blocks submit in the browser before our own message can show (`noValidate`); a file named `Telemetry.tsx` clashes with `telemetry.ts` on a case-insensitive disk; the entry budget needed the Vercel scripts and sync moved to lazy chunks.
+
+## 2026-11-23 — M11 merged, M12 everything else
+- M11 merged (PR #12, d7ac456e) after round 2 (R4/BQ4/V4).
+- M12 on `m12-everything-else`: the mission-complete moment, the break in depth, day and night variants, the profile (member since, calendar, roster), the illustrated menu with Morgana's placeholder, the sign fold, presence and the bonus vote (flag + fake), Copy the card. The inventory diff found one line without an entry (the sign fold); added and built.
+- Slip: the mission-complete moment and the break share one commit (they share the store, banner and sound rules), and the share-card copy commit carries the community copy strings.
+- Found on the way: lazy menu/map needed the room's last focus remembered; a banner queue means e2e waits for banners of the session just finished; `useCallback` that closes over state setters trips the React Compiler lint.
