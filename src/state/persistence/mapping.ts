@@ -1,5 +1,6 @@
 import { recordSession, repairStampedDays } from "@/domain/calendar";
 import { clampText, MAX_TODOS } from "@/domain/limits";
+import { stampEventIds } from "@/domain/progress";
 import { isEvent } from "./guard";
 import { repairDeadline, repairSettings, repairStory } from "./repair";
 import { bannersFor } from "../banners";
@@ -35,7 +36,8 @@ export function repairTodos(todos: readonly Todo[], nextTodoId: number): { todos
 export function stateFromPersisted(p: Persisted, now: number, flags: { recovered: boolean; storageBlocked: boolean; firstVisit?: boolean }): AppState {
   let timer = p.timer;
   // A single impossible event is dropped; the rest of the history is kept.
-  let events = p.events.filter(isEvent);
+  // Saves from before ids get theirs here (D-24): "<clientId>:<n>" in log order.
+  let events = stampEventIds(p.events.filter(isEvent), p.clientId);
   // An end time further away than the whole session (a corrupt value, or the clock moved) is pulled back to a full session.
   if (timer.status === "running") timer = { ...timer, endsAt: Math.min(timer.endsAt, now + timer.durationMs) };
   let studiedDays = repairStampedDays(p.studiedDays);
@@ -69,6 +71,7 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     locationId: p.locationId,
     visited: p.visited,
     events,
+    clientId: p.clientId,
     studiedDays,
     banners: offlineBanners.slice(-MAX_BANNERS),
     unreadThreads: p.unreadThreads,

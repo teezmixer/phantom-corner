@@ -20,13 +20,34 @@ export function levelForKnowledge(knowledge: number, thresholds: readonly number
 }
 
 /** An entry in the append-only event log. Knowledge is never stored; it is folded from these (spec §4.5). */
-export type ProgressEvent =
+export type ProgressEvent = (
   | { kind: "mission_first_set" }
   | { kind: "session"; plannedMs: number; focusedMs: number; outcome: "completed" | "stopped" }
   /** Knowledge a thread gave (a `grant` step). `key` names the step, so the same grant is never counted twice. */
   | { kind: "story_grant"; key: string; knowledge: number }
   /** Dev panel only. */
-  | { kind: "dev_grant"; knowledge: number };
+  | { kind: "dev_grant"; knowledge: number }
+) & {
+  /** Names the event across devices, for sync (D-24): "<clientId>:<n>". Absent only in memory-only modes. */
+  id?: string;
+};
+
+const sequenceOf = (id: string | undefined, clientId: string): number => {
+  if (!id || !id.startsWith(`${clientId}:`)) return 0;
+  const n = Number(id.slice(clientId.length + 1));
+  return Number.isInteger(n) ? n : 0;
+};
+
+/**
+ * Gives every event without an id one, in log order: "<clientId>:<n>", continuing after the highest number this client has
+ * used. Used when a save from before ids is loaded (the migration of D-24) and when the reducer appends. Events that already
+ * have ids, including other devices' after a sync, are never touched. With no clientId (demo, dev) nothing is stamped.
+ */
+export function stampEventIds(events: readonly ProgressEvent[], clientId: string): ProgressEvent[] {
+  if (clientId === "" || events.every((e) => e.id !== undefined)) return events as ProgressEvent[];
+  let n = events.reduce((max, e) => Math.max(max, sequenceOf(e.id, clientId)), 0);
+  return events.map((e) => (e.id === undefined ? { ...e, id: `${clientId}:${++n}` } : e));
+}
 
 /** Total Knowledge for an event log under the given rules. */
 export function knowledgeFor(events: readonly ProgressEvent[], rules: typeof KNOWLEDGE_RULES = KNOWLEDGE_RULES): number {

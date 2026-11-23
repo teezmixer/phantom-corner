@@ -11,7 +11,7 @@ import { answer, pendingAsk, post, skip, stepAll, type Facts, type Progress } fr
 import { HUD_SIZES, type HudSize, type WidgetId, TOGGLEABLE_WIDGETS } from "@/hud/slots";
 import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MotionSetting, type Volumes } from "./persistence/schema";
 import { initialTimer, remainingMs, transition, type TimerEvent, type TimerState } from "@/domain/timer";
-import type { ProgressEvent } from "@/domain/progress";
+import { stampEventIds, type ProgressEvent } from "@/domain/progress";
 import { bannersFor, type BannerMessage } from "./banners";
 import { derive } from "./derive";
 
@@ -40,6 +40,8 @@ export interface AppState {
   timer: TimerState;
   breakEndsAt: number | null;
   events: ProgressEvent[];
+  /** This device's id, the prefix of its event ids (D-24). Empty in the demo and dev mode, which never sync. Not part of any visible state. */
+  clientId: string;
   /** Days studied, each with the stamp design earned at the time (calendar, spec §3.4). */
   studiedDays: readonly StampedDay[];
   unreadThreads: string[];
@@ -94,6 +96,7 @@ export const initialState: AppState = {
   timer: initialTimer,
   breakEndsAt: null,
   events: [],
+  clientId: "",
   studiedDays: [],
   unreadThreads: [],
   story: {},
@@ -227,6 +230,17 @@ export function reducer(state: AppState, action: Action): AppState {
   const core = raw.idleSaid && raw.timer.status !== "idle" ? { ...raw, idleSaid: false } : raw;
   const next = action.type === "DISMISS_BANNER" || action.type === "RESET" ? core : settle(core);
   if (action.type === "DISMISS_BANNER" || action.type === "RESET" || action.type === "LOAD") return next;
+  return withBanners(state, withEventIds(state, next));
+}
+
+/** Every event appended by this action gets its id here, in one place, so no reducer branch needs a clock or an id source. */
+function withEventIds(prev: AppState, next: AppState): AppState {
+  if (next.events === prev.events || next.clientId === "") return next;
+  const events = stampEventIds(next.events, next.clientId);
+  return events === next.events ? next : { ...next, events };
+}
+
+function withBanners(state: AppState, next: AppState): AppState {
   const fresh = bannersFor(state, next);
   if (fresh.length === 0) return next;
   // The greeting comes first: Sojiro says hello, then the news waiting from a session that ended while the tab was closed.
@@ -400,7 +414,7 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "RESET":
       // Demo mode stays demo, so a reset can never turn into writing real progress later (M3 persistence).
       // Demo stays demo, and the analytics choice is never silently undone by a reset.
-      return { ...initialState, layer: "splash", demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
+      return { ...initialState, layer: "splash", clientId: state.clientId, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
   }
 }
 
