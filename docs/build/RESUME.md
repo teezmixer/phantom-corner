@@ -1,8 +1,9 @@
 # RESUME — checkpoint
 
-- **Updated:** 2026-11-22, M5 review round 1 fixes committed; PR #6 still open (not yet updated or merged)
+- **Updated:** 2026-11-23, M5 round 2 fixes committed; PR #6 open, about to merge
 - **Milestone / branch:** M5 HUD widgets on `m5-hud-widgets` (from main)
-- **In progress:** M5 review follow-up. Code fixes and e2e are done (99 e2e pass). Left: refresh M5 screenshots, add the M5 round to taste-review.md, run the full verify once, push, update PR #6 body, SendMessage reviewer ac71f0170655c6888 for round 2 (needs Readiness >=4, Build >=4), wait for CI, merge (merge commit), verify production bundle hash, sync main. Then M6.
+- **In progress:** M5 round 2 passed (R4/BQ4/V4). Pushing the last fixes, waiting once for CI, then merge PR #6 (merge commit), verify the production bundle hash, sync main. Then M6.
+- The repo was removed from iCloud sync on 2026-11-23; `node_modules` is a symlink to `node_modules.nosync` (ignored by git, eslint and tsconfig).
 - iCloud may have re-created sync-conflict copies (e.g. `src/app/Tv 2.tsx`); they are ignored by tsconfig/eslint/.gitignore. Delete only after verifying they match the originals.
 
 ## M5 plan (spec §3.6, §3.4, §3.2 settings, §4.12) — one commit per piece

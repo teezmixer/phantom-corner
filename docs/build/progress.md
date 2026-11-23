@@ -45,3 +45,4 @@
 - e2e now covers each of those; Delete-in-demo and opt-out-survives-Delete were mutation-checked (both fail when the fix is removed). Full e2e: 99 passed. Vitest: 318 passed (earlier run).
 - Corrected overstated features.json evidence; added D-29.
 - Still to do: refresh M5 screenshots, update taste-review.md, full verify (typecheck, lint, test, build, e2e) in one run, push, update PR #6, ask reviewer for round 2, merge.
+- 2026-11-23: iCloud was evicting node_modules and .git (builds and pushes hung); Ares removed the folder from iCloud sync. M5 round 2: R4/BQ4/V4. Fixed the guard, repeated backups and demo opt-out findings; 100 e2e and 320 unit tests pass.
