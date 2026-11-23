@@ -45,6 +45,9 @@ export function localStorageAdapter(key: string, now: () => number = Date.now): 
       return attempt(() => { window.localStorage.setItem(key, raw); return true; }, false);
     },
     backup: (raw) => {
+      // Reloading at the splash with unreadable data must not add an identical backup every time (that would rotate real ones out).
+      const newest = attempt(() => Object.keys(window.localStorage).filter((k) => k.startsWith(backupPrefix)).sort().pop(), undefined);
+      if (newest !== undefined && attempt(() => window.localStorage.getItem(newest) === raw, false)) return true;
       const backupKey = `${backupPrefix}${new Date(now()).toISOString()}`;
       const ok = attempt(() => { window.localStorage.setItem(backupKey, raw); return window.localStorage.getItem(backupKey) === raw; }, false);
       if (ok) {

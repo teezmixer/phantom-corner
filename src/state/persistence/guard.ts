@@ -48,7 +48,8 @@ export function isPersisted(v: unknown): v is Persisted {
   return (
     isStr(v.clientId) &&
     (v.name === null || isStr(v.name)) &&
-    isRec(settings) && isBool(settings.muted) && isRec(settings.volumes) && isRec(settings.ambienceMix) && Object.keys(settings.ambienceMix).length <= 200 &&
+    isRec(settings) && (!isRec(settings.ambienceMix) || Object.keys(settings.ambienceMix).length <= 200) && // every field inside is defaulted or clamped by repairSettings, so one bad preference never discards a save
+    
     (mission === null || (isRec(mission) && isStr(mission.text) && isStr(mission.setAt) && isBool(mission.done) && (mission.deadline === undefined || isStr(mission.deadline)))) &&
     Array.isArray(v.todos) && v.todos.length <= MAX_STORED_ITEMS && v.todos.every((t) => isRec(t) && isNum(t.id) && isStr(t.text) && isBool(t.done)) &&
     isNum(v.nextTodoId) && Number.isInteger(v.nextTodoId) && v.nextTodoId >= 1 &&

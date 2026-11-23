@@ -195,6 +195,15 @@ describe("localStorageAdapter", () => {
     expect(window.localStorage.getItem(`${STORAGE_KEY}:backup:${ISO}`)).toBe("old");
   });
 
+  it("does not add another backup of data that is already the newest backup", () => {
+    let t = NOW;
+    const a = localStorageAdapter(STORAGE_KEY, () => (t += 1000));
+    for (let i = 0; i < MAX_BACKUPS + 3; i++) expect(a.backup("same unreadable text")).toBe(true); // reloading at the splash again and again
+    expect(Object.keys(window.localStorage).filter((k) => k.startsWith(`${STORAGE_KEY}:backup:`))).toHaveLength(1);
+    expect(a.backup("something different")).toBe(true);
+    expect(Object.keys(window.localStorage).filter((k) => k.startsWith(`${STORAGE_KEY}:backup:`))).toHaveLength(2);
+  });
+
   it("keeps only the newest backups so repeated recoveries cannot fill the quota", () => {
     let t = NOW;
     const a = localStorageAdapter(STORAGE_KEY, () => (t += 1000));
@@ -349,9 +358,16 @@ describe("one bad preference does not cost the user their save", () => {
     expect(loadState(stored({}, { text: "x", setAt: ISO, done: false, deadline: ISO })).state.missionDeadline).toBe(ISO);
   });
 
-  it("still refuses a save that is structurally broken", () => {
+  it("still refuses a save whose settings are not an object at all", () => {
     expect(load(JSON.stringify({ ...stored({}), settings: "oops" })).recovered).toBe(true);
-    expect(load(JSON.stringify({ ...stored({}), settings: { ...fresh().settings, volumes: 5 } })).recovered).toBe(true);
+  });
+
+  it("repairs missing or wrongly typed muted, volumes and ambience instead of discarding the save", () => {
+    const { r, state } = loadState({ ...stored({}), settings: { ...stored({}).settings, volumes: 5, muted: "x", ambienceMix: undefined } });
+    expect(r.recovered).toBe(false);
+    expect(state.muted).toBe(false);
+    expect(state.volumes).toEqual({ music: 0.5, ambience: 0.35, ui: 0.7 });
+    expect(state.name).toBe("Ren");
   });
 });
 
