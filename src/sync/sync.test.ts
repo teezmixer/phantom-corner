@@ -9,7 +9,7 @@ import { FAKE_CODE, FakeBackend, FakeServer } from "./fake";
 import { mergeEvents, newer, plan } from "./merge";
 import { BadCode, NotSignedIn, type Snapshot } from "./types";
 
-const ev = (id: string, knowledge = 1): ProgressEvent => ({ kind: "dev_grant", knowledge, id });
+const ev = (id: string, knowledge = 1): ProgressEvent => ({ kind: "story_grant", key: id, knowledge, id });
 const T1 = "2026-11-20T10:00:00.000Z";
 const T2 = "2026-11-21T10:00:00.000Z";
 const T3 = "2026-11-22T10:00:00.000Z";
@@ -105,6 +105,12 @@ describe("the fake backend", () => {
     await b.pushEvents([ev("a:1", 1)]);
     await b.pushEvents([ev("a:1", 999)]);
     expect(await b.pullEvents()).toEqual([ev("a:1", 1)]);
+  });
+  it("never sends developer grants, and the server refuses them if they arrive", async () => {
+    const b = await signedIn(new FakeServer());
+    const dev: ProgressEvent = { kind: "dev_grant", knowledge: 50, id: "c:1" };
+    expect(plan(snap([dev, ev("c:2")]), [], {}).pushEvents.map((e) => e.id)).toEqual(["c:2"]);
+    await expect(b.pushEvents([dev])).rejects.toThrow();
   });
   it("refuses an event with an impossible shape", async () => {
     const b = await signedIn(new FakeServer());

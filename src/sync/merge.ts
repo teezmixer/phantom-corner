@@ -38,7 +38,8 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 export function plan(local: Snapshot, remoteEvents: readonly ProgressEvent[], remoteDocs: Docs): Plan {
   const events = mergeEvents(local.events, remoteEvents);
   const remoteIds = new Set(remoteEvents.flatMap((e) => (e.id ? [e.id] : [])));
-  const pushEvents = local.events.filter((e) => e.id && !remoteIds.has(e.id));
+  // The developer panel's grants are throwaway and never leave the device (the server refuses them too).
+  const pushEvents = local.events.filter((e) => e.id && e.kind !== "dev_grant" && !remoteIds.has(e.id));
   const settings = newer(local.docs.settings, remoteDocs.settings);
   const mission = newer(local.docs.mission, remoteDocs.mission);
   const todos = newer(local.docs.todos, remoteDocs.todos);

@@ -55,7 +55,7 @@ export class FakeBackend implements SyncBackend {
   async pushEvents(events: ProgressEvent[]): Promise<void> {
     const row = this.guard();
     for (const e of events) {
-      if (!e.id || !isEvent(e)) throw new Error("The server refused an event."); // like the check constraints
+      if (!e.id || e.kind === "dev_grant" || !isEvent(e)) throw new Error("The server refused an event."); // like the check constraints
       if (!row.events.has(e.id)) row.events.set(e.id, e); // an id already there is ignored: append-only
     }
   }
