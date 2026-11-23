@@ -3,7 +3,7 @@ import { X } from "@phosphor-icons/react";
 import { ui } from "@/content/copy";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/state/StoreProvider";
-import { carriedOpener, carryOpener } from "./openerFocus";
+import { carriedOpener, carryOpener, lastRoomFocus } from "./openerFocus";
 
 /**
  * Shared full-screen layer for wireframe screens. Token-styled with a small "placeholder" marker.
@@ -19,7 +19,7 @@ export function Overlay({ title, children, closable = true, className }: { title
   // Focus moves into the layer on open and returns to where it was on close.
   useEffect(() => {
     const active = document.activeElement as HTMLElement | null;
-    const before = active && active !== document.body ? active : carriedOpener();
+    const before = active && active !== document.body ? active : (carriedOpener() ?? lastRoomFocus());
     ref.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
     return () => {
       carryOpener(before);
