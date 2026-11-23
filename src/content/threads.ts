@@ -9,8 +9,14 @@ import type { Step, Thread } from "@/domain/story";
 import { invitations, noticeboard, onboarding, widgets } from "./copy";
 import { LOCATIONS } from "./registry";
 
-/** The version this build is: a `release` thread starts for a player when it names this. Bump it with each release note. */
+/**
+ * The version this build is. Each release has its OWN thread (below), which starts for a player when it names this version;
+ * a new release note is a new entry in RELEASES plus a bump here, and the old notes stay readable where they were.
+ */
 export const RELEASE_VERSION = "0.1";
+const RELEASES: readonly { version: string; lines: readonly string[] }[] = [{ version: "0.1", lines: noticeboard.whatsNew }];
+export const releaseThreadId = (version: string) => `whats-new-${version.replace(/\./g, "-")}`;
+export const WHATS_NEW_ID = releaseThreadId(RELEASE_VERSION);
 
 const say = (text: string, from?: string): Step => (from ? { say: text, from } : { say: text });
 
@@ -61,8 +67,9 @@ export const THREADS: readonly Thread[] = [
   character("futaba", "Futaba"),
   character("haru", "Haru"),
   character("akechi", "Akechi"),
-  { id: "whats-new", title: "What's new", from: "morgana", trigger: { on: "release", version: RELEASE_VERSION }, steps: noticeboard.whatsNew.map((t) => say(t)) },
-  { id: "feedback", title: "Feedback", from: "morgana", compose: true, steps: noticeboard.feedback.map((t) => say(t)) },
+  ...RELEASES.map((r): Thread => ({ id: releaseThreadId(r.version), title: r.version === RELEASE_VERSION ? "What's new" : `What's new ${r.version}`, from: "morgana", trigger: { on: "release", version: r.version }, steps: r.lines.map((t) => say(t)) })),
+  // Not before onboarding is over: a new player is not greeted by a second thread while Morgana is still talking.
+  { id: "feedback", title: "Feedback", from: "morgana", trigger: { on: "onboarded" }, compose: true, steps: noticeboard.feedback.map((t) => say(t)) },
 ];
 
 export const THREAD_IDS: readonly string[] = THREADS.map((t) => t.id);

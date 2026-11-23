@@ -47,9 +47,10 @@ export function repairDeadline(deadline: unknown): string | null {
 }
 
 /**
- * Saved thread progress, checked against the threads that really exist. A thread is kept when its position is a real step and
- * its messages are well formed (bad messages are dropped, text is cut); one that is broken beyond that is dropped, which at
- * worst makes a character say their first message again. Never costs the rest of the save.
+ * Saved thread progress, checked against the threads that really exist. A thread is kept when its position is a whole number
+ * and its messages are well formed (bad messages are dropped, text is cut); one that is broken beyond that, or that no longer
+ * exists, is dropped, which at worst makes a character say their first message again. A finished thread stays finished when
+ * the thread's content changes. Never costs the rest of the save.
  */
 export function repairStory(raw: unknown): Record<string, ThreadProgress> {
   const out: Record<string, ThreadProgress> = {};
@@ -58,14 +59,17 @@ export function repairStory(raw: unknown): Record<string, ThreadProgress> {
     const saved = raw[thread.id];
     if (!isRec(saved)) continue;
     const { cursor, messages } = saved;
-    if (typeof cursor !== "number" || !Number.isInteger(cursor) || cursor < 0 || cursor > thread.steps.length) continue;
+    if (typeof cursor !== "number" || !Number.isInteger(cursor) || cursor < 0) continue;
+    // A thread's content can change between builds (Ares's real messages, a new step). A thread the player has finished stays
+    // finished, whatever its length is now, so an edit never replays it; a position past the end (the thread got shorter) is the end.
+    const finished = !thread.compose && (saved.done === true || cursor >= thread.steps.length);
     const kept: Message[] = [];
     for (const m of Array.isArray(messages) ? messages.slice(-MAX_MESSAGES) : []) {
       if (!isRec(m) || (m.side !== "them" && m.side !== "me") || typeof m.text !== "string" || m.text.trim() === "") continue;
       const delay = typeof m.delayMs === "number" && Number.isFinite(m.delayMs) && m.delayMs > 0 ? Math.min(5000, m.delayMs) : undefined;
       kept.push({ side: m.side, from: typeof m.from === "string" ? m.from.slice(0, 40) : thread.from, text: m.text.slice(0, 500), ...(delay ? { delayMs: delay } : {}) });
     }
-    out[thread.id] = { cursor, messages: kept, done: !thread.compose && cursor >= thread.steps.length };
+    out[thread.id] = { cursor: finished ? thread.steps.length : cursor, messages: kept, done: finished };
   }
   return out;
 }

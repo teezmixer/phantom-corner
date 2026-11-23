@@ -79,9 +79,30 @@ describe("run", () => {
     expect(run(t, first.progress, facts()).effects).toEqual([]); // already done
   });
 
+  it("a grant with its own id is paid under that id, wherever the step sits", () => {
+    const early: Thread = { id: "gift", title: "G", from: "m", steps: [{ grant: { xp: 7, id: "welcome" } }, { say: "Here." }] };
+    const late: Thread = { id: "gift", title: "G", from: "m", steps: [{ say: "Here." }, { say: "More." }, { grant: { xp: 7, id: "welcome" } }] };
+    expect(run(early, empty, facts()).effects[0]!.key).toBe("gift:welcome");
+    expect(run(late, empty, facts()).effects[0]!.key).toBe("gift:welcome"); // reordered, same key: never paid twice
+  });
+
   it("a reveal step is understood and skipped", () => {
     const t: Thread = { id: "x", title: "X", from: "x", steps: [{ reveal: "timer" }, { say: "After." }] };
     expect(texts(run(t, empty, facts()).progress)).toEqual(["After."]);
+  });
+
+  it.each(["Ren$&", "Ren$`x", "$$", "a$'b", "{name}"])("says a name exactly as typed, whatever characters it has: %s", (name) => {
+    const t: Thread = { id: "x", title: "X", from: "x", steps: [{ say: "Hi {name}." }] };
+    expect(texts(run(t, empty, facts({ name })).progress)).toEqual([`Hi ${name}.`]);
+  });
+
+  it("at the cap the OLDEST line goes, for both sides: new news is never swallowed", () => {
+    const t: Thread = { id: "x", title: "X", from: "x", steps: [{ say: "Brand new." }] };
+    const full: ThreadProgress = { cursor: 0, messages: Array.from({ length: MAX_MESSAGES }, (_, i) => ({ side: "me" as const, from: "Ren", text: `old ${i}` })), done: false };
+    const out = run(t, full, facts()).progress;
+    expect(out.messages).toHaveLength(MAX_MESSAGES);
+    expect(out.messages.at(-1)!.text).toBe("Brand new.");
+    expect(out.messages[0]!.text).toBe("old 1");
   });
 
   it("never holds more than the cap", () => {
@@ -143,6 +164,15 @@ describe("triggers", () => {
     expect(triggered(notes, facts({ firstVisit: true }), { morgana: { cursor: 8, messages: [], done: true } })).toBe(true);
     expect(triggered(notes, facts({ firstVisit: false }), none)).toBe(true); // a returning player gets it at once
     expect(triggered(notes, facts({ release: "0.2" }), none)).toBe(false);
+  });
+
+  it("an onboarded thread waits until onboarding is over, and never greets a new player", () => {
+    const feedback: Thread = { id: "feedback", title: "F", from: "m", trigger: { on: "onboarded" }, steps: [] };
+    expect(triggered(feedback, facts({ firstVisit: true }), none)).toBe(false); // new, onboarding not begun
+    expect(triggered(feedback, facts({ firstVisit: true }), { morgana: { cursor: 3, messages: [], done: false } })).toBe(false);
+    expect(triggered(feedback, facts({ firstVisit: true }), { morgana: { cursor: 11, messages: [], done: true } })).toBe(true);
+    expect(triggered(feedback, facts({ firstVisit: false }), none)).toBe(true);
+    expect(triggered(feedback, facts({ firstVisit: false, entered: false }), none)).toBe(false); // not before they are inside
   });
 
   it("a thread with no trigger is always there", () => {
@@ -220,5 +250,16 @@ describe("stepAll", () => {
     const snapshot = JSON.stringify(given);
     stepAll(threads, given, facts({ firstVisit: true, name: "Ren", unlocked: ["leblanc", "ryuji"] }));
     expect(JSON.stringify(given)).toBe(snapshot);
+  });
+
+  it("a new release note starts for a player who has read the old one, and leaves the old one alone", () => {
+    const v1: Thread = { id: "whats-new-0-1", title: "N", from: "m", trigger: { on: "release", version: "0.1" }, steps: [{ say: "Old." }] };
+    const v2: Thread = { id: "whats-new-0-2", title: "N", from: "m", trigger: { on: "release", version: "0.2" }, steps: [{ say: "New one." }, { say: "Another." }] };
+    const read = stepAll([v1, v2], {}, facts({ release: "0.1" })).progress;
+    expect(Object.keys(read)).toEqual(["whats-new-0-1"]); // 0.2 is not out yet
+    const later = stepAll([v1, v2], read, facts({ release: "0.2" }));
+    expect(texts(later.progress["whats-new-0-2"]!)).toEqual(["New one.", "Another."]);
+    expect(later.progress["whats-new-0-1"]).toBe(read["whats-new-0-1"]); // untouched
+    expect(later.gained).toEqual({ "whats-new-0-2": 2 });
   });
 });

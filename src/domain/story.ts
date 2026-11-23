@@ -9,11 +9,16 @@ export type Step =
   | { ask: "name" | "save_progress" }
   | { waitFor: "name_set" | "mission_set" | "session_completed" | "arrived"; location?: string }
   /** Knowledge, once. Not used by the M8 content (the first mission already grants its Knowledge). */
-  | { grant: { xp: number } }
+  | { grant: { xp: number; /** Names this grant, so re-ordering a thread cannot pay it twice. Defaults to the step's position. */ id?: string } }
   /** Show a widget that was hidden. Understood and skipped: progressive reveal is a design decision (D-32). */
   | { reveal: string };
 
-export type Trigger = { on: "first_visit" } | { on: "unlock"; location: string } | { on: "release"; version: string };
+export type Trigger =
+  | { on: "first_visit" }
+  | { on: "unlock"; location: string }
+  | { on: "release"; version: string }
+  /** From the moment onboarding is over (finished or skipped), or at once for a player who is not new. For threads that must not greet a new player. */
+  | { on: "onboarded" };
 
 export interface Thread {
   id: string;
@@ -69,7 +74,8 @@ const clean = (text: string) => text.trim().slice(0, MAX_ANSWER_LENGTH);
 export type Progress = Readonly<Record<string, ThreadProgress>>;
 
 const NAME = /\{name\}/g;
-const fill = (text: string, facts: Facts) => text.replace(NAME, facts.name || facts.defaultName);
+// A function, not a string: a name such as "Ren$&" must be said as typed, not read as a replacement pattern.
+const fill = (text: string, facts: Facts) => text.replace(NAME, () => facts.name || facts.defaultName);
 
 /** Has this wait been satisfied by what the player has done? */
 export function waitSatisfied(step: Extract<Step, { waitFor: string }>, facts: Facts): boolean {
@@ -81,6 +87,9 @@ export function waitSatisfied(step: Extract<Step, { waitFor: string }>, facts: F
   }
 }
 
+/** Is the player past onboarding: inside, and either finished or skipped it, or not new in the first place? */
+const onboarded = (facts: Facts, progress: Progress) => facts.entered && (progress["morgana"]?.done ?? !facts.firstVisit);
+
 /** Is this thread's starting condition met? A thread without a trigger is always available. */
 export function triggered(thread: Thread, facts: Facts, progress: Progress): boolean {
   const t = thread.trigger;
@@ -89,7 +98,8 @@ export function triggered(thread: Thread, facts: Facts, progress: Progress): boo
     case "first_visit": return facts.entered && facts.firstVisit;
     case "unlock": return facts.unlocked.includes(t.location);
     // A release note waits until the player has finished or skipped onboarding, so a new player is not greeted by two threads.
-    case "release": return facts.release === t.version && facts.entered && (progress["morgana"]?.done ?? !facts.firstVisit);
+    case "release": return facts.release === t.version && onboarded(facts, progress);
+    case "onboarded": return onboarded(facts, progress);
   }
 }
 
@@ -104,7 +114,8 @@ export function run(thread: Thread, progress: ThreadProgress, facts: Facts): { p
   while (cursor < thread.steps.length) {
     const step = thread.steps[cursor]!;
     if ("say" in step) {
-      if (messages.length < MAX_MESSAGES) messages.push({ side: "them", from: step.from ?? thread.from, text: fill(step.say, facts), ...(step.delayMs ? { delayMs: step.delayMs } : {}) });
+      messages.push({ side: "them", from: step.from ?? thread.from, text: fill(step.say, facts), ...(step.delayMs ? { delayMs: step.delayMs } : {}) });
+      if (messages.length > MAX_MESSAGES) messages.shift(); // the oldest go, as with the player's own lines: new news is never swallowed
       cursor++;
     } else if ("ask" in step) {
       break; // the answer arrives through answer()
@@ -112,7 +123,7 @@ export function run(thread: Thread, progress: ThreadProgress, facts: Facts): { p
       if (!waitSatisfied(step, facts)) break;
       cursor++;
     } else if ("grant" in step) {
-      effects.push({ kind: "grant", xp: step.grant.xp, key: `${thread.id}:${cursor}` });
+      effects.push({ kind: "grant", xp: step.grant.xp, key: `${thread.id}:${step.grant.id ?? cursor}` });
       cursor++;
     } else {
       cursor++; // reveal: understood, skipped (D-32)

@@ -45,7 +45,7 @@ export const onboarding = {
   afterName: "{name}. Fine. It suits you.", // draft
   afterMission: "A mission, written down. That's already worth something. There — Knowledge. And look, a map.", // draft
   startTimer: "Now start the timer. I'll stay out of your way.", // draft
-  afterSession: "Not bad at all. Someone's been waiting to hear from you. Check your phone.", // draft
+  afterSession: "Not bad at all. Keep that up and people will start to notice.", // draft (does not promise a message: a short first session may not unlock anyone yet)
 } as const;
 
 /**

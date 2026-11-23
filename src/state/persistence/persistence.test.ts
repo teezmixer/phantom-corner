@@ -580,12 +580,32 @@ describe("the story survives storage", () => {
 describe("repairStory", () => {
   const good = { cursor: 2, messages: [{ side: "them", from: "morgana", text: "Oi." }], done: false };
 
-  it("keeps a well-formed thread and works out for itself whether it is done", () => {
+  it("keeps a well-formed thread, and at the last step it is finished", () => {
     expect(repairStory({ morgana: good }).morgana).toEqual({ cursor: 2, messages: good.messages, done: false });
     const steps = THREADS.find((t) => t.id === "ryuji")!.steps.length;
     expect(repairStory({ ryuji: { ...good, cursor: steps, done: false } }).ryuji!.done).toBe(true); // at the last step: finished, whatever the file says
-    expect(repairStory({ ryuji: { ...good, cursor: steps - 1, done: true } }).ryuji!.done).toBe(false); // one step short: not finished
-    expect(repairStory({ ryuji: { ...good, cursor: steps + 1 } }).ryuji).toBeUndefined(); // past the end: impossible
+    expect(repairStory({ ryuji: { ...good, cursor: steps - 1, done: false } }).ryuji!.done).toBe(false); // one step short: still going
+  });
+
+  it("a thread the player finished stays finished when its content changes in a later build", () => {
+    const steps = THREADS.find((t) => t.id === "ryuji")!.steps.length;
+    // Saved when the thread was shorter (done, cursor at the old end): now it has more steps. It must not reopen or replay.
+    const grown = repairStory({ ryuji: { cursor: steps - 2, messages: good.messages, done: true } }).ryuji!;
+    expect(grown.done).toBe(true);
+    expect(grown.cursor).toBe(steps);
+    // Saved when the thread was longer: a position past the end is the end, not a corrupt save.
+    const shrunk = repairStory({ ryuji: { ...good, cursor: steps + 5, done: false } }).ryuji!;
+    expect(shrunk.done).toBe(true);
+    expect(shrunk.cursor).toBe(steps);
+  });
+
+  it("a finished thread does not say its new lines to a player who has already finished it", () => {
+    const steps = THREADS.find((t) => t.id === "ryuji")!.steps.length;
+    const r = load(JSON.stringify({ ...fresh(), story: { ryuji: { cursor: steps - 2, messages: [{ side: "them", from: "ryuji", text: "Yo!" }], done: true } }, events: [{ kind: "dev_grant", knowledge: 40 }], visited: ["leblanc", "ryuji"] }));
+    const state = stateFromPersisted(r.persisted, NOW, { recovered: false, storageBlocked: false, firstVisit: false });
+    const entered = reducer({ ...state, entered: false, layer: "splash" }, { type: "ENTER" });
+    expect(entered.story["ryuji"]!.messages).toHaveLength(1); // nothing replayed
+    expect(entered.unreadThreads).not.toContain("ryuji");
   });
 
   it("drops threads that are not real, and ones whose position is impossible", () => {
