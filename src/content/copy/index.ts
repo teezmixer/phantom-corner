@@ -76,6 +76,8 @@ export const sessionEnd = {
 
 /** Labels used by screens and widgets. DRAFTS (decision D-10). */
 export const ui = {
+  /** The hideout menu (spec §3.7). Joker's voice: two or three words, imperative. */
+  menu: { title: "Hideout", study: "STUDY", map: "MAP", messages: "MESSAGES", profile: "PROFILE", settings: "SETTINGS", close: "CLOSE" },
   hideUi: "Hide UI",
   showUi: "Show UI",
   stamped: "Today is stamped.",

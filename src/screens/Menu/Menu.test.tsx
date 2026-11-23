@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { AudioProvider } from "@/audio/AudioProvider";
@@ -30,7 +30,7 @@ const selects = (engine: ReturnType<typeof setup>["engine"]) => engine.playSfx.m
 describe("Menu", () => {
   it("lists the spec's labels, with MAP and MESSAGES present even before they exist", () => {
     const { names } = setup();
-    expect(names().map((n) => n.replace(/Not yet\.$/, ""))).toEqual(["STUDY", "MAP", "MESSAGES", "PROFILE", "SETTINGS", "CLOSE"]);
+    expect(names().map((n) => n.replace(/\s*Not yet\.$/, ""))).toEqual(["STUDY", "MAP", "MESSAGES", "PROFILE", "SETTINGS", "CLOSE"]);
   });
 
   it("puts the highlight on the first label when it opens", () => {
@@ -95,5 +95,41 @@ describe("Menu", () => {
     setup();
     const delays = screen.getAllByRole("listitem").map((li) => (li as HTMLElement).style.getPropertyValue("--i"));
     expect(delays).toEqual(["0", "1", "2", "3", "4", "5"]);
+  });
+
+  it("STUDY from an idle timer starts a session and returns to the room", () => {
+    const { state } = setup();
+    expect(state().timer.status).toBe("idle");
+    act(() => screen.getByRole("button", { name: "STUDY" }).click());
+    expect(state().timer.status).toBe("running");
+    expect(state().layer).toBe("main");
+  });
+
+  it("STUDY while a session is already running just returns to the room, without restarting it", () => {
+    const first = setup();
+    act(() => screen.getByRole("button", { name: "STUDY" }).click());
+    const running = first.state().timer;
+    expect(running.status).toBe("running");
+    cleanup();
+    const { state } = setup({ timer: running, layer: "menu" });
+    act(() => screen.getByRole("button", { name: "STUDY" }).click());
+    expect(state().timer).toEqual(running); // the same session, untouched
+    expect(state().layer).toBe("main");
+  });
+
+  it("a not-yet label is announced with a space between the name and the note", () => {
+    setup();
+    expect(screen.getByRole("button", { name: /^MAP\s+Not yet\.$/ })).toBeInTheDocument();
+  });
+
+  it("the arrow keys still work after a click on the panel left nothing focused", () => {
+    const { focused } = setup();
+    (document.activeElement as HTMLElement).blur(); // focus is on the page body, as after clicking the heading
+    expect(document.activeElement).toBe(document.body);
+    fireEvent.keyDown(document.body, { key: "ArrowDown" });
+    expect(focused()).toBe("STUDY"); // nothing highlighted: down goes to the first label
+    (document.activeElement as HTMLElement).blur();
+    fireEvent.keyDown(document.body, { key: "ArrowUp" });
+    expect(focused()).toBe("CLOSE"); // up goes to the last
   });
 });

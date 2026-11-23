@@ -11,15 +11,31 @@ import { useStore } from "@/state/StoreProvider";
  */
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * One screen can hand over to another (menu → Settings). While the second is open the room behind is still inert, so the
+ * first screen's attempt to give focus back to the button that opened the menu is ignored, and the second screen would
+ * then remember "nothing" as its opener. The opener is therefore carried across the swap here, and cleared once no
+ * screen is open any more (the next turn of the event loop, after any follow-up screen has mounted).
+ */
+let open = 0;
+let carried: HTMLElement | null = null;
+
 export function Overlay({ title, children, closable = true, className }: { title: string; children: ReactNode; closable?: boolean; className?: string }) {
   const { state, dispatch } = useStore();
   const ref = useRef<HTMLDivElement>(null);
 
   // Focus moves into the layer on open and returns to where it was on close.
   useEffect(() => {
-    const before = document.activeElement as HTMLElement | null;
+    const active = document.activeElement as HTMLElement | null;
+    const before = active && active !== document.body ? active : carried;
+    open++;
     ref.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
-    return () => before?.focus?.();
+    return () => {
+      open--;
+      carried = before;
+      before?.focus?.();
+      setTimeout(() => { if (open === 0) carried = null; }, 0);
+    };
   }, []);
 
   // Keep Tab inside the dialog (the room behind it is inert; this covers the dialog's own edges).

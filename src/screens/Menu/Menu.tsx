@@ -1,12 +1,16 @@
 import { useEffect, useRef } from "react";
-import { widgets } from "@/content/copy";
+import { ui, widgets } from "@/content/copy";
 import { useAudio } from "@/audio/AudioProvider";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/state/StoreProvider";
 import { Overlay, buttonClass } from "../Overlay";
 
-/** How far each label rests from level, so the list reads as signs pinned at angles rather than a form (spec §3.7). */
-const TILTS = ["-2deg", "1.5deg", "-1deg", "2deg", "-1.5deg", "1deg"] as const;
+/**
+ * How far each label rests from level, so the list reads as signs pinned at angles rather than a form (spec §3.7).
+ * Small enough, with the gap below, that no label's tilted box reaches the next one: a click always lands on the label
+ * it is on (a test measures this).
+ */
+const TILTS = ["-1.5deg", "1deg", "-1deg", "1.5deg", "-1deg", "1deg"] as const;
 
 /**
  * Hideout menu (spec §3.7). Opens with a diagonal clip-path wipe while the labels fly in at angles, one after another;
@@ -21,38 +25,37 @@ export function Menu() {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const go = (layer: "main" | "map" | "profile" | "settings") => dispatch({ type: "SET_LAYER", layer });
   const items: { label: string; run: () => void; available?: boolean }[] = [
-    { label: "STUDY", run: () => { if (state.timer.status !== "running" && state.timer.status !== "paused") dispatch({ type: "START_SESSION", now: Date.now() }); else go("main"); } },
-    { label: "MAP", run: () => go("map"), available: derived.mapOpen },
-    { label: "MESSAGES", run: () => { dispatch({ type: "SET_PHONE", open: true }); go("main"); } },
-    { label: "PROFILE", run: () => go("profile") },
-    { label: "SETTINGS", run: () => go("settings") },
-    { label: "CLOSE", run: () => go("main") },
+    { label: ui.menu.study, run: () => { if (state.timer.status !== "running" && state.timer.status !== "paused") dispatch({ type: "START_SESSION", now: Date.now() }); else go("main"); } },
+    { label: ui.menu.map, run: () => go("map"), available: derived.mapOpen },
+    { label: ui.menu.messages, run: () => { dispatch({ type: "SET_PHONE", open: true }); go("main"); } },
+    { label: ui.menu.profile, run: () => go("profile") },
+    { label: ui.menu.settings, run: () => go("settings") },
+    { label: ui.menu.close, run: () => go("main") },
   ];
 
-  // Arrow keys move the highlight. Attached to the list itself (not a React prop) because a list is not an interactive
-  // element; the buttons inside it are, and key events reach the list from them.
-  const list = useRef<HTMLUListElement>(null);
+  // Arrow keys move the highlight. The listener is on the document, not the list: after a click on the heading or the
+  // panel padding nothing is focused and key events go to the page body, and the arrows must still work from there
+  // (an arrow with nothing highlighted goes to the first or last label). The menu is a layer, so it is only mounted while
+  // it is the one on screen; it has no text field to leave alone.
   const count = items.length;
   const { play } = audio;
   useEffect(() => {
-    const node = list.current;
-    if (!node) return;
     const move = (e: KeyboardEvent) => {
       const last = count - 1;
       const at = buttons.current.findIndex((b) => b === document.activeElement);
       const to = e.key === "ArrowDown" ? (at >= last ? 0 : at + 1) : e.key === "ArrowUp" ? (at <= 0 ? last : at - 1) : e.key === "Home" ? 0 : e.key === "End" ? last : null;
-      if (to === null) return;
+      if (to === null || e.altKey || e.ctrlKey || e.metaKey) return;
       e.preventDefault();
       buttons.current[to]?.focus();
       if (to !== at) play("select");
     };
-    node.addEventListener("keydown", move);
-    return () => node.removeEventListener("keydown", move);
+    document.addEventListener("keydown", move);
+    return () => document.removeEventListener("keydown", move);
   }, [count, play]);
 
   return (
-    <Overlay title="Hideout" closable={false} className="motion-safe:animate-menu-wipe motion-reduce:animate-menu-cut">
-      <ul ref={list} className="flex flex-col gap-2">
+    <Overlay title={ui.menu.title} closable={false} className="motion-safe:animate-menu-wipe motion-reduce:animate-menu-cut">
+      <ul className="flex flex-col gap-5">
         {items.map((item, i) => {
           const notYet = item.available === false;
           return (
@@ -65,10 +68,11 @@ export function Menu() {
                 onClick={() => { if (!notYet) item.run(); }}
                 // Only real pointer movement moves the highlight: a menu that opens under a resting mouse must not steal it from the keyboard.
                 onMouseMove={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.focus(); }}
-                className={cn(buttonClass, "w-full font-display-hero text-2xl hover:bg-black focus:bg-redbright", notYet && "cursor-not-allowed border-dashed text-greylight focus:bg-black")}
+                className={cn(buttonClass, "w-full font-display-hero text-2xl hover:bg-black focus:bg-redbright", notYet && "cursor-not-allowed border-dashed text-greylight focus:bg-black focus:outline-2 focus:outline-offset-2 focus:outline-accentteal")}
               >
                 <span className={notYet ? "line-through" : ""}>{item.label}</span>
-                {notYet && <span className="ml-3 text-sm no-underline">{widgets.notYet}</span>}
+                {/* A real space between the two, so a screen reader says "MAP, Not yet." and not one run-on word. */}
+                {notYet && <>{" "}<span className="ml-3 text-sm no-underline">{widgets.notYet}</span></>}
               </button>
             </li>
           );
