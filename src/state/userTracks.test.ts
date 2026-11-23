@@ -4,10 +4,10 @@ import { MAX_USER_TRACKS } from "@/domain/youtube";
 import { isPersisted } from "./persistence/guard";
 import { repairUserTracks, stateFromPersisted, toPersisted } from "./persistence/mapping";
 import { freshPersisted } from "./persistence/schema";
-import { initialState, reducer } from "./store";
+import { initialState, reducer, type AppState } from "./store";
 
 const id = (n: number) => `video${String(n).padStart(6, "0")}`; // eleven characters
-const room = { ...initialState, entered: true, layer: "main" as const };
+const room: AppState = { ...initialState, entered: true, layer: "main" };
 
 describe("the player's own TV links in the state", () => {
   it("adds a link once, ignores anything that is not a video id, and removes one", () => {
