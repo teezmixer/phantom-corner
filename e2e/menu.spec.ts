@@ -161,4 +161,17 @@ test.describe("hideout menu", () => {
     await dialog.getByRole("button", { name: "SETTINGS" }).hover(); // an actual move
     await expect(dialog.getByRole("button", { name: "SETTINGS" })).toBeFocused();
   });
+
+  test("only the highlighted label is red: a resting pointer's hover does not paint a second one", async ({ page }) => {
+    await page.goto("/?demo=true");
+    await page.mouse.move(520, 470); // rests over one of the labels once the menu has opened
+    await page.keyboard.press("m");
+    const dialog = page.getByRole("dialog", { name: "Hideout" });
+    await expect(dialog).toBeVisible();
+    await page.waitForTimeout(700);
+    const red = () => dialog.getByRole("button").evaluateAll((bs) => bs.filter((b) => getComputedStyle(b).backgroundColor === "rgb(221, 5, 7)").map((b) => b.textContent));
+    expect(await red()).toEqual(["STUDY"]); // the keyboard highlight, and nothing else
+    await page.keyboard.press("ArrowDown");
+    expect(await red()).toEqual(["MAP"]); // the red moved with it
+  });
 });
