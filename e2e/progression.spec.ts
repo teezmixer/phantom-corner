@@ -71,14 +71,19 @@ test.describe("calendar of studied days", () => {
     await expect(summary.locator("[data-stamp]")).toHaveCount(0);
   });
 
-  test("a stamp survives a reload", async ({ page }) => {
+  test("a stamp survives a reload and is drawn again afterwards, next to a new one", async ({ page }) => {
     await start(page);
     await finishSession(page);
-    await expect.poll(() => savedDays(page)).toHaveLength(1);
+    await expect.poll(() => savedDays(page)).toEqual([{ day: "2026-11-23", style: 0 }]); // the save has happened before we reload
+    await page.getByRole("button", { name: "Done for today" }).click();
+    await page.clock.fastForward("24:00:00"); // the next day
     await page.reload();
     await enter(page);
-    await page.keyboard.press("m");
-    expect(await savedDays(page)).toEqual([{ day: "2026-11-23", style: 0 }]); // still there after loading and re-saving
+    await finishSession(page); // a session on the second day, in a page that has loaded yesterday's stamp from storage
+    const summary = page.getByRole("dialog", { name: "Session complete" });
+    await expect(summary.locator("[data-stamp]")).toHaveCount(2);
+    await expect(summary.locator('[data-day="2026-11-23"]')).toHaveAttribute("data-stamp", "stamp"); // drawn from what was stored
+    await expect(summary.locator('[data-day="2026-11-24"]')).toHaveAttribute("data-stamp", "stamp");
   });
 });
 
@@ -94,5 +99,28 @@ test.describe("level gifts", () => {
     await page.clock.fastForward(3600);
     await expect(banner).toHaveText("Morgana: There's a map now. Don't wander off.");
     await expect(page.getByRole("button", { name: "Map (N)" })).toBeVisible();
+  });
+
+  test("a session that finished while the tab was closed brings its Knowledge, level and gift when the player comes back", async ({ page }) => {
+    await start(page);
+    await page.getByRole("button", { name: "Start" }).click();
+    await expect.poll(async () => JSON.parse((await stored(page)) ?? "{}").timer?.status).toBe("running");
+    // Make the saved session end a minute ago, as if the tab had been closed for the rest of it.
+    await page.evaluate(() => {
+      const saved = JSON.parse(window.localStorage.getItem("pc:v1")!);
+      saved.timer.endsAt = Date.now() - 60_000;
+      window.localStorage.setItem("pc:v1", JSON.stringify(saved));
+    });
+    await page.goto("about:blank"); // leave without letting the page save over our edit
+    await page.goto("/");
+    await page.clock.resume();
+    await enter(page);
+    await expect(page.getByRole("dialog", { name: "Time." })).toBeVisible(); // the finished session waits for its choice
+    const banner = page.locator("div[role=status] p");
+    await expect(banner).toHaveText("+30 Knowledge");
+    await page.clock.fastForward(3600);
+    await expect(banner).toHaveText("Level 2");
+    await page.clock.fastForward(3600);
+    await expect(banner).toHaveText("Morgana: There's a map now. Don't wander off.");
   });
 });

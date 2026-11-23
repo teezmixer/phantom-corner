@@ -51,3 +51,8 @@
 - M5 merged (PR #6, 2dc0bc68) after round 2 (R4/BQ4/V4) and a preview bundle match.
 - M6 on `m6-hideout-menu`: motion tokens (TS + CSS, parity test), diagonal clip-path wipe, staggered labels at angles, arrow/Home/End navigation with a select sound, Esc/Enter, 100 ms reduced-motion cut, focusable not-yet labels, `AudioApi.play`. Found by looking at a screenshot: a mouse resting where the menu opens stole the highlight; fixed (mouse-move, not mouse-enter) with a mutation-checked test.
 - 2026-11-23: M6 review round 1 R3/BQ3/V4 → fixes → round 2 R4/BQ4/V4. Extra fixes after round 2: dev-panel key capture, 1024×600 scroll. Merging after CI and the preview match.
+
+## 2026-11-23 — M7 progression and content engine
+- M6 merged (PR #7, 80aa115a). M7 on `m7-progression-content` (PR #8): content validator, reward table for levels 2–29, curve extended to 29 for the bonus locations, held unlocks, calendar of studied days (schema 4), draft content lines.
+- Review round 1: R3/BQ4/V4 → fixes (see taste-review.md). Two real bugs found by the reviewer: banners dropped under gift bursts; offline level-ups never announced.
+- Slip: the first M7 evidence commit bundled e2e, docs and src in one commit (should have been separate).

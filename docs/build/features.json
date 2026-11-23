@@ -660,7 +660,7 @@
       "description": "The summary shows calendar stamps for studied days.",
       "steps": "Component: today stamped after a session.",
       "status": "pass",
-      "evidence": "src/screens/Summary/SummaryScreen.test.tsx (after a finished session today is stamped and the calendar shows it; a three-minute stop claims nothing); e2e/progression.spec.ts \"a finished session stamps today in the summary, and the day is saved\"; screenshots docs/build/screens/M7/summary-*"
+      "evidence": "src/screens/Summary/SummaryScreen.test.tsx (after a finished session today is stamped and the calendar shows it; a three-minute stop claims nothing); e2e/progression.spec.ts \"a finished session stamps today in the summary, and the day is saved\"; screenshots docs/build/screens/M7/summary-*. The heading shows the year in the body face (the display face has no digits)"
     },
     {
       "id": "summary-continue-finish",
@@ -737,7 +737,7 @@
       "description": "Every level-up gives something (a line, a stamp style or tip) even without an unlock.",
       "steps": "Unit: each level 2–25 maps to a reward; Playwright: level-up banner.",
       "status": "pass",
-      "evidence": "src/content/progression.test.ts (every level 2–29 has a reward; unlock rewards sit exactly on the unlock levels; every other reward has its wording in content/copy; each stamp reward unlocks the next calendar design); src/state/banners.test.ts (gift announced after the level, several levels at once in order); e2e/progression.spec.ts \"the first level-up gives the map, announced after the level, one banner at a time\". Rewards are announcements and calendar stamp designs; \"a new idle line\" is a remark in a banner, not yet added to a location's idle lines (M8)"
+      "evidence": "src/content/progression.test.ts (every level 2–29 has a reward; unlock rewards sit exactly on the unlock levels; every other reward has its wording in content/copy; each stamp reward unlocks the next calendar design); src/state/banners.test.ts (gift announced after the level, several levels at once in order); e2e/progression.spec.ts \"the first level-up gives the map, announced after the level, one banner at a time\". Rewards are announcements and calendar stamp designs; \"a new idle line\" is a remark in a banner, not yet added to a location's idle lines (M8); src/state/persistence/persistence.test.ts and e2e/progression.spec.ts \"a session that finished while the tab was closed brings its Knowledge, level and gift when the player comes back\"; src/state/banners.test.ts \"the banner queue the player actually sees\" (a burst keeps every notice; a flood drops the oldest)"
     },
     {
       "id": "prog-unlock-order",
@@ -770,7 +770,7 @@
       "description": "A calendar marks studied days with no streak counter.",
       "steps": "Component + unit on stamps.",
       "status": "pass",
-      "evidence": "src/domain/calendar.test.ts (local day keys, what counts as studied, stamps keep their first design, month grid, month shifting); src/components/StampCalendar.test.tsx (stamps on studied days only, designs, today marked, month navigation, no counter or streak text); e2e/progression.spec.ts (second day adds a stamp; two sessions on one day stamp once; under five minutes stamps nothing; stamp saved and kept after reload)"
+      "evidence": "src/domain/calendar.test.ts (local day keys, what counts as studied, stamps keep their first design, month grid, month shifting); src/components/StampCalendar.test.tsx (stamps on studied days only, designs, today marked, month navigation, no counter or streak text); e2e/progression.spec.ts (second day adds a stamp; two sessions on one day stamp once; under five minutes stamps nothing; stamps saved, and drawn again from storage after a reload next to a new one; a list longer than the cap is trimmed by date and the save is kept)"
     },
     {
       "id": "prog-hold-unshipped",
@@ -1617,7 +1617,7 @@
       "description": "Content tests in CI (id collisions, canon gaps, unlock order, alt text, ≥3 lines, track id length, thread targets).",
       "steps": "CI run.",
       "status": "todo",
-      "evidence": ""
+      "evidence": "src/content/validate.ts + src/content/content.test.ts, run by `npm test` in CI: ids, canon indices, unlock order, image alt text and existence, all five line groups present with at least three lines each, eleven-character track ids, thread triggers naming existing locations (the phone threads carry triggers), manifest thread ids unique; each rule has a test that breaks it. Not covered and why: scene poster and sign are not required (the art is paused, D-21), so the image rule only runs on manifests that have images; manifest thread ids (e.g. ryuji-unlock) are checked for uniqueness only until M8 defines them. Stays todo until CI has run it on a PR"
     },
     {
       "id": "found-vite",
