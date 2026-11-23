@@ -150,6 +150,9 @@ export const sessionEnd = {
   finish: "Call it",
   breakHeading: "Breathe.", // draft
   breakBack: "Back to it",
+  breakSkip: "Skip the rest", // draft
+  breakLength: "Break length", // draft
+  breakMinutes: (n: number) => `${n} min`,
   summaryContinue: "One more",
   summaryFinish: "Done for today",
   shareCard: "Save a card", // draft (spec §5: a PNG with minutes, Knowledge and the place; never your name or mission)
@@ -184,7 +187,12 @@ export const ui = {
   locked: "Locked",
   youAreHere: "You are here",
   deadline: { dueIn: (span: string) => `due in ${span}`, overdueBy: (span: string) => `overdue by ${span}`, dueNow: "due now", day: "day", days: "days", hour: "h", minute: "min" },
-  banner: { knowledge: (n: number) => `+${n} Knowledge`, level: (n: number) => `Level ${n}` },
+  banner: {
+    knowledge: (n: number) => `+${n} Knowledge`,
+    level: (n: number) => `Level ${n}`,
+    missionDone: "Mission complete.", // draft (spec §3.6 "mission-complete moment")
+    breakOver: "Break's over. Back to it when you're ready.", // draft
+  },
   mixer: "Mixer",
   tv: { region: "TV", previous: "Previous track", next: "Next track", play: "Play", pause: "Pause" },
   mixerBuses: { music: "Music", ambience: "Ambience", ui: "Interface" },

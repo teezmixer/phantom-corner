@@ -2,7 +2,7 @@
  * Interface sounds as DATA: short synthesised tones, no audio files (spec §3.9; decision D-13).
  * Every recipe is a placeholder for real, licensed sounds; the sound design is the owner's call.
  */
-export type SfxId = "select" | "menuOpen" | "menuClose" | "travel" | "sessionStart" | "sessionComplete" | "doorbell";
+export type SfxId = "select" | "menuOpen" | "menuClose" | "travel" | "sessionStart" | "sessionComplete" | "doorbell" | "missionDone" | "breakEnd";
 
 export interface Note {
   /** Seconds after the sound starts. */
@@ -35,6 +35,16 @@ export const SFX: Record<SfxId, readonly Note[]> = {
     { at: 0.14, dur: 0.16, freq: 659.25, type: "square", gain: 0.55 },
     { at: 0.28, dur: 0.16, freq: 783.99, type: "square", gain: 0.55 },
     { at: 0.42, dur: 0.5, freq: 1046.5, type: "square", gain: 0.6 },
+  ],
+  // Marking the mission done: a small rising pair, clearly less than the session fanfare (spec §3.9: one loud moment).
+  missionDone: [
+    { at: 0, dur: 0.12, freq: 659.25, type: "triangle", gain: 0.45 },
+    { at: 0.1, dur: 0.28, freq: 880, type: "triangle", gain: 0.45 },
+  ],
+  // The break is over: two soft sine notes, falling, like a bell that is not asking for anything.
+  breakEnd: [
+    { at: 0, dur: 0.3, freq: 784, type: "sine", gain: 0.4 },
+    { at: 0.25, dur: 0.5, freq: 587.33, type: "sine", gain: 0.4 },
   ],
   doorbell: [
     { at: 0, dur: 0.45, freq: 880, type: "sine", gain: 0.5 },

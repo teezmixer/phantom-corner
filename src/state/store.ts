@@ -40,6 +40,12 @@ export interface AppState {
   nextTodoId: number;
   timer: TimerState;
   breakEndsAt: number | null;
+  /** How the last break ended: it ran out, or the player skipped the rest. Null before one starts. Not saved. */
+  lastBreak: "ended" | "skipped" | null;
+  /** The length chosen for the current break, in minutes. Not saved. */
+  breakMinutes: number;
+  /** How many times a mission has been ticked done this visit; names each banner. Not saved. */
+  missionsDone: number;
   events: ProgressEvent[];
   /** Accounts are on for this visit (?accounts=true until the live backend exists, B-10). Not saved. */
   accountsEnabled: boolean;
@@ -86,6 +92,8 @@ export interface AppState {
 }
 
 export const BREAK_MS = 5 * 60_000;
+/** The break lengths offered, in minutes (spec §3.6 "in depth"; PROVISIONAL, D-36). */
+export const BREAK_OPTIONS_MIN = [5, 10, 15] as const;
 
 export const initialState: AppState = {
   layer: "splash",
@@ -102,6 +110,9 @@ export const initialState: AppState = {
   nextTodoId: 1,
   timer: initialTimer,
   breakEndsAt: null,
+  lastBreak: null,
+  breakMinutes: 5,
+  missionsDone: 0,
   events: [],
   clientId: "",
   accountsEnabled: false,
@@ -151,6 +162,10 @@ export type Action =
   | { type: "FINISH" }
   | { type: "START_BREAK"; now: number }
   | { type: "END_BREAK" }
+  /** Leave the break early, without starting a session. */
+  | { type: "SKIP_BREAK" }
+  /** Restart the break at a different length (one of BREAK_OPTIONS_MIN). */
+  | { type: "SET_BREAK"; now: number; minutes: number }
   | { type: "START_TRAVEL"; to: string }
   /** The reveal begins: the destination is now the current place (so the wipe shows its room), though travel is not over yet. */
   | { type: "TRAVEL_REVEAL" }
@@ -347,7 +362,7 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "SET_TODO_COLLAPSED":
       return { ...state, todoCollapsed: action.collapsed };
     case "TOGGLE_MISSION_DONE":
-      return state.mission ? { ...state, missionDone: !state.missionDone } : state;
+      return state.mission ? { ...state, missionDone: !state.missionDone, missionsDone: state.missionDone ? state.missionsDone : state.missionsDone + 1 } : state;
     case "ADD_TODO": {
       const text = clampText(action.text);
       if (!text || state.todos.length >= MAX_TODOS) return state;
@@ -385,9 +400,14 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "FINISH":
       return { ...state, timer: transition(state.timer, { type: "ACKNOWLEDGE" }), layer: "main", breakEndsAt: null };
     case "START_BREAK":
-      return { ...state, layer: "break", breakEndsAt: action.now + BREAK_MS, timer: transition(state.timer, { type: "ACKNOWLEDGE" }) };
+      return { ...state, layer: "break", breakEndsAt: action.now + BREAK_MS, breakMinutes: BREAK_MS / 60_000, lastBreak: null, timer: transition(state.timer, { type: "ACKNOWLEDGE" }) };
     case "END_BREAK":
-      return { ...state, layer: "choice", breakEndsAt: null };
+      // Only while a break is on: a late tick after the player skipped it must not play the cue.
+      return state.layer === "break" && state.breakEndsAt !== null ? { ...state, layer: "choice", breakEndsAt: null, lastBreak: "ended" } : state;
+    case "SKIP_BREAK":
+      return state.layer === "break" ? { ...state, layer: "choice", breakEndsAt: null, lastBreak: "skipped" } : state;
+    case "SET_BREAK":
+      return state.layer === "break" && (BREAK_OPTIONS_MIN as readonly number[]).includes(action.minutes) ? { ...state, breakEndsAt: action.now + action.minutes * 60_000, breakMinutes: action.minutes } : state;
     case "START_TRAVEL":
       // Only to a place that is open, that is not where we already are, and not while a trip is already going. The map offers
       // only these, but the rule belongs here, where nothing can bypass it.

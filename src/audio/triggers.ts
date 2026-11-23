@@ -22,6 +22,10 @@ export function sfxFor(prev: AppState, next: AppState): SfxId[] {
   const wasRunning = prev.timer.status === "running";
   if (!wasRunning && next.timer.status === "running" && prev.timer.status !== "paused") out.push("sessionStart");
 
+  // The mission is ticked done (not un-ticked), and a break that ran out (not one that was skipped).
+  if (!prev.missionDone && next.missionDone && prev.mission === next.mission) out.push("missionDone");
+  if (prev.lastBreak !== "ended" && next.lastBreak === "ended") out.push("breakEnd");
+
   // A newly recorded completed session. Compare lengths so reloading with old events plays nothing.
   if (next.events.length > prev.events.length) {
     const added = next.events.slice(prev.events.length);
