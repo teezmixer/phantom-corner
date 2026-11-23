@@ -3,7 +3,9 @@ import type { ProgressEvent } from "@/domain/progress";
 import { initialState, reducer } from "@/state/store";
 import { freshPersisted } from "@/state/persistence/schema";
 import { initialTimer } from "@/domain/timer";
-import { patchFromSnapshot, snapshotFromState } from "./apply";
+import { toPersisted } from "@/state/persistence/mapping";
+import type { AppState } from "@/state/store";
+import { basisOf, patchFromSnapshot, snapshotFromState } from "./apply";
 import { syncOnce } from "./engine";
 import { FAKE_CODE, FakeBackend, FakeServer } from "./fake";
 import { mergeEvents, newer, plan } from "./merge";
@@ -141,17 +143,20 @@ describe("the fake backend", () => {
 
 describe("applying a sync to the state", () => {
   const base = freshPersisted("c1", T1, { timer: initialTimer, locationId: "leblanc", visited: ["leblanc"] });
+  const room = { ...initialState, entered: true, layer: "main" as const, clientId: "c1" };
+  const apply = (s: AppState, merged: Snapshot, basis = basisOf(s)) => reducer(s, { type: "SYNC_APPLY", patch: patchFromSnapshot(merged), basis });
 
   it("round-trips: the state's own snapshot, applied, changes nothing", () => {
-    const s = reducer({ ...initialState, entered: true, layer: "main", clientId: "c1" }, { type: "SET_MISSION", text: "Read" });
-    const next = reducer(s, { type: "SYNC_APPLY", patch: patchFromSnapshot(snapshotFromState(s, base, T2)) });
+    const s = reducer(room, { type: "SET_MISSION", text: "Read" });
+    const next = apply(s, snapshotFromState(s, base, T2));
     expect(next.events).toEqual(s.events);
     expect(next.mission).toBe("Read");
   });
+
   it("takes the server's newer mission and events, but never touches the timer, the place or the story", () => {
-    const s = reducer({ ...initialState, entered: true, layer: "main", clientId: "c1" }, { type: "SET_MISSION", text: "Old" });
+    const s = reducer(room, { type: "SET_MISSION", text: "Old" });
     const remote = snap([...s.events, ev("b:1", 7)], T3, { mission: { data: { text: "From the other device", setAt: T3, done: true }, updatedAt: T3 } });
-    const next = reducer(s, { type: "SYNC_APPLY", patch: patchFromSnapshot(plan(snapshotFromState(s, base, T2), remote.events, remote.docs).merged) });
+    const next = apply(s, plan(snapshotFromState(s, base, T2), remote.events, remote.docs).merged);
     expect(next.mission).toBe("From the other device");
     expect(next.missionDone).toBe(true);
     expect(next.events.map((e) => e.id)).toContain("b:1");
@@ -160,12 +165,52 @@ describe("applying a sync to the state", () => {
     expect(next.story).toBe(s.story);
     expect(next.banners).toEqual(s.banners); // history, not news
   });
+
+  it("loses nothing the player did while the sync was on its way (review of M11)", () => {
+    const began = reducer(room, { type: "SET_MISSION", text: "Read" });
+    const basis = basisOf(began);
+    const merged = plan(snapshotFromState(began, base, T2), [ev("b:1")], {}).merged; // what the round trip came back with
+    // …meanwhile the player finished a session, changed the mission and added a todo:
+    let now = reducer(began, { type: "DEV_GRANT", knowledge: 3 });
+    now = reducer(now, { type: "SET_MISSION", text: "Changed meanwhile" });
+    const next = reducer(now, { type: "SYNC_APPLY", patch: patchFromSnapshot(merged), basis });
+    expect(next.events.map((e) => e.id)).toEqual(["c1:1", "c1:2", "b:1"]); // the new event is kept, the remote one added
+    expect(next.mission).toBe("Changed meanwhile"); // not overwritten by the older copy; it goes up on the next sync
+  });
+
+  it("keeps the time a document had where it came from, so a stale copy cannot later pass as new (review of M11)", () => {
+    const s = reducer(room, { type: "SET_MISSION", text: "Mine" });
+    const remote = snap(s.events, T1, { mission: { data: { text: "Theirs", setAt: T1, done: false }, updatedAt: T3 } });
+    const next = apply(s, plan(snapshotFromState(s, base, T2), remote.events, remote.docs).merged);
+    expect(next.mission).toBe("Theirs");
+    expect(toPersisted(next, base, "2026-11-30T00:00:00.000Z").stamps.mission).toBe(T3); // not re-dated to "now"
+    const edited = reducer(next, { type: "SET_MISSION", text: "Edited here after" });
+    expect(toPersisted(edited, base, "2026-11-30T00:00:00.000Z").stamps.mission).toBe("2026-11-30T00:00:00.000Z"); // a real local edit is dated now
+  });
+
+  it("never carries the analytics choice: another device cannot switch it on or off", () => {
+    const s = { ...room, analytics: false };
+    const remote = snap([], T3, { settings: { data: { ...settings(true) }, updatedAt: T3 } });
+    expect(JSON.stringify(snapshotFromState(s, base, T2).docs.settings.data)).not.toContain("analytics");
+    expect(apply(s, plan(snapshotFromState(s, base, T2), [], remote.docs).merged).analytics).toBe(false);
+  });
+
   it("drops a bad event and clamps a bad document from the server", () => {
-    const s = { ...initialState, clientId: "c1" };
     const bad = [{ kind: "session", plannedMs: 5, focusedMs: 1e12, outcome: "completed", id: "x:1" }, ev("x:2")] as ProgressEvent[];
     const hostile = snap(bad, T3, { mission: { data: { text: "y".repeat(500), setAt: T3, done: false }, updatedAt: T3 } });
-    const next = reducer(s, { type: "SYNC_APPLY", patch: patchFromSnapshot(hostile) });
+    const next = apply(room, hostile);
     expect(next.events.map((e) => e.id)).toEqual(["x:2"]);
     expect(next.mission.length).toBeLessThanOrEqual(80);
+  });
+});
+
+describe("one refused event does not keep the rest from going up (review of M11)", () => {
+  it("falls back to one by one and leaves only the refused one behind", async () => {
+    const server = new FakeServer();
+    const b = new FakeBackend(server);
+    await b.requestCode("a@b.co"); await b.verifyCode("a@b.co", FAKE_CODE);
+    const bad = { kind: "session", plannedMs: 1000, focusedMs: 99_999_999, outcome: "completed", id: "c:2" } as ProgressEvent;
+    await syncOnce(b, snap([ev("c:1"), bad, ev("c:3")]));
+    expect((await b.pullEvents()).map((e) => e.id)).toEqual(["c:1", "c:3"]);
   });
 });

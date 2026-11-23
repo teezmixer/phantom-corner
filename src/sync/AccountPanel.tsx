@@ -49,7 +49,7 @@ export function AccountPanel() {
       {account.who && (
         <>
           <p>{t.signedInAs} {account.who.email}</p>
-          <p role="status" className="text-xs text-greylight">{account.sync === "down" ? t.syncDown : account.sync === "syncing" ? "…" : t.synced}</p>
+          <p role="status" className="text-xs text-greylight">{account.sync === "down" ? t.syncDown : account.sync === "syncing" ? t.working : account.fake ? t.syncedPractice : t.synced}</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={() => void account.syncNow()} disabled={account.busy} className={buttonClass}>{t.syncNow}</button>
             <button type="button" onClick={() => void account.signOut()} disabled={account.busy} className={buttonClass}>{t.signOut}</button>

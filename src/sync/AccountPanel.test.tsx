@@ -70,7 +70,7 @@ describe("the account panel", () => {
     const d = device(server, { events: [{ kind: "session", plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed", id: "c1:1" }] });
     await signIn();
     expect(await screen.findByText(`${t.signedInAs} ren@example.com`)).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.synced));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.syncedPractice));
     expect(d.state().signedIn).toBe(true);
     expect([...server.userFor("ren@example.com").events.keys()]).toEqual(["c1:1"]);
   });
@@ -134,7 +134,7 @@ describe("the account panel", () => {
     const d = device(server, { events: [{ kind: "mission_first_set", id: "c1:1" }] });
     const user = await signIn();
     await screen.findByText(new RegExp(t.signedInAs));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.synced));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.syncedPractice));
     server.down = true;
     d.send({ type: "SET_MISSION", text: "Changed offline" });
     await user.click(screen.getByRole("button", { name: t.syncNow }));

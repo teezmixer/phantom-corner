@@ -1,6 +1,7 @@
 import { isEvent } from "@/state/persistence/guard";
 import type { ProgressEvent } from "@/domain/progress";
-import { BadCode, NotSignedIn, type Docs, type SyncBackend, type Who } from "./types";
+import { settings } from "@/content/copy";
+import { BadCode, NotSignedIn, Refused, type Docs, type SyncBackend, type Who } from "./types";
 
 /** The six-digit code the fake accepts. A real backend sends a random one by email. */
 export const FAKE_CODE = "123456";
@@ -40,7 +41,7 @@ export class FakeBackend implements SyncBackend {
 
   async requestCode(email: string): Promise<void> {
     if (this.server.down) throw new Error("offline");
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) throw new Error("That doesn't look like an email address.");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) throw new Error(settings.accountPanel.badAddress);
   }
   async verifyCode(email: string, code: string): Promise<Who> {
     if (this.server.down) throw new Error("offline");
@@ -54,10 +55,9 @@ export class FakeBackend implements SyncBackend {
 
   async pushEvents(events: ProgressEvent[]): Promise<void> {
     const row = this.guard();
-    for (const e of events) {
-      if (!e.id || e.kind === "dev_grant" || !isEvent(e)) throw new Error("The server refused an event."); // like the check constraints
-      if (!row.events.has(e.id)) row.events.set(e.id, e); // an id already there is ignored: append-only
-    }
+    // All or nothing, like one insert statement: a single bad event refuses the whole batch (the engine then sends them one by one).
+    if (events.some((e) => !e.id || e.kind === "dev_grant" || !isEvent(e))) throw new Refused(); // like the check constraints
+    for (const e of events) if (!row.events.has(e.id!)) row.events.set(e.id!, e); // an id already there is ignored: append-only
   }
   async pullEvents(): Promise<ProgressEvent[]> { return [...this.guard().events.values()]; }
   async pullDocs(): Promise<Docs> { return { ...this.guard().docs }; }
