@@ -20,6 +20,9 @@ export const MIGRATIONS: readonly Migration[] = [
   },
   // 3 → 4 (M7 calendar): the days studied. Earlier events carry no dates, so earlier days cannot be stamped; the list starts empty.
   (data) => ({ ...data, studiedDays: [] }),
+  // 4 → 5 (M8 story): thread progress. Saves from before have none; because onboarding starts only on a first visit, an existing
+  // player is not onboarded, and each character they have already unlocked simply sends their first message.
+  (data) => ({ ...data, story: {} }),
 ];
 
 /** Stored data written by a NEWER build of the app. It must never be overwritten by an older one. */

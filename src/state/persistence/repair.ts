@@ -1,3 +1,5 @@
+import { THREADS } from "@/content/threads";
+import { MAX_MESSAGES, type Message, type ThreadProgress } from "@/domain/story";
 import { HUD_SIZES, TOGGLEABLE_WIDGETS, type HudSize, type WidgetId } from "@/hud/slots";
 import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MotionSetting, type Persisted, type Volumes } from "./schema";
 
@@ -42,4 +44,28 @@ export function repairSettings(raw: unknown): Persisted["settings"] {
 /** A stored deadline that is not a readable date is dropped; the mission itself is kept. */
 export function repairDeadline(deadline: unknown): string | null {
   return typeof deadline === "string" && !Number.isNaN(Date.parse(deadline)) ? deadline : null;
+}
+
+/**
+ * Saved thread progress, checked against the threads that really exist. A thread is kept when its position is a real step and
+ * its messages are well formed (bad messages are dropped, text is cut); one that is broken beyond that is dropped, which at
+ * worst makes a character say their first message again. Never costs the rest of the save.
+ */
+export function repairStory(raw: unknown): Record<string, ThreadProgress> {
+  const out: Record<string, ThreadProgress> = {};
+  if (!isRec(raw)) return out;
+  for (const thread of THREADS) {
+    const saved = raw[thread.id];
+    if (!isRec(saved)) continue;
+    const { cursor, messages } = saved;
+    if (typeof cursor !== "number" || !Number.isInteger(cursor) || cursor < 0 || cursor > thread.steps.length) continue;
+    const kept: Message[] = [];
+    for (const m of Array.isArray(messages) ? messages.slice(-MAX_MESSAGES) : []) {
+      if (!isRec(m) || (m.side !== "them" && m.side !== "me") || typeof m.text !== "string" || m.text.trim() === "") continue;
+      const delay = typeof m.delayMs === "number" && Number.isFinite(m.delayMs) && m.delayMs > 0 ? Math.min(5000, m.delayMs) : undefined;
+      kept.push({ side: m.side, from: typeof m.from === "string" ? m.from.slice(0, 40) : thread.from, text: m.text.slice(0, 500), ...(delay ? { delayMs: delay } : {}) });
+    }
+    out[thread.id] = { cursor, messages: kept, done: !thread.compose && cursor >= thread.steps.length };
+  }
+  return out;
 }

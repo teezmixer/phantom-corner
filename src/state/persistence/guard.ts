@@ -33,6 +33,7 @@ function isTimer(v: unknown): boolean {
 export function isEvent(v: unknown): boolean {
   if (!isRec(v)) return false;
   if (v.kind === "mission_first_set") return true;
+  if (v.kind === "story_grant") return isStr(v.key) && v.key.length <= 100 && isNum(v.knowledge) && v.knowledge >= 0 && v.knowledge <= 1000;
   if (v.kind === "dev_grant") return isNum(v.knowledge) && v.knowledge >= 0 && v.knowledge <= 1_000_000;
   if (v.kind === "session") {
     // Focused time is never negative and never longer than the session (1 s of rounding slack).
@@ -43,7 +44,7 @@ export function isEvent(v: unknown): boolean {
 
 /** Hand-written shape check (spec §4.2): data from storage is untrusted, so every field is verified. */
 export function isPersisted(v: unknown): v is Persisted {
-  if (!isRec(v) || v.schema !== 4) return false;
+  if (!isRec(v) || v.schema !== 5) return false;
   const { settings, mission, stamps } = v;
   return (
     isStr(v.clientId) &&
