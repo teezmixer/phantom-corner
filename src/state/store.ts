@@ -47,6 +47,8 @@ export interface AppState {
   story: Progress;
   /** The thread open in the phone, or null for the list. Not persisted. */
   phoneThread: string | null;
+  /** The place has said its idle line for this stretch of idling. Not persisted; cleared when a session starts. */
+  idleSaid: boolean;
   phoneOpen: boolean;
   hudHidden: boolean;
   muted: boolean;
@@ -94,6 +96,7 @@ export const initialState: AppState = {
   unreadThreads: [],
   story: {},
   phoneThread: null,
+  idleSaid: false,
   phoneOpen: false,
   hudHidden: false,
   muted: false,
@@ -144,6 +147,8 @@ export type Action =
   | { type: "POST_MESSAGE"; id: string; text: string }
   /** Skip onboarding with one key: it ends at once, and the level-2 map is still granted (spec §3.5). */
   | { type: "SKIP_ONBOARDING" }
+  /** The player has been idle in the room for a while: the place says one line (once per stretch of idling). */
+  | { type: "SAY_IDLE" }
   /** Dev panel: run onboarding again from the start. */
   | { type: "REPLAY_ONBOARDING" }
   | { type: "SET_PHONE"; open: boolean }
@@ -207,7 +212,9 @@ export function settle(state: AppState): AppState {
 
 /** The reducer proper plus the story and the banners each change deserves (pure rules in domain/story.ts and banners.ts). */
 export function reducer(state: AppState, action: Action): AppState {
-  const core = coreReducer(state, action);
+  const raw = coreReducer(state, action);
+  // A session that has started ends the stretch of idling: the place may speak again next time.
+  const core = raw.idleSaid && raw.timer.status !== "idle" ? { ...raw, idleSaid: false } : raw;
   const next = action.type === "DISMISS_BANNER" || action.type === "RESET" ? core : settle(core);
   if (action.type === "DISMISS_BANNER" || action.type === "RESET" || action.type === "LOAD") return next;
   const fresh = bannersFor(state, next);
@@ -316,6 +323,9 @@ function coreReducer(state: AppState, action: Action): AppState {
       return { ...state, unreadThreads: action.ids };
     case "SET_PHONE":
       return { ...state, phoneOpen: action.open };
+    case "SAY_IDLE":
+      // Only in the room, with the timer idle, in a real visit, and once until a session has started and ended.
+      return state.entered && state.layer === "main" && state.timer.status === "idle" && !state.idleSaid && !state.demo ? { ...state, idleSaid: true } : state;
     case "OPEN_THREAD":
       return { ...state, phoneThread: action.id, unreadThreads: action.id ? state.unreadThreads.filter((id) => id !== action.id) : state.unreadThreads };
     case "ANSWER_THREAD": {

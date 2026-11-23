@@ -42,6 +42,11 @@ export function bannersFor(prev: AppState, next: AppState): BannerMessage[] {
     const lines = getLocation(next.locationId).lines.start;
     out.push({ id: `start-${before.sessions}`, text: lines[before.sessions % lines.length]! });
   }
+  // The place says an idle line after a while of idling in the room (spec §3.3 "idle" lines), a different one each time.
+  if (!prev.idleSaid && next.idleSaid) {
+    const lines = getLocation(next.locationId).lines.idle;
+    out.push({ id: `idle-${before.sessions + next.visited.length}`, text: lines[(before.sessions + next.visited.length) % lines.length]! });
+  }
   // A first arrival somewhere with no character thread of its own (the bonus places): its arrival line. Characters' arrival
   // exchanges play in their phone thread.
   for (const id of next.visited.filter((v) => !prev.visited.includes(v))) {

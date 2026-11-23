@@ -149,3 +149,30 @@ describe("place lines (spec §3.3)", () => {
     expect(texts(toBonus, run([{ type: "DEV_JUMP_LOCATION", id: "mementos" }], toBonus))).toEqual([]); // not again
   });
 });
+
+describe("idle lines (spec §3.3)", () => {
+  const settled = run([{ type: "SET_PHONE", open: false }]); // the room, idle timer
+
+  it("the place says one idle line, then stays quiet for the rest of that stretch of idling", () => {
+    const said = run([{ type: "SAY_IDLE" }], settled);
+    expect(said.idleSaid).toBe(true);
+    expect(texts(settled, said)).toHaveLength(1);
+    expect(["Coffee's not going to drink itself.", "The clock's not going to stop for you.", "You staring at the cup won't fill it."]).toContain(texts(settled, said)[0]);
+    const again = run([{ type: "SAY_IDLE" }], said);
+    expect(again).toBe(said); // nothing new
+  });
+
+  it("only in the room, with the timer idle, in a real visit", () => {
+    expect(run([{ type: "SAY_IDLE" }], { ...settled, layer: "menu" }).idleSaid).toBe(false);
+    expect(run([{ type: "SAY_IDLE" }], { ...settled, entered: false }).idleSaid).toBe(false);
+    expect(run([{ type: "SAY_IDLE" }], { ...settled, demo: true }).idleSaid).toBe(false);
+    const running = run([{ type: "START_SESSION", now: 0 }], settled);
+    expect(run([{ type: "SAY_IDLE" }], running).idleSaid).toBe(false);
+  });
+
+  it("starting a session ends the stretch, so the place can speak again the next time the player idles", () => {
+    const said = run([{ type: "SAY_IDLE" }], settled);
+    const running = run([{ type: "START_SESSION", now: 0 }], said);
+    expect(running.idleSaid).toBe(false);
+  });
+});

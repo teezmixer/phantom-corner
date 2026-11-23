@@ -48,6 +48,24 @@ function SessionClock() {
   return null;
 }
 
+/** How long the player idles in the room before the place says an idle line. PROVISIONAL (D-32). */
+export const IDLE_AFTER_MS = 90_000;
+
+/**
+ * After a while of idling in the room (timer not running, nothing open, in a real visit) the place says one line, once per
+ * stretch of idling. Any activity that leaves the room or starts the timer cancels the wait.
+ */
+function IdleVoice() {
+  const { state, dispatch } = useStore();
+  const armed = state.entered && state.layer === "main" && state.timer.status === "idle" && !state.idleSaid && !state.demo;
+  useEffect(() => {
+    if (!armed) return;
+    const id = setTimeout(() => dispatch({ type: "SAY_IDLE" }), IDLE_AFTER_MS);
+    return () => clearTimeout(id);
+  }, [armed, dispatch]);
+  return null;
+}
+
 /** Keeps the tab title in step with the timer so the countdown shows from other tabs (spec §3.6). */
 function TabTitle() {
   const { state } = useStore();
@@ -94,6 +112,7 @@ export function App({ dev }: { dev: boolean }) {
       {state.entered && <MainScreen locked={state.layer !== "main"} />}
       {LAYERS[state.layer]?.()}
       <SessionClock />
+      <IdleVoice />
       <TabTitle />
       <StorageNotice />
       {state.entered && <Banner />}
