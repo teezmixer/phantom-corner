@@ -62,8 +62,9 @@ test.describe("analytics events", () => {
   test("a demo sends no events", async ({ page }) => {
     await page.goto("/?demo=true");
     await watch(page);
-    await page.keyboard.press("Space"); // the demo's timer is running: this pauses it
-    await page.getByRole("button", { name: "Menu (M)" }).click();
+    // Things that WOULD send an event in a real visit: stopping the running session (the demo's timer is running), and changing the mission.
+    await page.getByRole("button", { name: "Stop" }).click();
+    await expect(page.getByRole("dialog", { name: "Session complete" })).toBeVisible();
     await page.waitForTimeout(300);
     expect(await names(page)).toEqual([]);
   });
