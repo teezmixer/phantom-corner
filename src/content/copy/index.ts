@@ -156,7 +156,8 @@ export const ui = {
   placeholderMarker: "placeholder",
   settingsNotYet: "Volumes, HUD size, motion, menu style, analytics, export and delete: not yet.",
   lockedPlace: (n: number) => `Place ${n}`,
-  lockedAt: (level: number) => `Locked · reach level ${level}`,
+  /** A place that is not open yet. It does not say when: nothing telegraphs what unlocks (spec §3.4). */
+  locked: "Locked",
   youAreHere: "You are here",
   deadline: { dueIn: (span: string) => `due in ${span}`, overdueBy: (span: string) => `overdue by ${span}`, dueNow: "due now", day: "day", days: "days", hour: "h", minute: "min" },
   banner: { knowledge: (n: number) => `+${n} Knowledge`, level: (n: number) => `Level ${n}` },
