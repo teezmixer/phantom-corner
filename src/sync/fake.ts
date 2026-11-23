@@ -1,6 +1,7 @@
 import { isEvent } from "@/state/persistence/guard";
 import type { ProgressEvent } from "@/domain/progress";
 import { settings } from "@/content/copy";
+import { isLater } from "./merge";
 import { BadCode, NotSignedIn, Refused, type Docs, type SyncBackend, type Who } from "./types";
 
 /** The six-digit code the fake accepts. A real backend sends a random one by email. */
@@ -66,7 +67,7 @@ export class FakeBackend implements SyncBackend {
     for (const key of ["settings", "mission", "todos"] as const) {
       const incoming = docs[key];
       const have = row.docs[key];
-      if (incoming && (!have || incoming.updatedAt > have.updatedAt)) (row.docs as Record<string, unknown>)[key] = incoming;
+      if (incoming && (!have || isLater(incoming.updatedAt, have.updatedAt))) (row.docs as Record<string, unknown>)[key] = incoming;
     }
   }
   async exportAll(): Promise<unknown> {

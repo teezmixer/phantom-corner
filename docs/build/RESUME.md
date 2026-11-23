@@ -1,9 +1,8 @@
 # RESUME — checkpoint
 
-- **Updated:** 2026-11-23, M11 merged (PR #12); M12 built on `m12-everything-else`, about to push and open its PR
-- **Milestone / branch:** M12 everything else on `m12-everything-else`
-- **In progress:** M12 built and tested (see progress.md); inventory diffed against features.json (sign fold added). Left: push, open PR, fresh Opus review, fix, merge. Then M13 (final review: re-run build, typecheck, lint, unit and e2e and show the output; the final vision loop with three reviewer personas; docs/build/FINAL-REPORT.md listing every blocked item and every decision and question for Ares; all milestones in taste-review.md with Readiness and Build quality at least 4; git status clean).
-- Ares to be asked for: Ryuji's and Futaba's real unlock messages (D-32); the level-bar ruling (B-09); the map's layout and the look of travel (D-33); the share image, address and privacy wording (D-34); the Supabase project and keys, the email sender, and whether the calendar and story should sync (D-35, B-10); day/night hours and art, the illustrated menu, the sign fold and community rules (D-36, B-11).
+- **Updated:** 2026-11-23, M12 merged (PR #13); M13 (final review and report) on `m13-final-review`, about to merge
+- **State:** every milestone M1–M12 merged; features 156 pass / 9 blocked / 0 todo; `docs/build/FINAL-REPORT.md` written; the three final reviewers have reported and their Tier 1–2 findings are fixed. Left: merge the M13 PR (CI green, preview checked), then run the final checks on main and show their output.
+- **After that:** nothing is in progress. The next work is yours: the questions in `FINAL-REPORT.md` section 3, then the highest-value next moves in section 4.
 
 ## Rules to keep
 Colour/type from tokens only; no hand-drawn assets (D-21); banned SaaS phrases; copy in content/copy; Tier 3 → placeholder + decisions.md. Kill any preview on 4173 before e2e: `lsof -ti:4173 | xargs kill`.

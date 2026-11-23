@@ -115,7 +115,7 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **Next/Previous while paused or off start playback** (they are a user action, like Play).
 - **Keyboard access to the TV while a screen is open:** a screen traps focus inside itself, so the TV's buttons can be reached by mouse but not by Tab until the screen closes.
 - **YouTube's default player chrome stays on the video** (spec §4.8), so there are two sets of controls (ours beside the video, YouTube's on it). If you prefer only ours, that needs the owner's sign-off against the "do not alter the player" rule.
-- **Privacy / About pages say nothing about YouTube yet.** Embedding YouTube means YouTube may set cookies/collect data even with the privacy-enhanced host; the wording belongs in your voice (D-14).
+- **Privacy page and YouTube:** it now says the TV plays through YouTube's player, which loads after Enter, and that YouTube's own policy applies to what it collects (M10, D-34). The wording is a draft for your voice (D-14).
 
 ### D-28 Settings rules I chose (provisional — Ares decides)
 - **Widget toggles:** every widget except the **TV** (YouTube rule, spec §4.8) and the **button bar** (the way into the menu) can be hidden. Hiding the bar would strand mouse users; keyboard users could still press M.

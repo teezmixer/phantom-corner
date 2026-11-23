@@ -48,6 +48,24 @@ describe("newer", () => {
   });
 });
 
+describe("timestamps are compared as instants, not as text (final review)", () => {
+  it("a server's '+00:00' form and this device's 'Z' form of the same moment tie, and different precisions order by time", () => {
+    const here = { data: 1, updatedAt: "2026-11-21T10:00:00.000Z" };
+    expect(newer(here, { data: 2, updatedAt: "2026-11-21T10:00:00+00:00" })).toBe(here); // same instant: this device keeps its copy
+    expect(newer(here, { data: 2, updatedAt: "2026-11-21T10:00:00.500000+00:00" }).data).toBe(2); // half a second later
+    expect(newer(here, { data: 2, updatedAt: "2026-11-21T09:59:59.999999+00:00" })).toBe(here); // earlier, though it sorts after 'Z'-less text
+    expect(newer(here, { data: 2, updatedAt: "not a time" })).toBe(here);
+  });
+  it("the fake server orders a document the same way", async () => {
+    const server = new FakeServer();
+    const b = new FakeBackend(server);
+    await b.requestCode("a@b.co"); await b.verifyCode("a@b.co", FAKE_CODE);
+    await b.pushDocs({ mission: { data: { text: "new", setAt: T1, done: false }, updatedAt: "2026-11-21T10:00:00.500+00:00" } });
+    await b.pushDocs({ mission: { data: { text: "old", setAt: T1, done: false }, updatedAt: "2026-11-21T10:00:00.100Z" } });
+    expect((await b.pullDocs()).mission?.data?.text).toBe("new");
+  });
+});
+
 describe("plan", () => {
   it("pushes only the events the server lacks, and only documents where this device is newer and different", () => {
     const local = snap([ev("a:1"), ev("a:2")], T2);
@@ -221,6 +239,17 @@ describe("applying a sync to the state", () => {
     const next = apply(room, hostile);
     expect(next.events.map((e) => e.id)).toEqual(["x:2"]);
     expect(next.mission.length).toBeLessThanOrEqual(80);
+  });
+});
+
+describe("a merged log never goes over the cap (final review)", () => {
+  it("is cut at MAX_EVENTS with this device's own events first, so the next load does not refuse the save", async () => {
+    const { MAX_EVENTS } = await import("@/domain/limits");
+    const room = { ...initialState, entered: true, layer: "main" as const, clientId: "c1", events: [{ kind: "story_grant" as const, key: "mine", knowledge: 1, id: "c1:1" }] };
+    const remote = Array.from({ length: MAX_EVENTS + 10 }, (_, i) => ev(`b:${i}`));
+    const next = reducer(room, { type: "SYNC_APPLY", patch: patchFromSnapshot(snap(remote)), basis: basisOf(room) });
+    expect(next.events).toHaveLength(MAX_EVENTS);
+    expect(next.events[0]?.id).toBe("c1:1");
   });
 });
 

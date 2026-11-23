@@ -6,7 +6,7 @@ import { recordSession, type StampedDay } from "@/domain/calendar";
 import { HOME_LOCATION_ID } from "@/content/registry";
 import { ui } from "@/content/copy";
 import { RELEASE_VERSION, THREADS } from "@/content/threads";
-import { clampText, MAX_TODOS } from "@/domain/limits";
+import { clampText, MAX_EVENTS, MAX_TODOS } from "@/domain/limits";
 import { answer, pendingAsk, post, skip, stepAll, type Facts, type Progress } from "@/domain/story";
 import { HUD_SIZES, type HudSize, type WidgetId, TOGGLEABLE_WIDGETS } from "@/hud/slots";
 import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MenuStyle, type MotionSetting, type Volumes } from "./persistence/schema";
@@ -292,7 +292,8 @@ export function syncGroups(s: AppState): { settings: string; mission: string; to
  */
 function applySync(state: AppState, patch: SyncPatch, basis: { settings: string; mission: string; todos: string }): AppState {
   const now = syncGroups(state);
-  let next: AppState = { ...state, events: mergeEvents(state.events, patch.events) };
+  // Capped, as a save is: a log over the cap would make the next load refuse the whole save. This device's own events come first.
+  let next: AppState = { ...state, events: mergeEvents(state.events, patch.events).slice(0, MAX_EVENTS) };
   const adopted: NonNullable<AppState["adopted"]> = { ...state.adopted };
   if (now.settings === basis.settings) { next = { ...next, ...patch.settings }; adopted.settings = { stamp: patch.stamps.settings, key: syncGroups(next).settings }; }
   if (now.mission === basis.mission) { next = { ...next, ...patch.mission }; adopted.mission = { stamp: patch.stamps.mission, key: syncGroups(next).mission }; }

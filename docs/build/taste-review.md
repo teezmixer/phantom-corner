@@ -112,3 +112,17 @@ Findings and Tier 3 proposals are recorded under each milestone heading below.
 - **Fixed after round 1:** the mission-done sound (and banner) fired when a mission arrived done through a sync or a load; both now follow a counter that only a tick on this device moves; tests that could not fail (the sound for a text edit; the presence line at zero, when down, over a screen; the evidence claimed them) now exist and are mutation-checked; the community context moved into its own small module so the map does not load the provider and its fake; the vote lists only places still closed, says it does not decide the order and is gone on reload (the old note said it stayed in the browser, which was untrue), and shows a message when a vote fails; the break-over banner id no longer repeats; an axe check with the vote panel showing.
 - **Open (not blocking):** the presence line sits over the background screenshot's own seek bar at 1024×640 (harmless, `pointer-events-none`); the vote still names closed bonus places (D-36 asks Ares); initial JS 116.3 of 120 kB.
 - **Tier 3 for Ares:** D-36, B-11.
+
+## M13 — final review (the vision loop)
+The journeys of spec §3.1 were walked as a real user (`e2e/journeys.spec.ts`; screenshots in `docs/build/screens/M13/`): first visit, a session, an unlock and a trip, a return visit, the demo within ten seconds, a long-term user. Three fresh reviewers, one per success reaction in spec Part 1:
+
+| Reviewer | Readiness | Build quality | Vision fit |
+| --- | --- | --- | --- |
+| Persona 5 fan | 3 | 3 | 2 |
+| Pre-seed founder | 3 | 4 | 3 |
+| Senior engineer | 4 | 4.5 | 4.5 |
+
+- **Fixed (Tiers 1–2):** the README overclaimed ("made every decision"; now the owner holds them and the builder logged questions) and lacked a way in for a two-minute reader (added); signing in on a second device counted the other device's history as analytics events (it sends none now); sync compared timestamps as text, which a real Postgres' `+00:00` form would have ordered wrongly (compared as instants); a merged event log could exceed the cap and make the next load refuse the save (cut at the cap); the Privacy text and the decisions log were stale about YouTube and accounts. Each has a test that fails without it (mutation-checked).
+- **Tier 3, proposals for Ares (nothing applied):** replace or crop the borrowed background (all three; a game render with a video bar and cursor baked in is the largest signal on screen and the only real takedown risk — B-05; the file may not be touched); give every place its own scene; angled widget frames and one diagonal red wipe on "Time." and on arrival; let the TV's empty state invite a click; the small "PLACEHOLDER" tags; a README screen recording and a moodboard so creative direction shows while the drawn art is paused.
+- **Not a bug, noted:** screenshots where the level bar looks empty or an old banner is still showing come from stepping a faked clock (the bar is a spring; banners queue 3.5 s each); a real player waiting real time sees neither.
+- **Verdict:** see `FINAL-REPORT.md` section 4.

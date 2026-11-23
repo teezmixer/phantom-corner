@@ -148,3 +148,17 @@ describe("eventsFor: which changes are events", () => {
     for (const secret of secrets) expect(JSON.stringify(all)).not.toContain(secret);
   });
 });
+
+describe("a sync is not something the player just did (final review)", () => {
+  it("sends nothing for other devices' sessions arriving in the log, or for places their history opens", () => {
+    const here = { ...initialState, entered: true, layer: "main" as const, firstVisit: false, clientId: "c1", events: [] };
+    const remote = [
+      { kind: "session" as const, plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed" as const, id: "other:1" },
+      { kind: "session" as const, plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed" as const, id: "other:2" },
+    ];
+    expect(eventsFor(here, { ...here, events: remote })).toEqual([]);
+    // …while a session recorded here still counts.
+    const mine = { kind: "session" as const, plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed" as const, id: "c1:1" };
+    expect(eventsFor(here, { ...here, events: [mine] }).map((e) => e.name)).toContain("session_completed");
+  });
+});
