@@ -41,7 +41,7 @@ A product owner and creative director wrote the brief and holds every visual and
 
 `src/domain` pure logic with no React (timer, progress, calendar, story, travel) · `src/state` one reducer and local-first persistence · `src/widgets` the HUD · `src/screens` full-screen layers · `src/content` places, threads and copy as data · `src/hud` corner-anchored scaling · `src/audio` Web Audio sounds and the YouTube player · `e2e` Playwright.
 
-Local first: progress is saved in this browser; there are no accounts yet. See `docs/adr/` for why (corner HUD, a timer that counts to a timestamp, local persistence, a visible TV, Vite).
+Local first: progress is saved in this browser. Accounts exist only as practice (`?accounts=true`, an in-memory stand-in, until a Supabase project exists). See `docs/adr/` for why (corner HUD, a timer that counts to a timestamp, local persistence, a visible TV, Vite).
 
 ## Privacy
 
