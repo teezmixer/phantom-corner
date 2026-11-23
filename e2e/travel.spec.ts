@@ -17,7 +17,9 @@ async function record(page: Page) {
       last[kind] = value;
       const animations = document.getAnimations().flatMap((a) => {
         const name = (a as CSSAnimation).animationName;
-        if (!name) return [];
+        // Only what the travel card itself animates: the room behind it has animations of its own.
+        const target = (a.effect as KeyframeEffect | null)?.target as Element | null;
+        if (!name || !target?.closest?.("[data-phase]")) return [];
         const frames = (a.effect as KeyframeEffect).getKeyframes();
         const props = [...new Set(frames.flatMap((f) => Object.keys(f)).filter((k) => !["offset", "easing", "composite", "computedOffset"].includes(k)))].sort();
         return [{ name, duration: a.effect!.getComputedTiming().duration as number, props }];
@@ -57,20 +59,22 @@ test.describe("travel", () => {
     expect(phases[1]!.at - start).toBeLessThan(450);
     expect(phases[2]!.at - phases[1]!.at).toBeGreaterThanOrEqual(780); // the card is held at least 800 ms
     expect(phases[2]!.at - phases[1]!.at).toBeLessThan(950);
+    expect(phases[3]!.at - phases[2]!.at).toBeGreaterThanOrEqual(280); // the reveal takes its 300 ms
+    expect(phases[3]!.at - phases[2]!.at).toBeLessThan(450);
     await expect(page.getByLabel("Current location: School rooftop")).toBeVisible(); // arrived
     await expect(page.locator("[data-phase]")).toHaveCount(0); // and the card is gone
   });
 
-  test("the cover and the reveal are clip-path wipes, and nothing else animates in travel", async ({ page }) => {
+  test("the cover and the reveal are the only things that animate on the card, and both are clip-path wipes", async ({ page }) => {
     await record(page);
     await toTheMap(page);
     await page.getByRole("button", { name: /School rooftop/ }).click();
     await page.clock.runFor(1600);
     const phases = (await log(page)).filter((e) => e.kind === "phase");
-    const cover = phases.find((e) => e.value === "covering")!.animations.find((a) => a.name === "menu-wipe");
-    expect(cover).toMatchObject({ duration: 300, props: ["clipPath"] });
-    const reveal = phases.find((e) => e.value === "revealing")!.animations.find((a) => a.name === "travel-reveal");
-    expect(reveal).toMatchObject({ duration: 300, props: ["clipPath"] });
+    const during = (phase: string) => phases.find((e) => e.value === phase)!.animations;
+    expect(during("covering")).toEqual([{ name: "menu-wipe", duration: 300, props: ["clipPath"] }]); // exactly this: no fade, no second animation
+    expect(during("title")).toEqual([]); // the card is held still
+    expect(during("revealing")).toEqual([{ name: "travel-reveal", duration: 300, props: ["clipPath"] }]);
   });
 
   test("the destination is the current place by the time the wipe uncovers the room", async ({ page }) => {
@@ -112,6 +116,16 @@ test.describe("travel", () => {
     await page.clock.runFor(1600);
     const phases = (await log(page)).filter((e) => e.kind === "phase");
     expect(phases[1]!.at - phases[0]!.at).toBeLessThan(200);
+    for (const p of phases) expect(p.animations).toEqual([]); // and no wipe is drawn at all
+  });
+
+  test("when the trip ends, focus is back on the map button, not lost on the page", async ({ page }) => {
+    await record(page);
+    await toTheMap(page);
+    await page.getByRole("button", { name: /School rooftop/ }).click();
+    await page.clock.runFor(1600);
+    await expect(page.locator("[data-phase]")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Map (N)" })).toBeFocused();
   });
 });
 
@@ -183,6 +197,23 @@ test.describe("the map", () => {
     await page.keyboard.press("n");
     await expect(map.locator('[data-state="unlocked"]')).toHaveCount(11);
     await expect(map.locator('[data-state="locked"]')).toHaveCount(0);
+  });
+
+  test("after travel to the place with the longest name, the big sign is still clear of the TV and inside the window (1024×600)", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 600 });
+    await record(page);
+    await toTheMap(page);
+    await page.getByRole("button", { name: /Atelier by the park/ }).click();
+    await page.clock.runFor(2000); // the trip, then into the sign's hold, with its move finished
+    await expect(page.locator('[data-sign="arriving"]')).toBeVisible();
+    const tv = (await page.getByRole("region", { name: "TV" }).boundingBox())!;
+    for (const part of [page.locator('[data-sign="arriving"] span'), page.locator('[data-sign="arriving"] svg')]) {
+      const box = (await part.boundingBox())!;
+      expect(box.x < tv.x + tv.width && box.x + box.width > tv.x && box.y < tv.y + tv.height && box.y + box.height > tv.y, "clear of the TV").toBe(false);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(1024);
+      expect(box.y + box.height).toBeLessThanOrEqual(600);
+    }
   });
 
   for (const [width, height] of [[1024, 600], [1440, 900], [2560, 1440]] as const) {

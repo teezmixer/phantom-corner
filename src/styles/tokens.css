@@ -81,5 +81,7 @@
   --motion-travel-cover: 300ms;
   --motion-travel-hold: 800ms;
   --motion-travel-reveal: 300ms;
+  --motion-travel-motif: 1200ms;
+  --sign-arriving-scale: 1.9;
   --motion-reduced-cut: 100ms;
 }

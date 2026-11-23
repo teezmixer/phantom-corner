@@ -299,7 +299,8 @@ function coreReducer(state: AppState, action: Action): AppState {
       if (before.status === "running" && after.status === "complete") {
         const done: ProgressEvent = { kind: "session", plannedMs: before.durationMs, focusedMs: before.durationMs, outcome: "completed" };
         // Stamped on the day the session really ended (its end time), even if the tab only noticed a little later.
-        return { ...state, timer: after, ...recordSession(state.events, state.studiedDays, done, before.endsAt), layer: "choice" };
+        // Mid-travel, the choice waits for the trip to end (ARRIVE shows it): cutting the wipe off half-way would drop the trip.
+        return { ...state, timer: after, ...recordSession(state.events, state.studiedDays, done, before.endsAt), layer: state.layer === "travel" ? "travel" : "choice" };
       }
       // Stopping — from running or from paused — records the focused time so far as a cut-short session.
       if ((before.status === "running" || before.status === "paused") && action.event.type === "STOP") {
@@ -320,6 +321,9 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "END_BREAK":
       return { ...state, layer: "choice", breakEndsAt: null };
     case "START_TRAVEL":
+      // Only to a place that is open, that is not where we already are, and not while a trip is already going. The map offers
+      // only these, but the rule belongs here, where nothing can bypass it.
+      if (state.layer === "travel" || action.to === state.locationId || !derive(state).unlocked.includes(action.to)) return state;
       // Travelling is allowed mid-session and never stops a running timer (provisional rule, decision D-22).
       // A finished timer is acknowledged so it does not sit at 00:00 with no controls.
       return { ...state, layer: "travel", travelTo: action.to, timer: transition(state.timer, { type: "ACKNOWLEDGE" }) };
@@ -328,7 +332,8 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "ARRIVE": {
       if (!state.travelTo) return { ...state, layer: "main" };
       const there = arriveAt(state, state.travelTo);
-      return { ...there, layer: "main", travelTo: null };
+      // A session that finished during the trip is waiting for its choice.
+      return { ...there, layer: there.timer.status === "complete" ? "choice" : "main", travelTo: null };
     }
     case "SIGN_SETTLED":
       return state.signArriving ? { ...state, signArriving: false } : state;

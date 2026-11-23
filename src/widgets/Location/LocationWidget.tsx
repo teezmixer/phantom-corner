@@ -33,9 +33,10 @@ export const LocationWidget = ({ locationId, className = "" }: LocationWidgetPro
     <div className={`pointer-events-auto flex items-center justify-end ${className}`}>
       {/* The sign itself (pin and name) is what scales, around its own bottom-right corner: the slot around it is taller. */}
       <div
+        role="group"
         data-sign={arriving ? "arriving" : "settled"}
         className={`relative flex origin-bottom-right items-center justify-end gap-3 text-white ${arriving ? "z-20" : ""}`}
-        style={{ transform: arriving ? "scale(1.9)" : "none", transition: reduced ? "none" : "transform var(--motion-enter) var(--motion-enter-easing)" }}
+        style={{ transform: arriving ? "scale(var(--sign-arriving-scale))" : "none", transition: reduced ? "none" : "transform var(--motion-enter) var(--motion-enter-easing)" }}
         aria-label={`Current location: ${location.name}`}
       >
         <MapPin size={48} weight="fill" className="shrink-0 text-redbright" aria-hidden="true" />

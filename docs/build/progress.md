@@ -68,3 +68,5 @@
 - M8 merged (PR #9, 7f0401a4) after round 2 (R4/BQ4/V4).
 - M9 on `m9-map-travel`: pure travel machine (covering → title → revealing → done, the card waits for the hold and the images), the travel screen with clip-path wipes, `TRAVEL_REVEAL`, the location sign arriving big on a first visit, reduced-motion cuts, motion tokens for the three travel parts. Fixed on the way: the map told players which level opens each locked place (it telegraphs unlocks, against spec §3.4).
 - Found by looking at screenshots: a big arriving sign scaled around the whole HUD slot drifted up into the TV area; now only the visible sign scales, and an e2e checks it never reaches the TV at three window sizes. Screenshot harness: freeze the clock first, then step it with `runFor`.
+- 2026-11-23: M9 review round 1 R4/BQ4/V4 → fixes (see taste-review.md): finish-mid-trip, focus after travel, reducer guards, tighter e2e, tokens. An older e2e had gone vacuous because of chained timers; found by the reviewer, fixed with `runFor` and a wait for the card to unmount.
+

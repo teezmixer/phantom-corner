@@ -19,7 +19,7 @@ test("travelling mid-session keeps the timer running", async ({ page }) => {
   await page.getByRole("button", { name: "Unlock all" }).click();
   await page.getByLabel("Jump to screen").selectOption("map");
   await page.getByRole("button", { name: /School rooftop/ }).click();
-  await page.clock.fastForward(2000);
+  await page.clock.runFor(1600); // the whole trip: three chained timers
   await expect(page.getByLabel("Current location: School rooftop")).toBeVisible();
   await expect(page.getByRole("timer").first()).toContainText(/1[56]:\d\d/);
 });

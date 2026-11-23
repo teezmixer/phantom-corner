@@ -15,7 +15,7 @@ function show(locationId: string, state: Partial<AppState> = {}) {
   render(<StoreProvider initial={{ ...room, ...state }}><LocationWidget locationId={locationId} /><Grab /></StoreProvider>);
   return { send: (a: Action) => act(() => send(a)), state: () => latest };
 }
-const sign = () => screen.getByLabelText(/Current location/);
+const sign = () => screen.getByRole("group", { name: /Current location/ });
 
 describe("LocationWidget", () => {
   beforeEach(() => vi.useFakeTimers());
@@ -47,7 +47,7 @@ describe("LocationWidget", () => {
     it("comes in big, holds for the hold time, then settles", () => {
       const s = show("leblanc", { signArriving: true });
       expect(sign()).toHaveAttribute("data-sign", "arriving");
-      expect(sign().style.transform).toMatch(/scale\(1\.9\)/);
+      expect(sign().style.transform).toBe("scale(var(--sign-arriving-scale))"); // the number is a token, kept equal to the CSS by a test
       act(() => { vi.advanceTimersByTime(motion.hold - 1); });
       expect(sign()).toHaveAttribute("data-sign", "arriving"); // still holding
       act(() => { vi.advanceTimersByTime(2); });

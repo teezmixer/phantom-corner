@@ -43,6 +43,9 @@ export function TravelScreen() {
     dispatch({ type: "ARRIVE" });
   }, [phase, reduced, dispatch]);
 
+  // When travel is over the room is live again, but focus was lost with the map: put it back on the map button, the way the trip began.
+  useEffect(() => () => { document.querySelector<HTMLElement>('[aria-label="Map (N)"]')?.focus(); }, []);
+
   const waitingLong = phase === "title" && travel.holdElapsed && !travel.assetsReady;
   return (
     <div role="status" aria-live="polite" data-phase={phase} className="fixed inset-0 z-50 overflow-hidden font-body-primary text-white">
