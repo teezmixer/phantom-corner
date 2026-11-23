@@ -1,10 +1,12 @@
 import type { ProgressEvent } from "@/domain/progress";
+import { settings as copy } from "@/content/copy";
 import type { Persisted } from "@/state/persistence/schema";
 
 /** One synced slice and when it last changed (an ISO time). The newer side wins (spec §4.9). */
 export interface Doc<T> { data: T; updatedAt: string }
 
-export type SettingsDoc = Persisted["settings"];
+/** The synced settings: everything but the analytics choice, which stays on the device. */
+export type SettingsDoc = Omit<Persisted["settings"], "analytics">;
 export type MissionDoc = Persisted["mission"];
 export interface TodosDoc { todos: Persisted["todos"]; nextTodoId: number }
 
@@ -48,7 +50,11 @@ export interface SyncBackend {
 }
 
 export class BadCode extends Error {
-  constructor() { super("That code isn't right."); this.name = "BadCode"; }
+  constructor() { super(copy.accountPanel.badCode); this.name = "BadCode"; }
+}
+/** The server will not take this one event (it fails a check). Pushing the others still works. */
+export class Refused extends Error {
+  constructor() { super("The server refused an event."); this.name = "Refused"; }
 }
 export class NotSignedIn extends Error {
   constructor() { super("Not signed in."); this.name = "NotSignedIn"; }

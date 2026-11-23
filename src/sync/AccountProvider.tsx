@@ -1,10 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { settings } from "@/content/copy";
 import { useStore } from "@/state/StoreProvider";
+import { syncGroups } from "@/state/store";
 import type { StorageAdapter } from "@/state/persistence/adapter";
 import { isPersisted } from "@/state/persistence/guard";
 import type { Persisted } from "@/state/persistence/schema";
-import { patchFromSnapshot, snapshotFromState } from "./apply";
+import { basisOf, patchFromSnapshot, snapshotFromState } from "./apply";
 import type { Backend } from "./backend";
 import { syncOnce } from "./engine";
 import type { Who } from "./types";
@@ -47,6 +48,7 @@ export function AccountProvider({ backend, adapter, base, children }: { backend:
   const [error, setError] = useState<string | null>(null);
   const [codeSent, setCodeSent] = useState(false);
   const [sync, setSync] = useState<Account["sync"]>("idle");
+  const groups = syncGroups(state); // settings changes start a sync too, not only the log, the mission and the todos
   const latest = useRef(state);
   useEffect(() => { latest.current = state; });
   const running = useRef(false);
@@ -59,17 +61,26 @@ export function AccountProvider({ backend, adapter, base, children }: { backend:
     return base;
   }, [adapter, base]);
 
+  const again = useRef(false);
   const syncNow = useCallback(async () => {
-    if (running.current || !api.current()) return;
+    if (!api.current()) return;
+    if (running.current) { again.current = true; return; } // a change made during a sync gets its own sync right after
     running.current = true;
-    setSync("syncing");
     try {
-      const { merged, changedLocal } = await syncOnce(api, snapshotFromState(latest.current, lastSaved(), new Date().toISOString()));
-      if (changedLocal) dispatch({ type: "SYNC_APPLY", patch: patchFromSnapshot(merged) });
-      setSync("idle");
-      setError(null);
-    } catch {
-      setSync("down"); // nothing was lost: the next trigger tries again
+      do {
+        again.current = false;
+        setSync("syncing");
+        try {
+          const before = latest.current;
+          const { merged, changedLocal } = await syncOnce(api, snapshotFromState(before, lastSaved(), new Date().toISOString()));
+          // Applied against the state as it is after the round trip; `basis` says what each document was when the sync began.
+          if (changedLocal) dispatch({ type: "SYNC_APPLY", patch: patchFromSnapshot(merged), basis: basisOf(before) });
+          setSync("idle");
+          setError(null);
+        } catch {
+          setSync("down"); // nothing was lost: the next trigger tries again
+        }
+      } while (again.current);
     } finally {
       running.current = false;
     }
@@ -80,7 +91,7 @@ export function AccountProvider({ backend, adapter, base, children }: { backend:
     if (!who) return;
     const t = setTimeout(() => { void syncNow(); }, SYNC_DELAY_MS);
     return () => clearTimeout(t);
-  }, [who, state.events, state.mission, state.missionDone, state.missionDeadline, state.todos, syncNow]);
+  }, [who, state.events, groups.settings, groups.mission, groups.todos, syncNow]);
   useEffect(() => {
     if (!who) return;
     const visible = () => { if (document.visibilityState === "visible") void syncNow(); };

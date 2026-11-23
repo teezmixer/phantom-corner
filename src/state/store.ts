@@ -12,6 +12,7 @@ import { HUD_SIZES, type HudSize, type WidgetId, TOGGLEABLE_WIDGETS } from "@/hu
 import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MotionSetting, type Volumes } from "./persistence/schema";
 import { initialTimer, remainingMs, transition, type TimerEvent, type TimerState } from "@/domain/timer";
 import { stampEventIds, type ProgressEvent } from "@/domain/progress";
+import { mergeEvents } from "@/sync/merge";
 import { bannersFor, type BannerMessage } from "./banners";
 import { derive } from "./derive";
 
@@ -44,6 +45,8 @@ export interface AppState {
   accountsEnabled: boolean;
   /** Signed in to an account right now. Not saved: the backend keeps its own session. */
   signedIn: boolean;
+  /** Documents just taken from a sync, with the time they carry and the state they produced; the saver uses the time while the document is unchanged. Not saved. */
+  adopted?: Partial<Record<"settings" | "mission" | "todos", { stamp: string; key: string }>>;
   /** This device's id, the prefix of its event ids (D-24). Empty in the demo and dev mode, which never sync. Not part of any visible state. */
   clientId: string;
   /** Days studied, each with the stamp design earned at the time (calendar, spec §3.4). */
@@ -178,7 +181,7 @@ export type Action =
   | { type: "SET_LAYER_VOLUME"; id: string; value: number }
   | { type: "DEV_GRANT"; knowledge: number }
   /** The result of a sync: the merged event log and documents (built in sync/apply.ts). */
-  | { type: "SYNC_APPLY"; patch: SyncPatch }
+  | { type: "SYNC_APPLY"; patch: SyncPatch; basis: { settings: string; mission: string; todos: string } }
   | { type: "SET_SIGNED_IN"; signedIn: boolean }
   | { type: "DEV_UNLOCK_ALL" }
   | { type: "DEV_JUMP_LOCATION"; id: string }
@@ -233,8 +236,45 @@ export function settle(state: AppState): AppState {
   return { ...state, story: result.progress, events, unreadThreads: unread, ...(startedOnboarding ? { phoneOpen: true, phoneThread: "morgana" } : {}) };
 }
 
-/** The fields a sync may set: the event log and the three synced documents, nothing else. */
-export type SyncPatch = Pick<AppState, "events" | "muted" | "volumes" | "ambienceMix" | "hiddenWidgets" | "hudSize" | "motion" | "analytics" | "todoCollapsed" | "mission" | "missionDone" | "missionDeadline" | "todos" | "nextTodoId">;
+/** The state fields behind each synced document. The analytics choice is deliberately not among them: consent stays on the device. */
+type SettingsFields = Pick<AppState, "muted" | "volumes" | "ambienceMix" | "hiddenWidgets" | "hudSize" | "motion" | "todoCollapsed">;
+type MissionFields = Pick<AppState, "mission" | "missionDone" | "missionDeadline">;
+type TodosFields = Pick<AppState, "todos" | "nextTodoId">;
+
+/** What a sync may set: the event log and the three synced documents, nothing else. */
+export interface SyncPatch {
+  events: ProgressEvent[];
+  settings: SettingsFields;
+  mission: MissionFields;
+  todos: TodosFields;
+  /** When each document last changed on the side it came from (ISO), so the saver keeps that time instead of "now". */
+  stamps: { settings: string; mission: string; todos: string };
+}
+
+/** The synced documents of a state, each as a comparable string. Equal strings mean the document has not changed. */
+export function syncGroups(s: AppState): { settings: string; mission: string; todos: string } {
+  return {
+    settings: JSON.stringify([s.muted, s.volumes, s.ambienceMix, s.hiddenWidgets, s.hudSize, s.motion, s.todoCollapsed]),
+    mission: JSON.stringify([s.mission, s.missionDone, s.missionDeadline]),
+    todos: JSON.stringify([s.todos, s.nextTodoId]),
+  };
+}
+
+/**
+ * Applies a finished sync to the state as it is NOW, not as it was when the sync began (the round trip takes time and the
+ * player keeps playing). Events are unioned by id, so one recorded meanwhile is never lost. A document is taken from the sync
+ * only if it has not changed since the sync began (`basis`); one the player changed meanwhile is kept and goes up next time.
+ * A document that is taken keeps the time it had where it came from, so the saver does not re-date it to now.
+ */
+function applySync(state: AppState, patch: SyncPatch, basis: { settings: string; mission: string; todos: string }): AppState {
+  const now = syncGroups(state);
+  let next: AppState = { ...state, events: mergeEvents(state.events, patch.events) };
+  const adopted: NonNullable<AppState["adopted"]> = { ...state.adopted };
+  if (now.settings === basis.settings) { next = { ...next, ...patch.settings }; adopted.settings = { stamp: patch.stamps.settings, key: syncGroups(next).settings }; }
+  if (now.mission === basis.mission) { next = { ...next, ...patch.mission }; adopted.mission = { stamp: patch.stamps.mission, key: syncGroups(next).mission }; }
+  if (now.todos === basis.todos) { next = { ...next, ...patch.todos }; adopted.todos = { stamp: patch.stamps.todos, key: syncGroups(next).todos }; }
+  return { ...next, adopted };
+}
 
 /** The reducer proper plus the story and the banners each change deserves (pure rules in domain/story.ts and banners.ts). */
 export function reducer(state: AppState, action: Action): AppState {
@@ -374,7 +414,7 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "SET_SIGNED_IN":
       return state.signedIn === action.signedIn ? state : { ...state, signedIn: action.signedIn };
     case "SYNC_APPLY":
-      return { ...state, ...action.patch };
+      return applySync(state, action.patch, action.basis);
     case "MARK_ALL_UNREAD":
       return { ...state, unreadThreads: action.ids };
     case "SET_PHONE":

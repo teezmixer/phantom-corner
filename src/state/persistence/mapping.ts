@@ -4,7 +4,7 @@ import { stampEventIds } from "@/domain/progress";
 import { isEvent } from "./guard";
 import { repairDeadline, repairSettings, repairStory } from "./repair";
 import { bannersFor } from "../banners";
-import { MAX_BANNERS, initialState, type AppState, type Todo } from "../store";
+import { MAX_BANNERS, initialState, syncGroups, type AppState, type Todo } from "../store";
 import type { Persisted } from "./schema";
 
 /**
@@ -82,6 +82,12 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
   };
 }
 
+/** A changed document is dated now, unless it is exactly what a sync just brought in: then it keeps the time it came with. */
+function stampFor(state: AppState, doc: "settings" | "mission" | "todos", nowIso: string): string {
+  const adopted = state.adopted?.[doc];
+  return adopted && adopted.key === syncGroups(state)[doc] ? adopted.stamp : nowIso;
+}
+
 /**
  * App state → stored data. `prev` supplies the identity and the last-changed stamps; a stamp moves only when its
  * slice actually changed, which is what sync compares later (M11). UI state is never stored.
@@ -116,9 +122,9 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
     unreadThreads: state.unreadThreads,
     story: { ...state.story },
     stamps: {
-      settings: settingsChanged ? nowIso : prev.stamps.settings,
-      mission: missionChanged ? nowIso : prev.stamps.mission,
-      todos: todosChanged ? nowIso : prev.stamps.todos,
+      settings: settingsChanged ? stampFor(state, "settings", nowIso) : prev.stamps.settings,
+      mission: missionChanged ? stampFor(state, "mission", nowIso) : prev.stamps.mission,
+      todos: todosChanged ? stampFor(state, "todos", nowIso) : prev.stamps.todos,
     },
   };
 }
