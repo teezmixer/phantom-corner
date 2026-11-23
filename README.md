@@ -2,7 +2,7 @@
 
 A calm study room with a *Persona 5* mood: set a mission, start a timer, earn Knowledge, and unlock places to work from.
 
-**This is a fan project.** It is non-commercial and not affiliated with or endorsed by ATLUS or SEGA. No official assets are used; the background is the owner's own screenshot and the music plays through YouTube's player.
+**This is a fan project.** It is non-commercial and not affiliated with or endorsed by ATLUS or SEGA. The code and interface use no official assets. The one exception is a placeholder background screenshot kept from an early build, which is to be replaced by an original scene (`docs/build/blocked.md`, B-05). The music plays through YouTube's player.
 
 ## Run it
 
