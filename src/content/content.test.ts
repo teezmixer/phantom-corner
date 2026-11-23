@@ -42,7 +42,7 @@ describe("content registry", () => {
   });
 
   it("passes every content rule: ids, canon order, unlock order, images and alt text, lines, track ids, thread targets", () => {
-    expect(contentProblems(LOCATIONS, { imageExists, threads: THREADS.map((t) => ({ id: t.id })) })).toEqual([]);
+    expect(contentProblems(LOCATIONS, { imageExists, threads: THREADS.map((t) => ({ id: t.id, trigger: t.trigger })) })).toEqual([]);
   });
 
   it("never uses a banned SaaS phrase (spec §3.8)", () => {
@@ -94,6 +94,14 @@ describe("content rules catch broken content", () => {
     expect(contentProblems(l, { imageExists: () => false }).join("\n")).toMatch(/"leblanc" sign points at \/nope.png, which does not exist/);
   });
 
+  it("a group is missing altogether, not just short", () => {
+    const l = base(); delete (at(l, "ann").lines as unknown as Record<string, unknown>).idle;
+    (at(l, "ann").lines as unknown as Record<string, unknown>).arrive = undefined;
+    const text = problems(l).join("\n");
+    expect(text).toMatch(/"ann" has no idle lines at all/);
+    expect(text).toMatch(/"ann" has no arrive lines at all/);
+  });
+
   it("a group has fewer than three lines, or an empty one", () => {
     const l = base(); at(l, "ann").lines.idle = ["One.", "Two."];
     at(l, "haru").lines.start = ["a", "", "c"];
@@ -114,5 +122,18 @@ describe("content rules catch broken content", () => {
   it("two locations claim the same thread", () => {
     const l = base(); at(l, "ann").threads = { unlock: "ryuji-unlock" };
     expect(problems(l).join("\n")).toMatch(/thread "ryuji-unlock" is claimed by both "ryuji" and "ann"/);
+  });
+});
+
+describe("the phone's threads", () => {
+  it("every thread that names a location names one that exists (this is not vacuous: the threads carry triggers)", () => {
+    const named = THREADS.filter((t) => t.trigger && "location" in t.trigger);
+    expect(named.length).toBeGreaterThanOrEqual(7); // the seven characters who send an unlock message
+    expect(contentProblems(LOCATIONS, { imageExists, threads: THREADS.map((t) => ({ id: t.id, trigger: t.trigger })) })).toEqual([]);
+  });
+
+  it("an unlock thread for a location that is not in the registry would fail the build", () => {
+    const broken = THREADS.map((t) => (t.id === "ryuji" ? { id: t.id, trigger: { on: "unlock", location: "rooftop" } } : { id: t.id, trigger: t.trigger }));
+    expect(contentProblems(LOCATIONS, { imageExists, threads: broken }).join("\n")).toMatch(/thread "ryuji" refers to the location "rooftop"/);
   });
 });

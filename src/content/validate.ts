@@ -2,6 +2,8 @@ import type { ImageRef, LocationManifest } from "./types";
 
 /** The spec's floor for how much a location says in each situation (§4.6). */
 export const MIN_LINES_PER_GROUP = 3;
+/** Every situation a location must have lines for (spec §4.6). A manifest that leaves one out fails, not just one that has too few. */
+export const REQUIRED_LINE_GROUPS = ["arrive", "back", "idle", "start", "complete"] as const;
 /** A YouTube video id is exactly eleven characters from this alphabet (spec §4.6). */
 export const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
@@ -63,9 +65,12 @@ export function contentProblems(locations: readonly CheckedLocation[], options: 
     }
 
     // A manifest has fewer than three lines in any group (or an empty line).
-    for (const [group, lines] of Object.entries(l.lines) as [string, string[]][]) {
+    const groups = l.lines as unknown as Record<string, string[] | undefined>;
+    for (const group of REQUIRED_LINE_GROUPS) {
+      const lines = groups[group];
+      if (!Array.isArray(lines)) { problems.push(`"${l.id}" has no ${group} lines at all; at least ${MIN_LINES_PER_GROUP} are needed`); continue; }
       if (lines.length < MIN_LINES_PER_GROUP) problems.push(`"${l.id}" has ${lines.length} ${group} line(s); at least ${MIN_LINES_PER_GROUP} are needed`);
-      if (lines.some((line) => line.trim() === "")) problems.push(`"${l.id}" has an empty ${group} line`);
+      if (lines.some((line) => typeof line !== "string" || line.trim() === "")) problems.push(`"${l.id}" has an empty ${group} line`);
     }
 
     // A track id isn't eleven characters.
