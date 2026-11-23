@@ -18,6 +18,8 @@ export const MIGRATIONS: readonly Migration[] = [
     const settings = (typeof data.settings === "object" && data.settings !== null ? data.settings : {}) as Record<string, unknown>;
     return { ...data, settings: { ...settings, hidden: [], hudSize: 1, motion: "system", analytics: true, todoCollapsed: false } };
   },
+  // 3 → 4 (M7 calendar): the days studied. Earlier events carry no dates, so earlier days cannot be stamped; the list starts empty.
+  (data) => ({ ...data, studiedDays: [] }),
 ];
 
 /** Stored data written by a NEWER build of the app. It must never be overwritten by an older one. */

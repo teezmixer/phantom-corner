@@ -1,3 +1,4 @@
+import { recordSession, repairStampedDays } from "@/domain/calendar";
 import { clampText, MAX_TODOS } from "@/domain/limits";
 import { isEvent } from "./guard";
 import { repairDeadline, repairSettings } from "./repair";
@@ -36,8 +37,10 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
   let events = p.events.filter(isEvent);
   // An end time further away than the whole session (a corrupt value, or the clock moved) is pulled back to a full session.
   if (timer.status === "running") timer = { ...timer, endsAt: Math.min(timer.endsAt, now + timer.durationMs) };
+  let studiedDays = repairStampedDays(p.studiedDays);
   if (timer.status === "running" && now >= timer.endsAt) {
-    events = [...events, { kind: "session", plannedMs: timer.durationMs, focusedMs: timer.durationMs, outcome: "completed" }];
+    // The day is the one the session really ended on, not the day the tab was reopened.
+    ({ events, studiedDays } = recordSession(events, studiedDays, { kind: "session", plannedMs: timer.durationMs, focusedMs: timer.durationMs, outcome: "completed" }, timer.endsAt) as { events: typeof events; studiedDays: typeof studiedDays });
     timer = { status: "complete", durationMs: timer.durationMs };
   }
   const settings = repairSettings(p.settings);
@@ -60,6 +63,7 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     locationId: p.locationId,
     visited: p.visited,
     events,
+    studiedDays,
     unreadThreads: p.unreadThreads,
     firstVisit: flags.firstVisit ?? false,
     recovered: flags.recovered,
@@ -86,7 +90,7 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
   };
   const settingsChanged = JSON.stringify(prev.settings) !== JSON.stringify(settings);
   return {
-    schema: 3,
+    schema: 4,
     clientId: prev.clientId,
     name: state.name === "" ? null : state.name,
     settings,
@@ -97,6 +101,7 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
     locationId: state.locationId,
     visited: state.visited,
     events: state.events,
+    studiedDays: [...state.studiedDays],
     unreadThreads: state.unreadThreads,
     stamps: {
       settings: settingsChanged ? nowIso : prev.stamps.settings,

@@ -3,7 +3,7 @@
  * streak, ever. Pure: no React, no storage; dates come from an injected time.
  */
 import { KNOWLEDGE_RULES, LEVEL_REWARDS, STAMP_STYLES } from "@/content/progression";
-import type { ProgressEvent } from "./progress";
+import { knowledgeFor, levelForKnowledge, type ProgressEvent } from "./progress";
 
 /** One stamped day: the local date it belongs to and the stamp design that was current when it was stamped. */
 export interface StampedDay {
@@ -62,4 +62,33 @@ export function monthGrid(year: number, month: number): (number | null)[][] {
 export function shiftMonth(year: number, month: number, delta: number): { year: number; month: number } {
   const index = year * 12 + month + delta;
   return { year: Math.floor(index / 12), month: ((index % 12) + 12) % 12 };
+}
+
+/**
+ * Add an event to the log and, when it counts as having studied, stamp the day it happened on with the design the player has
+ * earned by then. The ONE place a session is recorded, so the reducer and the "ended while the tab was closed" path stamp
+ * days identically. `atMs` is when the session really ended (for a finished one: its end time, not when the tab noticed).
+ */
+export function recordSession(events: readonly ProgressEvent[], days: readonly StampedDay[], event: ProgressEvent, atMs: number): { events: ProgressEvent[]; studiedDays: readonly StampedDay[] } {
+  const next = [...events, event];
+  if (!isStudied(event)) return { events: next, studiedDays: days };
+  return { events: next, studiedDays: stampDay(days, atMs, stampStyleFor(levelForKnowledge(knowledgeFor(next)))) };
+}
+
+/** Keep the stamps that are well formed (a real date, a known design) and drop the rest, so one bad entry never costs the list. */
+export function repairStampedDays(raw: unknown): StampedDay[] {
+  if (!Array.isArray(raw)) return [];
+  const out: StampedDay[] = [];
+  const seen = new Set<string>();
+  for (const item of raw.slice(-MAX_STAMPED_DAYS)) {
+    if (typeof item !== "object" || item === null) continue;
+    const { day, style } = item as Record<string, unknown>;
+    if (typeof day !== "string" || !DAY_KEY.test(day) || seen.has(day)) continue;
+    const [y, m, d] = day.split("-").map(Number) as [number, number, number];
+    const real = new Date(y, m - 1, d);
+    if (real.getFullYear() !== y || real.getMonth() !== m - 1 || real.getDate() !== d) continue; // 2026-02-31 is not a day
+    out.push({ day, style: typeof style === "number" && Number.isInteger(style) && style >= 0 && style < STAMP_STYLES.length ? style : 0 });
+    seen.add(day);
+  }
+  return out;
 }

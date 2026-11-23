@@ -2,6 +2,7 @@
  * App state: one reducer, one `layer` value (spec §4.2 — no router). Pure and testable;
  * the React provider lives in state/StoreProvider.tsx. In-memory only until M3 adds persistence.
  */
+import { recordSession, type StampedDay } from "@/domain/calendar";
 import { HOME_LOCATION_ID } from "@/content/registry";
 import { THREADS } from "@/content/threads";
 import { clampText, MAX_TODOS } from "@/domain/limits";
@@ -36,6 +37,8 @@ export interface AppState {
   timer: TimerState;
   breakEndsAt: number | null;
   events: ProgressEvent[];
+  /** Days studied, each with the stamp design earned at the time (calendar, spec §3.4). */
+  studiedDays: readonly StampedDay[];
   unreadThreads: string[];
   phoneOpen: boolean;
   hudHidden: boolean;
@@ -80,6 +83,7 @@ export const initialState: AppState = {
   timer: initialTimer,
   breakEndsAt: null,
   events: [],
+  studiedDays: [],
   unreadThreads: [],
   phoneOpen: false,
   hudHidden: false,
@@ -208,12 +212,13 @@ function coreReducer(state: AppState, action: Action): AppState {
       // A running timer that completes is a finished session; stopping it early is a cut-short one.
       if (before.status === "running" && after.status === "complete") {
         const done: ProgressEvent = { kind: "session", plannedMs: before.durationMs, focusedMs: before.durationMs, outcome: "completed" };
-        return { ...state, timer: after, events: [...state.events, done], layer: "choice" };
+        // Stamped on the day the session really ended (its end time), even if the tab only noticed a little later.
+        return { ...state, timer: after, ...recordSession(state.events, state.studiedDays, done, before.endsAt), layer: "choice" };
       }
       // Stopping — from running or from paused — records the focused time so far as a cut-short session.
       if ((before.status === "running" || before.status === "paused") && action.event.type === "STOP") {
         const focusedMs = before.durationMs - remainingMs(before, action.now);
-        return { ...state, timer: after, events: [...state.events, { kind: "session", plannedMs: before.durationMs, focusedMs, outcome: "stopped" }], layer: "summary" };
+        return { ...state, timer: after, ...recordSession(state.events, state.studiedDays, { kind: "session", plannedMs: before.durationMs, focusedMs, outcome: "stopped" }, action.now), layer: "summary" };
       }
       return { ...state, timer: after };
     }

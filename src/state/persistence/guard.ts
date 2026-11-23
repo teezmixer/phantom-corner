@@ -1,3 +1,4 @@
+import { MAX_STAMPED_DAYS } from "@/domain/calendar";
 import { MAX_EVENTS } from "@/domain/limits";
 import { MAX_CUSTOM_MINUTES, MINUTE } from "@/domain/timer";
 import type { Persisted } from "./schema";
@@ -43,7 +44,7 @@ export function isEvent(v: unknown): boolean {
 
 /** Hand-written shape check (spec §4.2): data from storage is untrusted, so every field is verified. */
 export function isPersisted(v: unknown): v is Persisted {
-  if (!isRec(v) || v.schema !== 3) return false;
+  if (!isRec(v) || v.schema !== 4) return false;
   const { settings, mission, stamps } = v;
   return (
     isStr(v.clientId) &&
@@ -59,6 +60,8 @@ export function isPersisted(v: unknown): v is Persisted {
     // Events are only checked to be a bounded array here: a single impossible event is dropped on load (mapping),
     // so one bad record never costs the user their whole history.
     Array.isArray(v.events) && v.events.length <= MAX_EVENTS &&
+    // Stamps are repaired on load (repairStampedDays): a bad entry is dropped, a missing or broken list becomes empty; never the whole save.
+    (!Array.isArray(v.studiedDays) || v.studiedDays.length <= MAX_STAMPED_DAYS) &&
     isStrArray(v.unreadThreads) && v.unreadThreads.length <= MAX_STORED_ITEMS &&
     isRec(stamps) && isStr(stamps.settings) && isStr(stamps.mission) && isStr(stamps.todos)
   );

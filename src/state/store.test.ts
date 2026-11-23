@@ -201,9 +201,56 @@ describe("store reducer", () => {
 
   it("dev tools: grant Knowledge, unlock everything, reset", () => {
     let s = run([{ type: "DEV_GRANT", knowledge: 5000 }, { type: "DEV_UNLOCK_ALL" }]);
-    expect(derive(s).level).toBe(25);
+    expect(derive(s).level).toBe(27); // 5000 Knowledge on the curve that now runs to level 29
     expect(derive(s).unlocked).toHaveLength(12);
     s = reducer(s, { type: "RESET" });
     expect(s).toEqual(initialState);
+  });
+});
+
+describe("the calendar of studied days", () => {
+  const at = (day: number, h: number, m = 0) => new Date(2026, 10, day, h, m).getTime();
+  const session = (startMs: number, minutes: number, finish: "tick" | "stop", from?: AppState, tickAtMs?: number): AppState => run([
+    { type: "START_SESSION", now: startMs }, // also works after a finished session, where the timer waits at "complete"
+    finish === "tick"
+      ? { type: "TIMER", event: { type: "TICK", now: tickAtMs ?? startMs + minutes * 60_000 }, now: tickAtMs ?? startMs + minutes * 60_000 }
+      : { type: "TIMER", event: { type: "STOP" }, now: startMs + minutes * 60_000 },
+  ], from);
+
+  it("a finished session stamps the day it ended on", () => {
+    const s = session(at(23, 12), 25, "tick");
+    expect(s.studiedDays).toEqual([{ day: "2026-11-23", style: 0 }]);
+  });
+
+  it("a session that ended just before midnight is stamped on that day even if the tab only noticed after midnight", () => {
+    const s = session(at(23, 23, 20), 25, "tick", undefined, at(24, 0, 30)); // ended 23:45 on the 23rd, noticed 00:30 on the 24th
+    expect(s.studiedDays.map((d) => d.day)).toEqual(["2026-11-23"]);
+  });
+
+  it("a cut-short session of five minutes or more stamps the day; a shorter one does not", () => {
+    expect(session(at(23, 12), 5, "stop").studiedDays.map((d) => d.day)).toEqual(["2026-11-23"]);
+    expect(session(at(23, 12), 4, "stop").studiedDays).toEqual([]);
+  });
+
+  it("writing the first mission or a dev grant is not studying", () => {
+    expect(run([{ type: "SET_MISSION", text: "Study" }, { type: "DEV_GRANT", knowledge: 500 }]).studiedDays).toEqual([]);
+  });
+
+  it("two sessions on one day stamp it once; the next day adds another", () => {
+    let s = session(at(23, 9), 25, "tick");
+    s = session(at(23, 14), 25, "tick", s);
+    s = session(at(24, 9), 25, "tick", s);
+    expect(s.studiedDays.map((d) => d.day)).toEqual(["2026-11-23", "2026-11-24"]);
+  });
+
+  it("the stamp design is the newest one earned by then: the default at first, the star once level 4 is reached", () => {
+    const early = session(at(23, 12), 25, "tick");
+    expect(early.studiedDays[0]!.style).toBe(0);
+    const later = session(at(24, 12), 25, "tick", run([{ type: "DEV_GRANT", knowledge: 125 }]));
+    expect(later.studiedDays[0]!.style).toBe(1); // level 4 gives the second design
+  });
+
+  it("starting over (reset) clears the calendar with everything else", () => {
+    expect(reducer(session(at(23, 12), 25, "tick"), { type: "RESET" }).studiedDays).toEqual([]);
   });
 });

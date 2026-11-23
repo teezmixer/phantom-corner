@@ -64,7 +64,7 @@ describe("load path", () => {
   });
 });
 
-describe("the real migrations 1 → 2 → 3 (existing users keep their progress)", () => {
+describe("the real migrations 1 → 2 → 3 → 4 (existing users keep their progress)", () => {
   // Exactly what M3 wrote to localStorage.
   const v1 = {
     schema: 1, clientId: "old-client", name: "Ren", settings: { muted: true },
@@ -77,23 +77,34 @@ describe("the real migrations 1 → 2 → 3 (existing users keep their progress)
 
   const PREFS = { hidden: [], hudSize: 1, motion: "system", analytics: true, todoCollapsed: false };
 
-  it("loads a schema-2 save (exactly what M4 wrote) as schema 3, keeping volumes and everything else", () => {
+  it("loads a schema-2 save (exactly what M4 wrote) as schema 4, keeping volumes and everything else", () => {
     const v2 = { ...v1, schema: 2, settings: { muted: true, volumes: { music: 0.2, ambience: 0.9, ui: 0.1 }, ambienceMix: { "leblanc-rain": 0.4 } } };
     const r = load(JSON.stringify(v2));
     expect(r.recovered).toBe(false);
     expect(r.adapter.dump().backups).toEqual([]);
-    expect(r.persisted.schema).toBe(3);
+    expect(r.persisted.schema).toBe(4);
+    expect(r.persisted.studiedDays).toEqual([]);
     expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.2, ambience: 0.9, ui: 0.1 }, ambienceMix: { "leblanc-rain": 0.4 }, ...PREFS });
     expect(r.persisted).toMatchObject({ name: "Ren", locationId: "ryuji", unreadThreads: ["ann"] });
   });
 
-  it("loads a schema-1 save as schema 3 without treating it as unreadable, keeping everything", () => {
+  it("loads a schema-1 save as schema 4 without treating it as unreadable, keeping everything", () => {
     const r = load(JSON.stringify(v1));
     expect(r.recovered).toBe(false);
     expect(r.adapter.dump().backups).toEqual([]);
-    expect(r.persisted).toMatchObject({ schema: 3, clientId: "old-client", name: "Ren", locationId: "ryuji", visited: ["leblanc", "ryuji"], unreadThreads: ["ann"] });
+    expect(r.persisted).toMatchObject({ schema: 4, studiedDays: [], clientId: "old-client", name: "Ren", locationId: "ryuji", visited: ["leblanc", "ryuji"], unreadThreads: ["ann"] });
     expect(r.persisted.events).toHaveLength(2);
     expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {}, ...PREFS });
+  });
+
+  it("loads a schema-3 save (what M5 and M6 wrote) as schema 4: nothing lost, the calendar starts empty", () => {
+    const v3 = { ...v1, schema: 3, settings: { muted: false, volumes: { music: 0.3, ambience: 0.3, ui: 0.3 }, ambienceMix: {}, ...PREFS, hudSize: 1.3 } };
+    const r = load(JSON.stringify(v3));
+    expect(r.recovered).toBe(false);
+    expect(r.adapter.dump().backups).toEqual([]);
+    expect(r.persisted).toMatchObject({ schema: 4, studiedDays: [], name: "Ren", locationId: "ryuji" });
+    expect(r.persisted.settings.hudSize).toBe(1.3);
+    expect(r.persisted.events).toHaveLength(2); // the sessions are kept; they just have no date
   });
 
   it("upgrades a schema-1 save whose settings are missing or damaged instead of throwing it away", () => {
@@ -435,5 +446,46 @@ describe("repairing recoverable data on load", () => {
     const stored = toPersisted({ ...initialState, mission: "m" }, fresh(), ISO);
     const back = stateFromPersisted({ ...stored, mission: { text: "y".repeat(400), setAt: ISO, done: false } }, NOW, { recovered: false, storageBlocked: false });
     expect(back.mission).toHaveLength(80);
+  });
+});
+
+describe("the calendar survives storage", () => {
+  const day = (y: number, m: number, d: number, h = 12) => new Date(y, m, d, h).getTime();
+  const load2 = (data: unknown) => { const r = load(JSON.stringify(data)); return { r, state: stateFromPersisted(r.persisted, NOW, { recovered: r.recovered, storageBlocked: false }) }; };
+
+  it("round-trips the studied days through the app state", () => {
+    const state: AppState = { ...initialState, studiedDays: [{ day: "2026-11-20", style: 0 }, { day: "2026-11-22", style: 1 }] };
+    const back = stateFromPersisted(toPersisted(state, fresh(), ISO), NOW, { recovered: false, storageBlocked: false });
+    expect(back.studiedDays).toEqual(state.studiedDays);
+  });
+
+  it("a session that ended while the tab was closed is stamped on the day it really ended, not the day the tab reopened", () => {
+    const endsAt = day(2026, 10, 20, 15);
+    const p = { ...fresh(), timer: { status: "running" as const, durationMs: 25 * 60_000, endsAt } };
+    const state = stateFromPersisted(p, day(2026, 10, 23), { recovered: false, storageBlocked: false });
+    expect(state.timer.status).toBe("complete");
+    expect(state.studiedDays).toEqual([{ day: "2026-11-20", style: 0 }]);
+  });
+
+  it("drops stamps that are not real dates, repeats and non-objects, and fixes an unknown design, keeping the rest", () => {
+    const { r, state } = load2({ ...fresh(), studiedDays: [
+      { day: "2026-11-20", style: 0 }, { day: "2026-02-31", style: 0 }, { day: "yesterday", style: 0 }, null, 7, "2026-11-21",
+      { day: "2026-11-20", style: 1 }, { day: "2026-11-22", style: 99 }, { day: "2026-11-23" },
+    ] });
+    expect(r.recovered).toBe(false);
+    expect(state.studiedDays).toEqual([{ day: "2026-11-20", style: 0 }, { day: "2026-11-22", style: 0 }, { day: "2026-11-23", style: 0 }]);
+  });
+
+  it("a missing or broken list becomes an empty calendar, and the save is kept", () => {
+    for (const studiedDays of [undefined, null, "x", 5, {}]) {
+      const { r, state } = load2({ ...fresh(), name: "Ren", studiedDays });
+      expect(r.recovered, JSON.stringify(studiedDays)).toBe(false);
+      expect(state.studiedDays).toEqual([]);
+      expect(state.name).toBe("Ren");
+    }
+  });
+
+  it("refuses an absurdly long list as a corrupt save", () => {
+    expect(load(JSON.stringify({ ...fresh(), studiedDays: Array.from({ length: 4000 }, () => ({ day: "2026-11-20", style: 0 })) })).recovered).toBe(true);
   });
 });
