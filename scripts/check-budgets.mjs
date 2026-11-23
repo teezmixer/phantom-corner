@@ -29,6 +29,12 @@ for (const f of assets.filter((a) => /\.(png|jpe?g|webp|avif|gif|svg)$/i.test(a)
   if (!exempt && kb(size) > budgets.imageKB) failures.push(`image ${f} is ${kb(size).toFixed(1)} kB, over ${budgets.imageKB} kB`);
 }
 
+for (const f of assets.filter((a) => /\.(mp4|webm)$/i.test(a))) {
+  const size = statSync(path.join(dist, "assets", f)).size;
+  console.log(`Media ${f}  ${kb(size).toFixed(1)} kB (budget ${budgets.mediaKB} kB)`);
+  if (kb(size) > budgets.mediaKB) failures.push(`media ${f} is ${kb(size).toFixed(1)} kB, over ${budgets.mediaKB} kB`);
+}
+
 if (failures.length) {
   console.error(`\nBudget broken:\n- ${failures.join("\n- ")}`);
   process.exit(1);

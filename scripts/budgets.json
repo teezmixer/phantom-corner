@@ -3,5 +3,6 @@
   "initialJsGzipKB": 120,
   "firstLoadKB": 800,
   "imageKB": 250,
+  "mediaKB": 500,
   "exemptImagePrefixes": ["screenshot-"]
 }
