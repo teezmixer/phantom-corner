@@ -26,11 +26,12 @@ export const CornerGroup = ({
 }): React.JSX.Element => (
   <section
     aria-label={label}
-    className={`absolute ${CORNER_STYLES[corner].position} pointer-events-none`}
+    className={`hud-group absolute ${CORNER_STYLES[corner].position} pointer-events-none`}
     style={{
       width: REF_WIDTH,
       height: REF_HEIGHT,
       transform: `scale(${scale})`,
+      ["--hud-scale" as string]: scale,
       transformOrigin: CORNER_STYLES[corner].origin,
     }}
   >
