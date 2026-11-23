@@ -177,6 +177,9 @@ function unit(value: number): number {
  */
 export const MAX_BANNERS = 12;
 
+/** Is onboarding under way (begun, not finished or skipped)? While it is, nothing else speaks over Morgana. */
+export const onboardingRunning = (state: AppState): boolean => !!state.story["morgana"] && !state.story["morgana"].done;
+
 /** What the thread interpreter may look at (domain/story.ts `Facts`), taken from the state. */
 export function factsFor(state: AppState): Facts {
   return {
@@ -324,8 +327,8 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "SET_PHONE":
       return { ...state, phoneOpen: action.open };
     case "SAY_IDLE":
-      // Only in the room, with the timer idle, in a real visit, and once until a session has started and ended.
-      return state.entered && state.layer === "main" && state.timer.status === "idle" && !state.idleSaid && !state.demo ? { ...state, idleSaid: true } : state;
+      // Only in the room, with the timer idle, in a real visit, not while Morgana is still onboarding the player, and once until a session has started and ended.
+      return state.entered && state.layer === "main" && state.timer.status === "idle" && !state.idleSaid && !state.demo && !onboardingRunning(state) ? { ...state, idleSaid: true } : state;
     case "OPEN_THREAD":
       return { ...state, phoneThread: action.id, unreadThreads: action.id ? state.unreadThreads.filter((id) => id !== action.id) : state.unreadThreads };
     case "ANSWER_THREAD": {

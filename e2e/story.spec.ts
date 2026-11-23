@@ -211,6 +211,16 @@ test.describe("idle lines", () => {
     expect(await idleLines(page)).toHaveLength(1); // still just the one
   });
 
+  test("the place does not speak over Morgana while she is onboarding the player", async ({ page }) => {
+    await firstVisit(page); // onboarding running, waiting for a name
+    await watchBanners(page);
+    await page.clock.runFor(200_000);
+    expect(await idleLines(page)).toEqual([]);
+    await page.keyboard.press("s"); // once it is over, the wait starts
+    await page.clock.runFor(120_000);
+    expect(await idleLines(page)).toHaveLength(1);
+  });
+
   test("a screen open or a session running cancels the wait", async ({ page }) => {
     await firstVisit(page);
     await page.keyboard.press("s");

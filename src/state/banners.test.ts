@@ -170,6 +170,13 @@ describe("idle lines (spec §3.3)", () => {
     expect(run([{ type: "SAY_IDLE" }], running).idleSaid).toBe(false);
   });
 
+  it("not while Morgana is still onboarding the player: the place does not talk over her", () => {
+    const onboarding = run([{ type: "ENTER" }], { ...initialState, layer: "splash", entered: false, firstVisit: true });
+    expect(run([{ type: "SAY_IDLE" }], onboarding).idleSaid).toBe(false);
+    const skipped = run([{ type: "SKIP_ONBOARDING" }, { type: "SAY_IDLE" }], onboarding);
+    expect(skipped.idleSaid).toBe(true); // once onboarding is over, it may
+  });
+
   it("starting a session ends the stretch, so the place can speak again the next time the player idles", () => {
     const said = run([{ type: "SAY_IDLE" }], settled);
     const running = run([{ type: "START_SESSION", now: 0 }], said);

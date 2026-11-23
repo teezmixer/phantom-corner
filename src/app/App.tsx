@@ -4,7 +4,7 @@ import { BASE_TITLE, tabTitle } from "@/domain/title";
 import { useNow } from "@/hooks/useNow";
 import { isTypingTarget, shortcutAction } from "@/hooks/shortcuts";
 import { useStore } from "@/state/StoreProvider";
-import type { Layer } from "@/state/store";
+import { onboardingRunning, type Layer } from "@/state/store";
 import { BreakScreen } from "@/screens/Break/BreakScreen";
 import { MapScreen } from "@/screens/Map/MapScreen";
 import { Menu } from "@/screens/Menu/Menu";
@@ -57,7 +57,7 @@ export const IDLE_AFTER_MS = 90_000;
  */
 function IdleVoice() {
   const { state, dispatch } = useStore();
-  const armed = state.entered && state.layer === "main" && state.timer.status === "idle" && !state.idleSaid && !state.demo;
+  const armed = state.entered && state.layer === "main" && state.timer.status === "idle" && !state.idleSaid && !state.demo && !onboardingRunning(state);
   useEffect(() => {
     if (!armed) return;
     const id = setTimeout(() => dispatch({ type: "SAY_IDLE" }), IDLE_AFTER_MS);
