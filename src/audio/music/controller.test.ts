@@ -173,4 +173,24 @@ describe("the player's own tracks", () => {
     expect(stopped.status).toBe("off");
     expect(stopped.index).toBe(0);
   });
+
+  it("a pasted link that cannot play says so and stays; a place's own track is still skipped in silence", () => {
+    const withMine = initialMusic([...base, mine]);
+    const onMine = { ...withMine, index: 2, status: "playing" as const };
+    const failedMine = musicReducer(onMine, { type: "PLAYER_ERROR", code: 150 });
+    expect(failedMine.status).toBe("link_failed");
+    expect(failedMine.index).toBe(2);
+    expect(failedMine.failed).toContain(2);
+    const onBase = { ...withMine, index: 0, status: "playing" as const };
+    expect(musicReducer(onBase, { type: "PLAYER_ERROR", code: 150 }).index).toBe(1); // skipped without a word
+    expect(musicReducer(failedMine, { type: "NEXT" }).status).toBe("loading"); // the player can move on
+  });
+  it("SET_TRACKS carries failure marks by video, so removing a link does not blame a working track", () => {
+    const first: TrackRef = { videoId: "ddddddddddd", title: "Your link 1", source: "user", checkedOn: "" };
+    const second: TrackRef = { videoId: "eeeeeeeeeee", title: "Your link 2", source: "user", checkedOn: "" };
+    const state = { ...initialMusic([...base, first, second]), index: 0, status: "paused" as const, failed: [3] }; // link 2 failed
+    const after = musicReducer(state, { type: "SET_TRACKS", tracks: [...base, second] }); // link 1 removed: link 2 is now at 2
+    expect(after.failed).toEqual([2]);
+    expect(after.tracks[after.failed[0]!]!.videoId).toBe("eeeeeeeeeee");
+  });
 });

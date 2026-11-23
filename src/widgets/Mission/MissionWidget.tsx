@@ -21,7 +21,8 @@ export function MissionWidget() {
   // Morgana has the player's name and is now asking for the mission: put the cursor where the answer goes (it was in the phone).
   const input = useRef<HTMLInputElement>(null);
   const waitingForMission = onboardingRunning(state) && state.name !== "" && state.mission === "" && !state.events.some((e) => e.kind === "mission_first_set");
-  useEffect(() => { if (waitingForMission) input.current?.focus(); }, [waitingForMission]);
+  // Again when a screen closes, because the widgets are inert while one is open and focus() does nothing then.
+  useEffect(() => { if (waitingForMission && state.layer === "main") input.current?.focus(); }, [waitingForMission, state.layer]);
   const left = state.missionDeadline && !state.missionDone ? countdown(state.missionDeadline, now) : null;
 
   const submit = (e: FormEvent) => {

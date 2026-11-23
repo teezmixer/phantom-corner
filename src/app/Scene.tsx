@@ -1,6 +1,7 @@
 import { getLocation } from "@/content/registry";
 import { dayPartAt } from "@/domain/daynight";
 import { useNow } from "@/hooks/useNow";
+import { useEffect, useRef } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import loop from "@/bu1weaikjewy.mp4";
 
@@ -18,11 +19,20 @@ export function Scene({ locationId }: { locationId: string }) {
   const location = getLocation(locationId);
   const variant = dayPartAt(useNow(60_000));
   const reduced = useReducedMotion();
+  // `autoPlay` only decides how the video starts. Turning reduced motion on while it plays must stop it, and off must start it again.
+  const video = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = video.current;
+    if (!el) return;
+    if (reduced) el.pause();
+    else void el.play?.()?.catch(() => { /* the browser would not start it by itself: it stays on its first frame */ });
+  }, [reduced, locationId]);
   if (locationId === "leblanc") {
     // Silent (so browsers let it start by itself), looped, and only a picture to a screen reader: the room's sounds are the TV's.
     return (
-      <div data-variant={variant} role="img" aria-label="Background scene" className="absolute inset-0">
-        <video className="h-full w-full object-cover" aria-hidden="true" src={loop} autoPlay={!reduced} loop muted playsInline preload="auto" />
+      // A solid token colour behind the video: where the browser cannot play it, the room is black, not blank.
+      <div data-variant={variant} role="img" aria-label="Background scene" className="absolute inset-0 bg-black">
+        <video ref={video} className="h-full w-full object-cover" aria-hidden="true" src={loop} autoPlay={!reduced} loop muted playsInline preload="auto" />
       </div>
     );
   }

@@ -331,6 +331,17 @@ describe("the player's own links", () => {
     expect(screen.getByRole("list", { name: "Your links" }).querySelectorAll("li")).toHaveLength(1);
   });
 
+  it("a link that cannot play says so, and does not slide on to another track in silence", async () => {
+    const { latest } = await setup();
+    await openPanel();
+    paste(`https://youtu.be/${VIDEO}`);
+    submit();
+    await act(async () => { await Promise.resolve(); });
+    emit(() => latest().handlers.onError(150));
+    expect(caption()).toBe("That video can't play here.");
+    expect(latest().backend.load).not.toHaveBeenCalledWith(PLACEHOLDER_PLAYLIST[0]!.videoId, true);
+  });
+
   it("the caption box is only as wide as its words", async () => {
     await setup();
     expect(screen.getByRole("status").className).toContain("w-fit");

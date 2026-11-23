@@ -109,6 +109,7 @@ export const widgets = {
   linkPlay: "Play",
   linkInvalid: "That isn't a link to a single YouTube video.",
   linkNote: "It plays in this window, through YouTube, and is kept on this device.",
+  linkFailed: "That video can't play here.", // draft (its owner may not allow it to be played outside YouTube)
   linkRemove: (n: number) => `Remove your link ${n}`,
   linkPlayThis: (n: number) => `Play your link ${n}`,
   musicUnavailable: "That tape's gone. Skipping it.", // draft

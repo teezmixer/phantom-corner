@@ -1,9 +1,10 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { useEffect } from "react";
 import { describe, expect, it } from "vitest";
 import { answer, stepAll, type Facts } from "@/domain/story";
 import { THREADS } from "@/content/threads";
-import { initialState, type AppState } from "@/state/store";
-import { StoreProvider } from "@/state/StoreProvider";
+import { initialState, type Action, type AppState } from "@/state/store";
+import { StoreProvider, useStore } from "@/state/StoreProvider";
 import { MissionWidget } from "./MissionWidget";
 
 const facts: Facts = { entered: true, firstVisit: true, name: "", missionSet: false, sessionsCompleted: 0, visited: ["leblanc"], unlocked: ["leblanc"], saveOffer: false, release: "", defaultName: "Student Ren" };
@@ -28,10 +29,20 @@ describe("the mission box during onboarding", () => {
     render(<StoreProvider initial={{ ...initialState, entered: true, layer: "main", name: "Ren" }}><MissionWidget /></StoreProvider>);
     expect(screen.getByLabelText("Today's mission")).not.toHaveFocus();
   });
-  it("does not keep stealing focus once the mission is set", () => {
-    const { rerender } = render(<StoreProvider initial={askingForMission()}><MissionWidget /></StoreProvider>);
-    act(() => { (document.activeElement as HTMLElement).blur(); });
-    rerender(<StoreProvider initial={askingForMission()}><MissionWidget /></StoreProvider>);
+  it("is not retried once the mission is set: the box goes away and nothing else is given focus", () => {
+    render(<StoreProvider initial={askingForMission()}><MissionWidget /></StoreProvider>);
+    const box = screen.getByLabelText("Today's mission");
+    fireEvent.change(box, { target: { value: "Read" } });
+    fireEvent.submit(box.closest("form")!);
+    expect(screen.queryByLabelText("Today's mission")).not.toBeInTheDocument();
+    expect(document.body).toHaveFocus();
+  });
+  it("waits for a screen to close when one is open (the widgets are inert then), and takes the cursor when it does", () => {
+    let send!: (a: Action) => void;
+    function Grab() { const s = useStore(); useEffect(() => { send = s.dispatch; }); return null; }
+    render(<StoreProvider initial={{ ...askingForMission(), layer: "settings" }}><Grab /><MissionWidget /></StoreProvider>);
     expect(screen.getByLabelText("Today's mission")).not.toHaveFocus();
+    act(() => send({ type: "SET_LAYER", layer: "main" }));
+    expect(screen.getByLabelText("Today's mission")).toHaveFocus();
   });
 });

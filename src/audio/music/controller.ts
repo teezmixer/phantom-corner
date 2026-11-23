@@ -1,7 +1,8 @@
 import type { TrackRef } from "@/content/types";
 
 /** What the TV shows (spec §3.6). */
-export type MusicStatus = "off" | "loading" | "playing" | "paused" | "blocked" | "unavailable";
+/** `link_failed`: a link the player pasted cannot play here (often the video's owner forbids embedding). It says so and stays put. */
+export type MusicStatus = "off" | "loading" | "playing" | "paused" | "blocked" | "unavailable" | "link_failed";
 
 export interface MusicState {
   tracks: readonly TrackRef[];
@@ -70,7 +71,11 @@ export function musicReducer(state: MusicState, event: MusicEvent): MusicState {
       const current = currentTrack(state);
       const at = current ? event.tracks.findIndex((t) => t.videoId === current.videoId) : -1;
       // The playing track is still there: nothing changes but the list. It is gone (the player removed it): stop and cue the first.
-      if (at >= 0) return { ...state, tracks: event.tracks, index: at, failed: state.failed.filter((i) => i < event.tracks.length) };
+      // Failure marks are positions, so they are carried over by video, not by place in the list.
+      if (at >= 0) {
+        const failedIds = state.failed.flatMap((i) => (state.tracks[i] ? [state.tracks[i]!.videoId] : []));
+        return { ...state, tracks: event.tracks, index: at, failed: event.tracks.flatMap((t, i) => (failedIds.includes(t.videoId) ? [i] : [])) };
+      }
       return { ...initialMusic(event.tracks), apiFailed: state.apiFailed, status: state.apiFailed ? "unavailable" : "off" };
     }
     case "PLAY_TRACK":
@@ -109,6 +114,8 @@ export function musicReducer(state: MusicState, event: MusicEvent): MusicState {
     case "PLAYER_ERROR": {
       if (!(SKIP_ERROR_CODES as readonly number[]).includes(event.code)) return state;
       const failed = state.failed.includes(state.index) ? state.failed : [...state.failed, state.index];
+      // A link the player pasted that cannot play is not skipped past in silence: it says so and stays, so they know.
+      if (currentTrack(state)?.source === "user") return { ...state, failed, status: "link_failed" };
       const i = nextIndex({ tracks: state.tracks, failed }, state.index, 1);
       // Skip silently to the next playable track; only when all have failed does the TV say it is unavailable.
       return i === null ? { ...state, failed, status: "unavailable" } : { ...state, failed, index: i, status: state.status === "loading" || state.status === "playing" ? "loading" : state.status };

@@ -1,7 +1,8 @@
 import { act, render, screen } from "@testing-library/react";
+import { useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { initialState } from "@/state/store";
-import { StoreProvider } from "@/state/StoreProvider";
+import { initialState, type Action } from "@/state/store";
+import { StoreProvider, useStore } from "@/state/StoreProvider";
 import { Scene } from "./Scene";
 
 const renderScene = (id: string) => render(<StoreProvider initial={initialState}><Scene locationId={id} /></StoreProvider>);
@@ -46,5 +47,25 @@ describe("Scene day and night (spec §3.3)", () => {
   it("with reduced motion the loop does not start by itself", () => {
     render(<StoreProvider initial={{ ...initialState, motion: "reduced" }}><Scene locationId="leblanc" /></StoreProvider>);
     expect((screen.getByLabelText("Background scene").querySelector("video") as HTMLVideoElement).autoplay).toBe(false);
+  });
+
+  it("turning reduced motion on while the loop plays pauses it, and off starts it again", () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
+    const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(() => Promise.resolve());
+    let send!: (a: Action) => void;
+    function Grab() { const s = useStore(); useEffect(() => { send = s.dispatch; }); return null; }
+    render(<StoreProvider initial={initialState}><Grab /><Scene locationId="leblanc" /></StoreProvider>);
+    expect(pause).not.toHaveBeenCalled();
+    act(() => send({ type: "SET_MOTION", motion: "reduced" }));
+    expect(pause).toHaveBeenCalled();
+    play.mockClear();
+    act(() => send({ type: "SET_MOTION", motion: "system" }));
+    expect(play).toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
+  it("the room is black, not blank, where the browser cannot play the loop", () => {
+    render(<StoreProvider initial={initialState}><Scene locationId="leblanc" /></StoreProvider>);
+    expect(screen.getByLabelText("Background scene").className).toContain("bg-black");
   });
 });

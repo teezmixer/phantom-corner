@@ -32,6 +32,7 @@ function caption(status: MusicStatus, title: string | undefined): string {
     case "paused": return title ? widgets.musicPaused(title) : widgets.musicOff;
     case "blocked": return widgets.musicBlocked;
     case "unavailable": return widgets.musicUnavailable;
+    case "link_failed": return widgets.linkFailed;
   }
 }
 
