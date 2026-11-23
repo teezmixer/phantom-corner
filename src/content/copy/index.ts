@@ -114,6 +114,16 @@ export const widgets = {
   notYet: "Not yet.", // draft — menu items that aren't built (spec §3.7)
 } as const;
 
+/** Community features behind ?community=true, running on made-up numbers until there is a backend (B-11). DRAFTS (D-10, D-36). */
+export const community = {
+  presence: (n: number) => (n === 1 ? "1 Phantom Thief is studying here" : `${n} Phantom Thieves are studying here`),
+  practice: "practice numbers",
+  voteTitle: "Which place should open next?",
+  votes: (n: number) => (n === 1 ? "1 vote" : `${n} votes`),
+  voted: "Your vote is in; pressing another place moves it.",
+  voteNote: "A practice vote: it stays in this browser.",
+} as const;
+
 /** Splash and footer. */
 export const splash = {
   enter: "Press to enter", // draft
@@ -156,6 +166,8 @@ export const sessionEnd = {
   summaryContinue: "One more",
   summaryFinish: "Done for today",
   shareCard: "Save a card", // draft (spec §5: a PNG with minutes, Knowledge and the place; never your name or mission)
+  shareCardCopy: "Copy the card", // draft
+  shareCardCopied: "Copied. Paste it into a message.", // draft
   shareCardFailed: "The card wouldn't draw.", // draft
 } as const;
 

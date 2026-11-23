@@ -42,12 +42,27 @@ export async function drawShareCard(canvas: HTMLCanvasElement, lines: ShareCardL
   ctx.fillText(lines.fan, 80, 596);
 }
 
-/** Draws the card and hands it to the browser as a PNG download. */
-export async function saveShareCard(lines: ShareCardLines): Promise<void> {
+async function cardBlob(lines: ShareCardLines): Promise<Blob> {
   const canvas = document.createElement("canvas");
   await drawShareCard(canvas, lines);
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("The card could not be made");
+  return blob;
+}
+
+/** Whether this browser can put an image on the clipboard (not every one can, and none can when the page is not secure). */
+export const canCopyImage = (): boolean => typeof ClipboardItem !== "undefined" && !!navigator.clipboard?.write;
+
+/** Draws the card and puts it on the clipboard as a PNG, to paste into a message. The picture is the same one Save makes. */
+export async function copyShareCard(lines: ShareCardLines): Promise<void> {
+  if (!canCopyImage()) throw new Error("This browser cannot copy images");
+  // Handing the clipboard a promise keeps the click's permission alive while the card is drawn.
+  await navigator.clipboard.write([new ClipboardItem({ "image/png": cardBlob(lines) })]);
+}
+
+/** Draws the card and hands it to the browser as a PNG download. */
+export async function saveShareCard(lines: ShareCardLines): Promise<void> {
+  const blob = await cardBlob(lines);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
