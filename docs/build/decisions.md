@@ -186,7 +186,7 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **Analytics (D-14):** the named events (ten today; the two `save_prompt_*` events wait for accounts) fire only while the Settings switch is on and never in dev mode or the demo; the page-view script still loads in the demo when the switch is on. The default is still **on** (provisional); say if it should be off until the player chooses.
 - **Timer announcements:** a screen reader hears "N minutes left" in five-minute steps, "Less than a minute left", and "Paused". The steps are my choice.
 - **Controls get a 24 px target on screen** at any HUD scale; the look is unchanged but a few small controls now take a little more room.
-- **Performance budgets** (120 kB initial JS gzipped, 800 kB first load, 250 kB per image with the B-05 screenshot exempt by name) are the spec's numbers; initial JS is at 118 kB, so there is little room left in the entry.
+- **Performance budgets** (120 kB initial JS gzipped, 800 kB first load, 250 kB per image with the B-05 screenshot exempt by name) are the spec's numbers; initial JS is at 115 kB, so there is little room left in the entry.
 - **Not built:** the weekly check that each YouTube track still exists (needs a scheduled job); say if you want it.
 
 ### D-35 Accounts and sync choices that are yours (provisional — Ares decides)
@@ -197,4 +197,6 @@ Nothing here is applied without Ares. Provisional values are tagged `provisional
 - **Sign in** is the first sync: the guest's whole history goes up at once, and the server's comes down. Signing out keeps everything on the device. Deleting the account removes what is stored online and keeps what is on the device; a separate Delete my data removes that.
 - **Sync down** shows as a small red dot in the bottom-left corner of the window plus a sentence in Settings; the dot's look and place are placeholders.
 - **The panel's words** (practice-mode note, "Send code", "Sign in", "Sync now" and so on) are plain drafts, not in a character's voice.
+- **Not synced on purpose:** your analytics choice (consent is per device).
+- **The save prompt** also appears for a player who reached Ryuji's place before accounts were switched on, the first time they are on, wherever they are, rather than only on a fresh arrival.
 - **Practice mode:** until the live backend exists the account lives in memory, so a reload ends the practice session; the code is always 123456.

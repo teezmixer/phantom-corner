@@ -1386,7 +1386,7 @@
       "description": "Email-code sign-in UI behind a flag, working against the local fake.",
       "steps": "Component with fake auth.",
       "status": "pass",
-      "evidence": "src/sync/AccountPanel.test.tsx (component with the fake): a bad address and a wrong code each say so in words; the right code signs in. e2e/accounts.spec.ts signs in through the panel. Behind ?accounts=true; real emails wait for B-10."
+      "evidence": "src/sync/AccountPanel.test.tsx (component with the fake): a bad address and a wrong code each say so in words; the right code signs in. e2e/accounts.spec.ts signs in through the panel. Behind ?accounts=true; real emails wait for B-10. Words for a wrong code and a bad address live in content/copy."
     },
     {
       "id": "acct-sync-fake",
@@ -1397,7 +1397,7 @@
       "description": "Sync module behind an interface merges events by id and docs by newest stamp (local fake).",
       "steps": "Unit: merge rules.",
       "status": "pass",
-      "evidence": "src/sync/sync.test.ts: events merge by id (this device's order first, idempotent, a first mission on two devices counts once), documents by newest stamp (tie keeps this device), equal data is not pushed, developer grants never leave, a failed pull writes nothing, guest-to-account uploads once, a second device ends with both histories, one account cannot see another's; SYNC_APPLY cannot touch the timer, place or story and drops bad events. Mutation-checked (tie rule, id de-duplication)."
+      "evidence": "src/sync/sync.test.ts: events merge by id (this device's order first, idempotent, a first mission on two devices counts once), documents by newest stamp (tie keeps this device), equal data is not pushed, developer grants never leave, a failed pull writes nothing, guest-to-account uploads once, a second device ends with both histories, one account cannot see another's; SYNC_APPLY cannot touch the timer, place or story and drops bad events. Mutation-checked (tie rule, id de-duplication). After review: SYNC_APPLY merges with the state as it is after the round trip (a mission, event or todo made during a sync is kept), keeps the remote time of a document it adopts, and never carries the analytics choice; one refused event does not stop the rest (all mutation-checked)."
     },
     {
       "id": "acct-sync-live",
@@ -1419,7 +1419,7 @@
       "description": "SQL migrations, RLS policies and the four RLS tests are in the repo.",
       "steps": "Files present; tests runnable against a Supabase project (live run blocked).",
       "status": "pass",
-      "evidence": "supabase/migrations/20261123000000_accounts_and_sync.sql (tables, check constraints, policies, grants, delete_my_account) and src/sync/rls.test.ts: the spec's four tests (B cannot read A's events; signed-out reads nothing; a forged user_id is rejected; an event cannot be updated or deleted), documents/profiles own-row only, session and grant payload checks, future events refused, account delete. Run against an in-process Postgres (PGlite), mutation-checked on four policy changes. NOT run against a real Supabase project: B-10."
+      "evidence": "supabase/migrations/20261123000000_accounts_and_sync.sql and src/sync/rls.test.ts (15 cases): the spec's four tests (B cannot read A's events; signed-out reads nothing; a forged user_id is rejected; an event cannot be updated or deleted), the same event id for two accounts, no truncate, own-row documents and profiles, an older document ignored and a far-future one refused, payload checks that do not pass on a missing key, free text refused in the first mission, size and age limits, account delete. Run against an in-process Postgres (PGlite) set up with Supabase's default grants; mutation-checked on the grants, the key, the coalesce and the trigger. NOT run against a real Supabase project: B-10."
     },
     {
       "id": "acct-sign-out",
