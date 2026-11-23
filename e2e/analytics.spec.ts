@@ -40,6 +40,26 @@ test.describe("analytics events", () => {
     expect(got.find((e) => e.name === "session_completed")!.data).toEqual({ location: "leblanc", plannedMin: 25, focusedMin: 25, level: 3 });
     expect(got.find((e) => e.name === "location_unlocked")!.data).toEqual({ location: "ryuji", level: 3 });
     expect(JSON.stringify(got)).not.toMatch(/secret|thesis|milk/i);
+
+    // Travelling to the place that just opened sends where, and nothing else.
+    await page.getByRole("button", { name: "Call it" }).click();
+    await page.getByRole("button", { name: "Done for today" }).click();
+    await page.getByRole("button", { name: "Map (N)" }).click();
+    await page.getByRole("button", { name: /School rooftop/ }).click();
+    await page.clock.runFor(1600);
+    const travelled = (await events(page)).filter((e) => e.name === "travelled");
+    expect(travelled).toEqual([{ name: "travelled", data: { location: "ryuji" } }]);
+  });
+
+  test("developer mode on its own sends nothing, not even the TV's music events", async ({ page }) => {
+    await page.goto("/?dev=true");
+    await watch(page);
+    await enter(page);
+    const tv = page.getByRole("region", { name: "TV" });
+    await tv.getByRole("button", { name: "Play" }).click();
+    await expect(page.getByRole("region", { name: "TV" }).getByRole("status")).toHaveText("Beneath the Mask");
+    await page.waitForTimeout(300);
+    expect(await names(page)).toEqual([]);
   });
 
   test("with the Settings switch off, no event is sent for what the player does next", async ({ page }) => {
@@ -69,7 +89,7 @@ test.describe("analytics events", () => {
     expect(await names(page)).toEqual([]);
   });
 
-  test("travelling sends the place, and unlocking sends the place and the level", async ({ page }) => {
+  test("developer mode stays silent too, even when the demo is also on", async ({ page }) => {
     await page.clock.install({ time: new Date(2026, 10, 23, 12) });
     await page.goto("/?demo=true&dev=true");
     await page.clock.resume();

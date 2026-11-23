@@ -65,9 +65,9 @@ function Preferences({ children, events }: { children: React.ReactNode; events: 
   }, [reduced]);
   // The send-time gate and the remembered opt-out follow the switch.
   useEffect(() => {
-    setAnalyticsAllowed(state.analytics);
+    setAnalyticsAllowed(state.analytics && events); // developer mode sends nothing at all, including the TV's events
     if (!state.demo) rememberOptOut(!state.analytics); // a demo visit never changes the real visitor's remembered choice
-  }, [state.analytics, state.demo]);
+  }, [state.analytics, state.demo, events]);
   return (
     <MotionConfig reducedMotion={reduced ? "always" : "user"}>
       {children}
