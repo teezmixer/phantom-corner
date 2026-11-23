@@ -1,39 +1,16 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { demo as demoCopy, HOW_BUILT_URL, morgana } from "@/content/copy";
 import { BASE_TITLE, tabTitle } from "@/domain/title";
 import { useNow } from "@/hooks/useNow";
 import { isTypingTarget, shortcutAction } from "@/hooks/shortcuts";
 import { useStore } from "@/state/StoreProvider";
 import { onboardingRunning, type Layer } from "@/state/store";
-import { BreakScreen } from "@/screens/Break/BreakScreen";
-import { MapScreen } from "@/screens/Map/MapScreen";
-import { Menu } from "@/screens/Menu/Menu";
-import { AboutScreen, CreditsScreen, PrivacyScreen } from "@/screens/Pages/Pages";
-import { ProfileScreen } from "@/screens/Profile/ProfileScreen";
-import { SessionEndScreen } from "@/screens/SessionEnd/SessionEndScreen";
-import { SettingsScreen } from "@/screens/Settings/SettingsScreen";
+import { forgetOpener } from "@/screens/openerFocus";
 import { Splash } from "@/screens/Splash/Splash";
-import { SummaryScreen } from "@/screens/Summary/SummaryScreen";
-import { TravelScreen } from "@/screens/Travel/TravelScreen";
 import { Banner } from "./Banner";
 import { DevPanel } from "./DevPanel";
 import { ErrorBoundary } from "./ErrorBoundary";
-import MainScreen from "./MainScreen";
-
-const LAYERS: Partial<Record<Layer, () => ReactNode>> = {
-  splash: () => <Splash />,
-  menu: () => <Menu />,
-  map: () => <MapScreen />,
-  travel: () => <TravelScreen />,
-  settings: () => <SettingsScreen />,
-  profile: () => <ProfileScreen />,
-  summary: () => <SummaryScreen />,
-  choice: () => <SessionEndScreen />,
-  break: () => <BreakScreen />,
-  about: () => <AboutScreen />,
-  credits: () => <CreditsScreen />,
-  privacy: () => <PrivacyScreen />,
-};
+import { LAYER_SCREENS, prefetchScreens, Room } from "./screens";
 
 /**
  * Ends a session when its time is up. Lives here, not in the timer widget, so a session still completes when the timer
@@ -106,8 +83,16 @@ function DevBoom(): never {
   throw new Error("Forced crash from the developer tools");
 }
 
+function LayerView({ layer }: { layer: Layer }) {
+  const Screen = LAYER_SCREENS[layer];
+  return Screen ? <Screen /> : null;
+}
+
 export function App({ dev }: { dev: boolean }) {
   const { state, derived, dispatch } = useStore();
+  useEffect(prefetchScreens, []);
+  // Back in the room: no screen is waiting to be given focus back any more.
+  useEffect(() => { if (state.layer === "main") forgetOpener(); }, [state.layer]);
   const [devCrash, setDevCrash] = useState<"screen" | "app" | null>(null);
 
   useEffect(() => {
@@ -130,10 +115,11 @@ export function App({ dev }: { dev: boolean }) {
 
   return (
     <>
-      {state.entered && <MainScreen locked={state.layer !== "main"} />}
+      {/* Black while a chunk is on its way: the page behind is black too, so nothing flashes. */}
+      <Suspense fallback={null}>{state.entered && <Room locked={state.layer !== "main"} />}</Suspense>
       {/* One boundary per screen layer: a bug in one screen shows the crash card instead of a blank page. Keyed so changing layer starts clean. */}
       <ErrorBoundary key={state.layer}>
-        {devCrash === "screen" ? <DevBoom /> : LAYERS[state.layer]?.()}
+        <Suspense fallback={null}>{devCrash === "screen" ? <DevBoom /> : state.layer === "splash" ? <Splash /> : <LayerView layer={state.layer} />}</Suspense>
       </ErrorBoundary>
       <SessionClock />
       <IdleVoice />

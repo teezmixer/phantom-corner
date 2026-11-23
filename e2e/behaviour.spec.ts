@@ -79,6 +79,7 @@ test("focus stays inside an open dialog and returns to the button that opened it
 
 test("the room behind a dialog is inert", async ({ page }) => {
   await page.goto("/?demo=true&at=menu");
+  await page.locator('[data-widget="timer"]').waitFor({ state: "attached" }); // the room is its own chunk
   const inert = (widget: string) => page.evaluate((w) => document.querySelector(`[data-widget="${w}"]`)?.closest("[inert]") !== null, widget);
   expect(await inert("timer")).toBe(true);
   // …but the TV is deliberately not inert
