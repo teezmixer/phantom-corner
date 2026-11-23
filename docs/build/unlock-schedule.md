@@ -10,12 +10,12 @@ You asked me to draft the unlock thresholds and messages without waiting for you
 | --- | --- | --- | --- | --- | --- |
 | 1 | 0 | about 0.0 h | Café Leblanc | Sojiro & Morgana | — |
 | 3 | 35 | about 0.5 h | School rooftop | Ryuji | Yo! Found a spot. / Come up to the roof when you're ready. Bring notes. Snacks too, if you're a good person. |
-| 5 | 215 | about 3.0 h | Ann's place (sunny seat) | Ann | Got a sunny seat saved for you. / Crepes after, okay? Come find me. |
-| 8 | 575 | about 8.0 h | Gallery light | Yusuke | I have found the ideal light. / Come. It will not wait forever. |
-| 12 | 1080 | about 15.0 h | Library | Makoto | The library is quiet today. I reserved a table. / Phones on silent, please. See you there. |
+| 5 | 215 | about 3.0 h | Café terrace | Ann | Got a sunny seat saved for you. / Crepes after, okay? Come find me. |
+| 8 | 575 | about 8.0 h | Atelier by the park | Yusuke | I have found the ideal light. / Come. It will not wait forever. |
+| 12 | 1080 | about 15.0 h | School library | Makoto | The library is quiet today. I reserved a table. / Phones on silent, please. See you there. |
 | 16 | 1800 | about 25.0 h | Futaba's room | Futaba | ok so. you can come over. / don't be weird. also bring snacks. not optional. |
-| 20 | 2880 | about 40.0 h | Garden | Haru | The garden is lovely this morning. Join me? / I'll have tea ready. No hurry at all. |
-| 25 | 4320 | about 60.0 h | Jazz bar | Akechi | There's a seat at the bar. Late, as usual. / Don't keep me waiting too long. Patience isn't my strong suit. |
+| 20 | 2880 | about 40.0 h | Rooftop garden | Haru | The garden is lovely this morning. Join me? / I'll have tea ready. No hurry at all. |
+| 25 | 4320 | about 60.0 h | Jazz club | Akechi | There's a seat at the bar. Late, as usual. / Don't keep me waiting too long. Patience isn't my strong suit. |
 | 26 | 4610 | about 64.0 h | Rainy walk | (bonus) | — |
 | 27 | 4900 | about 68.1 h | Subway ride home | (bonus) | — |
 | 28 | 5190 | about 72.1 h | Velvet Room | (bonus) | — |
