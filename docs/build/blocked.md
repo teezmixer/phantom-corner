@@ -50,3 +50,8 @@ Format: what · why · what would unblock it · what was built around it.
 - **Why:** spec §3.4 says [DECIDED] there is never a progress bar toward the next unlock. The level widget (Figma, M5) shows a bar toward the next *level*, and unlocks sit on levels (3, 5, 8, 12, 16, 20, 25), so the bar hints at them. Which side gives way is a design decision. Affects `prog-unlock-im`.
 - **Unblock:** Ares rules: keep the bar, hide it, or show it only between unlock levels.
 - **Built around:** the IM reveal is built and tested; the bar is left as designed.
+
+## B-10 Live accounts and sync need a Supabase project (pre-flight P4)
+- **Why:** `SUPABASE_URL` and `SUPABASE_ANON_KEY` are not in `.env.local` (P4 answer: "not yet"), and a custom email sender needs a domain (spec D13). Affects `acct-sync-live`, and the live halves of `acct-rls` (the SQL is tested here against an in-process Postgres, not Supabase), `acct-email-code` (real emails) and `acct-export-delete` (the live delete function).
+- **Unblock:** Ares creates the project and adds the two keys to `.env.local`; applies `supabase/migrations/20261123000000_accounts_and_sync.sql`; re-runs the cases in `src/sync/rls.test.ts` against it; says which email sender to use. Then a `SupabaseBackend` implementing `SyncBackend` (src/sync/types.ts) is added and returned by `backend()` when `VITE_SUPABASE_URL` is set, and `?accounts=true` can become the default.
+- **Built around:** everything behind `?accounts=true`, against an in-memory fake with the same contract: sign-in with a six-digit code, sync (events by id, documents by newest stamp), sign out, export, delete, the save prompt at Ryuji's arrival, and the sync-down dot. Nothing is shown to players without the switch.
