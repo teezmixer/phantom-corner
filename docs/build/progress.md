@@ -50,3 +50,4 @@
 ## 2026-11-23 — M5 merged, M6 hideout menu
 - M5 merged (PR #6, 2dc0bc68) after round 2 (R4/BQ4/V4) and a preview bundle match.
 - M6 on `m6-hideout-menu`: motion tokens (TS + CSS, parity test), diagonal clip-path wipe, staggered labels at angles, arrow/Home/End navigation with a select sound, Esc/Enter, 100 ms reduced-motion cut, focusable not-yet labels, `AudioApi.play`. Found by looking at a screenshot: a mouse resting where the menu opens stole the highlight; fixed (mouse-move, not mouse-enter) with a mutation-checked test.
+- 2026-11-23: M6 review round 1 R3/BQ3/V4 → fixes → round 2 R4/BQ4/V4. Extra fixes after round 2: dev-panel key capture, 1024×600 scroll. Merging after CI and the preview match.

@@ -2,7 +2,7 @@
 
 - **Updated:** 2026-11-23, M5 merged (PR #6); M6 built on m6-hideout-menu
 - **Milestone / branch:** M5 HUD widgets on `m5-hud-widgets` (from main)
-- **In progress:** M6 hideout menu built and tested on `m6-hideout-menu`. Left: full verify, push, open PR, fresh Opus review (screens in docs/build/screens/M6), fix, merge. Then M7.
+- **In progress:** M6 passed round 2 (R4/BQ4/V4); merging PR #7 after CI and the preview bundle match. Then M7 (progression and content engine: folder-glob content registry, content tests in CI, progress fold, provisional XP/unlock data, unlock reveal, calendar stamps).
 - The repo was removed from iCloud sync on 2026-11-23; `node_modules` is a symlink to `node_modules.nosync` (ignored by git, eslint and tsconfig).
 - iCloud may have re-created sync-conflict copies (e.g. `src/app/Tv 2.tsx`); they are ignored by tsconfig/eslint/.gitignore. Delete only after verifying they match the originals.
 

@@ -45,6 +45,9 @@ export function Menu() {
       const at = buttons.current.findIndex((b) => b === document.activeElement);
       const to = e.key === "ArrowDown" ? (at >= last ? 0 : at + 1) : e.key === "ArrowUp" ? (at <= 0 ? last : at - 1) : e.key === "Home" ? 0 : e.key === "End" ? last : null;
       if (to === null || e.altKey || e.ctrlKey || e.metaKey) return;
+      // Only keys from inside the menu, or from nowhere in particular (the page body): a control elsewhere (the dev panel's
+      // select, for one) keeps its own arrow keys.
+      if (e.target instanceof Element && e.target !== document.body && !e.target.closest('[role="dialog"]')) return;
       e.preventDefault();
       buttons.current[to]?.focus();
       if (to !== at) play("select");
@@ -55,7 +58,7 @@ export function Menu() {
 
   return (
     <Overlay title={ui.menu.title} closable={false} className="motion-safe:animate-menu-wipe motion-reduce:animate-menu-cut">
-      <ul className="flex flex-col gap-5">
+      <ul className="flex flex-col gap-4">
         {items.map((item, i) => {
           const notYet = item.available === false;
           return (

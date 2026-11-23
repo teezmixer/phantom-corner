@@ -132,4 +132,15 @@ describe("Menu", () => {
     fireEvent.keyDown(document.body, { key: "ArrowUp" });
     expect(focused()).toBe("CLOSE"); // up goes to the last
   });
+
+  it("arrow keys pressed in a control outside the menu are left to that control", () => {
+    const { focused } = setup();
+    const outside = document.createElement("select");
+    document.body.appendChild(outside);
+    outside.focus();
+    fireEvent.keyDown(outside, { key: "ArrowDown" });
+    expect(document.activeElement).toBe(outside); // the menu did not take the key
+    expect(focused()).toBe("");
+    outside.remove();
+  });
 });

@@ -202,6 +202,18 @@ test.describe("hideout menu", () => {
     for (let i = 1; i < boxes.length; i++) expect(boxes[i]!.top, `${boxes[i]!.name} overlaps ${boxes[i - 1]!.name}`).toBeGreaterThanOrEqual(boxes[i - 1]!.bottom);
   });
 
+  test("at the smallest supported window the menu fits without a scrollbar, and the labels still do not overlap", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 600 });
+    await page.goto("/?demo=true&at=menu");
+    const dialog = page.getByRole("dialog", { name: "Hideout" });
+    await expect(dialog).toBeVisible();
+    await page.waitForTimeout(800);
+    const fit = await dialog.evaluate((d) => { const panel = d.firstElementChild as HTMLElement; return { scroll: panel.scrollHeight, client: panel.clientHeight }; });
+    expect(fit.scroll).toBeLessThanOrEqual(fit.client);
+    const boxes = await dialog.getByRole("button").evaluateAll((bs) => bs.map((b) => { const r = b.getBoundingClientRect(); return { name: b.textContent, top: r.top, bottom: r.bottom }; }));
+    for (let i = 1; i < boxes.length; i++) expect(boxes[i]!.top, `${boxes[i]!.name} overlaps ${boxes[i - 1]!.name}`).toBeGreaterThanOrEqual(boxes[i - 1]!.bottom);
+  });
+
   test("moving the mouse onto a not-yet label highlights it, so the pointer is never left without feedback", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Press to enter" }).click();
