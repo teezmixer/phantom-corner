@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MINUTE, initialTimer } from "@/domain/timer";
-import { initialState, type AppState } from "../store";
+import { initialState, reducer, type AppState } from "../store";
 import { MAX_BACKUPS, localStorageAdapter, memoryAdapter } from "./adapter";
 import { isPersisted } from "./guard";
 import { loadPersisted } from "./load";
@@ -520,5 +520,13 @@ describe("a session that ended while the tab was closed is announced when the pl
     const first = reopen({ timer: { status: "running", durationMs: 25 * 60_000, endsAt: NOW - 60_000 } });
     const stored = toPersisted(first, fresh(), ISO);
     expect(reopen(stored).banners).toEqual([]);
+  });
+
+  it("Sojiro's greeting comes first when the player enters, then the news from the session that ended while they were away", () => {
+    const state = reopen({ timer: { status: "running", durationMs: 25 * 60_000, endsAt: NOW - 60_000 } });
+    const entered = reducer({ ...state, entered: false, layer: "splash" }, { type: "ENTER" });
+    expect(entered.banners.map((b) => b.text)[0]).toBe("Ah, you're back.");
+    expect(entered.banners.map((b) => b.text)).toContain("+30 Knowledge");
+    expect(entered.banners.length).toBeGreaterThan(1);
   });
 });

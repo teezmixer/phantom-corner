@@ -158,7 +158,11 @@ export function reducer(state: AppState, action: Action): AppState {
   const next = coreReducer(state, action);
   if (action.type === "DISMISS_BANNER" || action.type === "RESET" || action.type === "LOAD") return next;
   const fresh = bannersFor(state, next);
-  return fresh.length === 0 ? next : { ...next, banners: [...next.banners, ...fresh].slice(-MAX_BANNERS) };
+  if (fresh.length === 0) return next;
+  // The greeting comes first: Sojiro says hello, then the news waiting from a session that ended while the tab was closed.
+  const greeting = fresh.filter((b) => b.id === "back");
+  const rest = fresh.filter((b) => b.id !== "back");
+  return { ...next, banners: [...greeting, ...next.banners, ...rest].slice(-MAX_BANNERS) };
 }
 
 function coreReducer(state: AppState, action: Action): AppState {
