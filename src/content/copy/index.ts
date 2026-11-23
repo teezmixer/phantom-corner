@@ -31,7 +31,33 @@ export const morgana = {
   scrambled: "Something got scrambled in my notes. We start fresh — I kept a copy, just in case.", // draft
   cantWrite: "I can't write anything down in here. Today counts, but I won't remember it tomorrow.", // draft
   keepStudying: "Keep studying and you'll find new places — and new people.", // draft (FigJam sticky)
+  /** The level-up line when the next location is not ready yet (spec §3.4: "someone has been asking about them"). */
+  someoneAsking: "Someone's been asking about you. Not yet — but soon.", // draft
 } as const;
+
+/**
+ * What a level gives when it is not a location (spec §3.4, "no empty level-ups"), by level. Which levels give what is in
+ * content/progression.ts. DRAFTS in voice (D-10); the tips are real study advice, not decoration.
+ */
+export const levelRewards: Record<number, string> = {
+  2: "Morgana: There's a map now. Don't wander off.",
+  4: "A new stamp for your calendar: star.",
+  6: "Tip: write the first line of an answer before you check your notes.",
+  7: "Sojiro: Still here, I see. Good.",
+  9: "Tip: a five-minute break is part of the session, not a loss.",
+  10: "A new stamp for your calendar: heart.",
+  11: "Morgana: Progress, at last. I knew it.",
+  13: "Tip: stop in the middle of a sentence. Starting again is easier.",
+  14: "Sojiro: The coffee's gone cold. Again.",
+  15: "A new stamp for your calendar: moon.",
+  17: "Tip: explain it out loud to someone who isn't there.",
+  18: "Morgana: Look at you. Almost a proper Phantom Thief.",
+  19: "A new stamp for your calendar: lightning.",
+  21: "Tip: study the thing you like least while you're fresh.",
+  22: "Sojiro: You've been here a while. Don't tell the others.",
+  23: "A new stamp for your calendar: crown.",
+  24: "Tip: sleep is studying too. Go to bed.",
+};
 
 /** Widget prompts and states. */
 export const widgets = {

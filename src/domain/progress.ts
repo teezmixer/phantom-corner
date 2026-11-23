@@ -45,9 +45,23 @@ export function knowledgeFor(events: readonly ProgressEvent[], rules: typeof KNO
   return total;
 }
 
-/** Ids of the locations whose unlock level has been reached. */
+/** Ids of the locations whose unlock level has been reached (shipped or not). */
 export function unlockedIds(level: number, locations: readonly { id: string; unlockLevel: number }[]): string[] {
   return locations.filter((l) => l.unlockLevel <= level).map((l) => l.id);
+}
+
+/**
+ * What the player can actually enter and what is waiting for the content to ship (spec §3.4). A location whose level is
+ * reached but which is not in `shipped` is HELD: it is not unlocked until it ships. Canon and bonus locations follow the
+ * same rule; each location's own `unlockLevel` (canon levels, and the one provisional bonus rule) is the only input.
+ */
+export function unlockState(
+  level: number,
+  locations: readonly { id: string; unlockLevel: number }[],
+  shipped: readonly string[],
+): { unlocked: string[]; held: string[] } {
+  const reached = unlockedIds(level, locations);
+  return { unlocked: reached.filter((id) => shipped.includes(id)), held: reached.filter((id) => !shipped.includes(id)) };
 }
 
 /** Where a user is within their current level: Knowledge into the level, needed for the next, and 0–100 percent. */
