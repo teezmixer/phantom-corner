@@ -4,6 +4,8 @@ import { expect, test } from "./fixtures";
 
 /** Serious and critical axe findings fail the build (spec §4.17). The dev panel is not part of the product, so it is left out. */
 async function seriousViolations(page: Page) {
+  // A screen fades in; contrast measured mid-fade is not the screen's real contrast, so let every animation finish first.
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
   const results = await new AxeBuilder({ page }).exclude('[aria-label="Developer tools"]').analyze();
   return results.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`);
 }
