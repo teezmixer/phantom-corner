@@ -105,13 +105,17 @@ test.describe("level gifts", () => {
     await start(page);
     await page.getByRole("button", { name: "Start" }).click();
     await expect.poll(async () => JSON.parse((await stored(page)) ?? "{}").timer?.status).toBe("running");
-    // Make the saved session end a minute ago, as if the tab had been closed for the rest of it.
-    await page.evaluate(() => {
-      const saved = JSON.parse(window.localStorage.getItem("pc:v1")!);
+    // Make the saved session end a minute ago, as if the tab had been closed for the rest of it. A script that runs when the NEXT page loads
+    // makes the edit: the old page is gone by then (its unload save has happened), so nothing can write over it.
+    await page.addInitScript(() => {
+      if (window.sessionStorage.getItem("expired")) return;
+      const raw = window.localStorage.getItem("pc:v1");
+      if (!raw) return;
+      const saved = JSON.parse(raw);
       saved.timer.endsAt = Date.now() - 60_000;
       window.localStorage.setItem("pc:v1", JSON.stringify(saved));
+      window.sessionStorage.setItem("expired", "1");
     });
-    await page.goto("about:blank"); // leave without letting the page save over our edit
     await page.goto("/");
     await page.clock.resume();
     await enter(page);

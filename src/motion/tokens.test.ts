@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { ENTER_EASING, motion, motionVar } from "./tokens";
+import { ENTER_EASING, SIGN_ARRIVING_SCALE, motion, motionVar } from "./tokens";
 
 // Read from disk: Vitest replaces imported CSS with an empty string.
 const css = readFileSync(resolve(import.meta.dirname, "../styles/tokens.css"), "utf8");
@@ -23,5 +23,20 @@ describe("motion tokens", () => {
     expect(motion.stagger).toBeLessThanOrEqual(80);
     expect(motion.travel).toBeGreaterThanOrEqual(1200);
     expect(motion.travel).toBeLessThanOrEqual(1600);
+  });
+
+  it("the three parts of travel add up to the whole", () => {
+    expect(motion.travelCover + motion.travelHold + motion.travelReveal).toBe(motion.travel);
+  });
+
+  it("the arriving sign's scale is the same number in TypeScript and in tokens.css", () => {
+    expect(css).toContain(`--sign-arriving-scale: ${SIGN_ARRIVING_SCALE};`);
+  });
+
+  it("no animation in theme.css has a raw duration: they all come from the motion tokens", () => {
+    const theme = readFileSync(resolve(import.meta.dirname, "../styles/theme.css"), "utf8");
+    const raw = theme.split("\n").filter((line) => line.includes("--animate-") && /\s\d+m?s\b/.test(line) && !/var\(--motion/.test(line));
+    // marquee (the gate's, 18 s) and gate-in (the gate's, BUILT) predate the tokens and are Ares's; nothing new may join them.
+    expect(raw.map((l) => l.trim().split(":")[0])).toEqual(["--animate-marquee", "--animate-gate-in"]);
   });
 });

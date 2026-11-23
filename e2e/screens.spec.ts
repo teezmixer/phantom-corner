@@ -50,12 +50,33 @@ const SCREENS: Screen[] = [
   { name: "onboarding-mission-asked", path: "/", since: "M8", ready: async (p) => { await enterRoom(p); await p.getByRole("textbox", { name: "Your name" }).fill("Ren"); await p.getByRole("button", { name: "Send" }).click(); await p.getByText("What's today's mission?").waitFor(); await p.waitForTimeout(900); } },
   { name: "phone-threads-unlocked", path: "/?demo=true&dev=true", since: "M8", ready: async (p) => { await p.getByRole("button", { name: "Unlock all" }).click(); await p.keyboard.press("s"); await p.getByRole("button", { name: /^Phone/ }).click(); await p.getByRole("button", { name: /Akechi/ }).waitFor(); await p.waitForTimeout(900); } },
   { name: "phone-character-thread", path: "/?demo=true&dev=true", since: "M8", ready: async (p) => { await p.getByRole("button", { name: "Unlock all" }).click(); await p.keyboard.press("s"); await p.getByRole("button", { name: /^Phone/ }).click(); await p.getByRole("button", { name: /Ryuji/ }).click(); await p.getByRole("log", { name: "Ryuji" }).waitFor(); await p.waitForTimeout(900); } },
+  // Travel and the arriving sign are time-based: the fake clock is frozen part-way through a phase and the running animations pinned to match.
+  { name: "travel-covering", path: "/?demo=true&dev=true", since: "M9", clock: true, ready: async (p, _c, { reduced }) => { await travelTo(p, reduced ? 50 : 120, reduced ? 0 : 120); /* a reduced cut lasts 100 ms: look inside it */ } },
+  { name: "travel-title-card", path: "/?demo=true&dev=true", since: "M9", clock: true, ready: async (p) => { await travelTo(p, 600, 0); } },
+  { name: "travel-revealing", path: "/?demo=true&dev=true", since: "M9", clock: true, ready: async (p) => { await travelTo(p, 1250, 150); } },
+  { name: "sign-arriving", path: "/", since: "M9", clock: true, ready: async (p) => { await freezeClock(p); await enterRoom(p); await p.clock.runFor(250); } },
+  { name: "map-locked-and-open", path: "/?demo=true&dev=true", since: "M9", ready: async (p) => { await p.getByRole("button", { name: "+50 Knowledge" }).click(); await p.getByLabel("Jump to screen").selectOption("map"); await p.getByRole("button", { name: /DEV — nothing here/ }).click(); /* fold the dev panel so it does not cover the map */ } },
   { name: "timer-custom", path: "/", since: "M3", ready: async (p) => { await enterRoom(p); await p.getByLabel("Session length").selectOption("custom"); } },
   { name: "splash-recovered", path: "/", since: "M3", before: async (p) => { await p.addInitScript(() => { if (!sessionStorage.getItem("seeded")) { localStorage.setItem("pc:v1", "{nope"); sessionStorage.setItem("seeded", "1"); } }); } },
   { name: "splash-storage-blocked", path: "/", since: "M3", before: async (p) => { await p.addInitScript(() => { const boom = () => { throw new DOMException("blocked", "SecurityError"); }; Storage.prototype.getItem = boom; Storage.prototype.setItem = boom; }); } },
   { name: "tab-lock", path: "/", since: "M3", ready: async (p, context, { reduced }) => { const second = await context.newPage(); await stubExternal(second); await second.setViewportSize(p.viewportSize()!); await second.emulateMedia({ reducedMotion: reduced ? "reduce" : "no-preference" }); await second.goto("/"); await second.getByRole("alertdialog").waitFor(); return second; } },
   { name: "scene-ryuji", path: "/?demo=true&dev=true", ready: async (p) => { await p.getByLabel("Jump to location").selectOption("ryuji"); } },
 ];
+
+/** Freeze the fake clock where it is, so what happens next is stepped by hand (`runFor`) and nothing runs on real time. */
+async function freezeClock(p: Page) {
+  await p.clock.pauseAt(new Date((await p.evaluate(() => Date.now())) + 1000));
+}
+
+/** Start travel to the rooftop, step the frozen clock `ms` into it, and pin any running animation to `animationMs` into itself. */
+async function travelTo(p: Page, ms: number, animationMs: number) {
+  await p.getByRole("button", { name: "Unlock all" }).click();
+  await p.getByLabel("Jump to screen").selectOption("map");
+  await freezeClock(p);
+  await p.getByRole("button", { name: /School rooftop/ }).click();
+  await p.clock.runFor(ms); // runs the phases' timers in turn (a single jump would fire only the first)
+  await p.evaluate((t) => document.getAnimations().forEach((a) => { a.pause(); a.currentTime = t; }), animationMs);
+}
 
 test.describe("review screenshots", () => {
   test.skip(!MILESTONE, "set MILESTONE to capture review screenshots");

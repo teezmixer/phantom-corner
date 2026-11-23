@@ -14,6 +14,12 @@ async function phoneList(page: Page) {
 }
 const log = (page: Page, title: string) => phone(page).getByRole("log", { name: title });
 
+/** Let a trip run to its end. Travel is three chained timers, so `fastForward` (which fires each due timer once) would stop part-way; `runFor` runs them all. */
+async function arrived(page: Page) {
+  await page.clock.runFor(1600);
+  await expect(page.locator("[data-phase]")).toHaveCount(0);
+}
+
 async function firstVisit(page: Page, clock = true) {
   if (clock) await page.clock.install({ time: new Date(2026, 10, 23, 12) });
   await page.goto("/");
@@ -70,7 +76,7 @@ test.describe("onboarding", () => {
     // Travel to the roof: the arrival exchange plays, once.
     await page.getByRole("button", { name: "Map (N)" }).click();
     await page.getByRole("button", { name: /School rooftop/ }).click();
-    await page.clock.fastForward(2000);
+    await arrived(page);
     await expect(page.getByLabel("Current location: School rooftop")).toBeVisible();
     await phoneList(page);
     await phone(page).getByRole("button", { name: /Ryuji/ }).click();
@@ -78,10 +84,12 @@ test.describe("onboarding", () => {
     const lines = await log(page, "Ryuji").locator("p").count();
     await page.getByRole("button", { name: "Map (N)" }).click();
     await page.getByRole("button", { name: /Café Leblanc|LeBlanc/i }).first().click();
-    await page.clock.fastForward(2000);
+    await arrived(page);
     await page.getByRole("button", { name: "Map (N)" }).click();
     await page.getByRole("button", { name: /School rooftop/ }).click();
-    await page.clock.fastForward(2000);
+    await arrived(page); // the whole trip has run, so a replayed arrival exchange would be in the thread by now
+    await phoneList(page);
+    await phone(page).getByRole("button", { name: /Ryuji/ }).click();
     expect(await log(page, "Ryuji").locator("p").count()).toBe(lines); // arriving again says nothing new
   });
 

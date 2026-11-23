@@ -6,7 +6,7 @@ import { Overlay, buttonClass } from "../Overlay";
 
 /**
  * Map of every location: locked, unlocked and current. A plain list-of-markers wireframe (layout is Ares's call,
- * DECISION: map-layout). Locked places show only their order and level — no progress bar toward unlocks (spec §3.4).
+ * DECISION: map-layout). Locked places show only their order and that they are locked: no level, no progress bar toward unlocks, nothing that telegraphs what opens when (spec §3.4).
  */
 export function MapScreen() {
   const { state, derived, dispatch } = useStore();
@@ -32,7 +32,7 @@ export function MapScreen() {
                 <span className="min-w-0 flex-1">
                   <span className={`block truncate text-lg ${unlocked ? "font-display-hero" : "font-body-primary"}`}>{unlocked ? loc.name : ui.lockedPlace(index + 1)}</span>
                   <span className={`block text-xs ${current ? "text-white" : "text-greylight"}`}>
-                    {current ? ui.youAreHere : unlocked ? loc.register : ui.lockedAt(loc.unlockLevel)}
+                    {current ? ui.youAreHere : unlocked ? loc.register : ui.locked}
                   </span>
                 </span>
               </button>

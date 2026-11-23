@@ -171,3 +171,18 @@ describe("the phone's threads", () => {
     expect(morgana.steps.some((s) => "say" in s && s.say === "What's today's mission?")).toBe(true);
   });
 });
+
+describe("imagesOf (what travel preloads)", () => {
+  it("lists a place's scene and sign images, and nothing for a place with no art yet", async () => {
+    const { imagesOf } = await import("./assets");
+    expect(imagesOf({ scene: {} })).toEqual([]);
+    const img = (src: string) => ({ src, width: 1, height: 1, alt: "x" });
+    expect(imagesOf({ scene: { poster: img("/a.png"), night: img("/b.png") }, sign: img("/c.png") })).toEqual(["/a.png", "/b.png", "/c.png"]);
+    expect(imagesOf({ scene: { night: img("/b.png") } })).toEqual(["/b.png"]);
+  });
+
+  it("every real location can be asked for its images", async () => {
+    const { imagesOf } = await import("./assets");
+    for (const l of LOCATIONS) expect(Array.isArray(imagesOf(l)), l.id).toBe(true);
+  });
+});

@@ -76,8 +76,8 @@
       "spec": "§3.6, §3.10",
       "description": "On first arrival the big location sign holds (~900 ms, provisional) then settles bottom-right.",
       "steps": "Playwright: sign has 'arriving' state then 'settled'; reduced-motion: settles at once.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/travel.spec.ts \"on a first visit it comes in big, holds about 900 ms, and settles\" (state sequence arriving → settled, held 880–960 ms on a frozen fake clock), \"with reduced motion it is never drawn big\", \"it arrives big at a new place after travel… and not on a return to a place already seen\", and \"the big arriving sign never reaches the TV\" at 1024×600, 1440×900 and 2560×1440; src/widgets/Location/LocationWidget.test.tsx (the hold, transform-only movement, no hold while a travel card covers the room, settled at once with reduced motion); src/state/store.test.ts. Screenshots docs/build/screens/M9/sign-arriving-*; also measured after travel to the place with the longest name at 1024×600 (\"after travel to the place with the longest name…\")"
     },
     {
       "id": "entry-first-visit-bell",
@@ -1110,8 +1110,8 @@
       "spec": "§3.2",
       "description": "The map shows every location (8 canon + 4 bonus) with locked, unlocked and current states.",
       "steps": "Playwright: 12 markers; states match progress.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/screens/Map/MapScreen.test.tsx (twelve markers; one current and eleven locked at the start; states follow progress; everything open when unlocked; a locked place shows only \"Place N · Locked\", never its name or a level; choosing an open place starts travel); e2e/travel.spec.ts \"the map\" (twelve markers, the states at the start and as progress moves, no level text); screenshot docs/build/screens/M9/map-locked-and-open-*. Fixed on the way: locked places used to say which level opens them, which telegraphs what unlocks (spec §3.4)"
     },
     {
       "id": "map-open",
@@ -1132,8 +1132,8 @@
       "spec": "§3.10, §4.10",
       "description": "Travel runs covering → title card → revealing → done; preloading happens inside the title hold.",
       "steps": "Unit: travel state machine; Playwright: phases in order.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/travel.test.ts (the machine covering → title → revealing → done; the title card waits for BOTH the hold and the images, whichever is later; images that arrive early do not shorten the hold; stale or out-of-order events change nothing; preload never rejects and gives up after 8 s); src/screens/Travel/TravelScreen.test.tsx (phases at their times, the destination becomes the current place when the reveal begins, slow images hold the card with a moving line, failed images do not trap the player); e2e/travel.spec.ts (phases in order at the spec's times, clip-path-only wipes, the room already the destination behind the reveal); screenshots docs/build/screens/M9/travel-*. Caveat: no location has scene images yet, so preloading inside the hold is exercised with test doubles, not real files; src/state/store.test.ts \"travel rules\" (only to an open place, not the current one, not while travelling; a session finishing mid-trip waits for the trip to end); e2e/travel.spec.ts \"when the trip ends, focus is back on the map button\""
     },
     {
       "id": "travel-reduced-motion",
@@ -1143,8 +1143,8 @@
       "spec": "§3.10",
       "description": "With reduced motion, travel uses short cuts instead of wipes.",
       "steps": "Playwright with reducedMotion emulation.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/travel.test.ts (reduced timings: both wipes 100 ms, the card still holds); src/screens/Travel/TravelScreen.test.tsx (phases at 100/800/100 ms, no wipe animation, the waiting line stands still); e2e/travel.spec.ts \"with reduced motion the wipes are 100 ms cuts\" (system setting) and \"the in-app Reduce motion setting does the same as the system's\""
     },
     {
       "id": "travel-arrival-first",

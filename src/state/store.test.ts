@@ -76,7 +76,7 @@ describe("store reducer", () => {
   });
 
   it("travels: covering → arrive at the destination, remembering visits", () => {
-    let s = run([{ type: "START_TRAVEL", to: "ryuji" }]);
+    let s = run([{ type: "DEV_UNLOCK_ALL" }, { type: "START_TRAVEL", to: "ryuji" }]);
     expect(s.layer).toBe("travel");
     s = run([{ type: "ARRIVE" }], s);
     expect(s.layer).toBe("main");
@@ -108,7 +108,7 @@ describe("store reducer", () => {
       { type: "TIMER", event: { type: "TICK", now: T0 + 25 * 60_000 }, now: T0 + 25 * 60_000 },
     ]);
     // "Go somewhere else" → travel: the finished timer is acknowledged
-    const travelling = reducer(done, { type: "START_TRAVEL", to: "ryuji" });
+    const travelling = reducer({ ...done, devUnlockAll: true }, { type: "START_TRAVEL", to: "ryuji" });
     expect(travelling.timer.status).toBe("idle");
     // …and a timer left at "complete" (map closed instead) can still start a new session
     const again = reducer(reducer(done, { type: "SET_LAYER", layer: "main" }), { type: "START_SESSION", now: T0 + 30 * 60_000 });
@@ -116,7 +116,7 @@ describe("store reducer", () => {
   });
 
   it("keeps a running timer running while travelling", () => {
-    const running = run([{ type: "TIMER", event: { type: "START", now: T0 }, now: T0 }]);
+    const running = { ...run([{ type: "TIMER", event: { type: "START", now: T0 }, now: T0 }]), devUnlockAll: true };
     expect(reducer(running, { type: "START_TRAVEL", to: "ryuji" }).timer).toBe(running.timer);
   });
 
@@ -252,5 +252,96 @@ describe("the calendar of studied days", () => {
 
   it("starting over (reset) clears the calendar with everything else", () => {
     expect(reducer(session(at(23, 12), 25, "tick"), { type: "RESET" }).studiedDays).toEqual([]);
+  });
+});
+
+describe("travel and the arriving sign", () => {
+  it("the reveal makes the destination the current place while travel is still going", () => {
+    const s = run([{ type: "DEV_UNLOCK_ALL" }, { type: "START_TRAVEL", to: "ryuji" }, { type: "TRAVEL_REVEAL" }]);
+    expect(s.locationId).toBe("ryuji");
+    expect(s.visited).toContain("ryuji");
+    expect(s.layer).toBe("travel"); // not over yet: the wipe is still uncovering the room
+    expect(s.travelTo).toBe("ryuji");
+  });
+
+  it("arriving ends travel, and still works when no reveal came first", () => {
+    const revealed = run([{ type: "DEV_UNLOCK_ALL" }, { type: "START_TRAVEL", to: "ryuji" }, { type: "TRAVEL_REVEAL" }, { type: "ARRIVE" }]);
+    expect(revealed).toMatchObject({ layer: "main", locationId: "ryuji", travelTo: null });
+    const direct = run([{ type: "DEV_UNLOCK_ALL" }, { type: "START_TRAVEL", to: "ryuji" }, { type: "ARRIVE" }]);
+    expect(direct).toMatchObject({ layer: "main", locationId: "ryuji", travelTo: null });
+    expect(direct.visited.filter((v) => v === "ryuji")).toHaveLength(1); // remembered once
+  });
+
+  it("a reveal with nowhere to go changes nothing", () => {
+    const s = run([{ type: "SET_PHONE", open: false }]);
+    expect(reducer(s, { type: "TRAVEL_REVEAL" })).toBe(s);
+  });
+
+  it("the sign arrives big on the first visit to a place, once, however travel ends", () => {
+    expect(run([{ type: "DEV_UNLOCK_ALL" }, { type: "START_TRAVEL", to: "ryuji" }, { type: "TRAVEL_REVEAL" }]).signArriving).toBe(true);
+    expect(run([{ type: "DEV_UNLOCK_ALL" }, { type: "START_TRAVEL", to: "ryuji" }, { type: "ARRIVE" }]).signArriving).toBe(true);
+    // Reveal then arrive: it arrived at the reveal and is not re-armed by the end.
+    const settledMidway = run([{ type: "DEV_UNLOCK_ALL" }, { type: "START_TRAVEL", to: "ryuji" }, { type: "TRAVEL_REVEAL" }, { type: "SIGN_SETTLED" }, { type: "ARRIVE" }]);
+    expect(settledMidway.signArriving).toBe(false);
+  });
+
+  it("going back to a place already visited does not bring the sign in big again", () => {
+    const back = run([{ type: "DEV_UNLOCK_ALL" }, { type: "START_TRAVEL", to: "ryuji" }, { type: "ARRIVE" }, { type: "SIGN_SETTLED" }, { type: "START_TRAVEL", to: "leblanc" }, { type: "ARRIVE" }]);
+    expect(back.signArriving).toBe(false);
+  });
+
+  it("entering the room for the first time brings the sign in big; a return does not", () => {
+    expect(reducer({ ...initialState, firstVisit: true }, { type: "ENTER" }).signArriving).toBe(true);
+    expect(reducer({ ...initialState, firstVisit: false }, { type: "ENTER" }).signArriving).toBe(false);
+  });
+
+  it("settling clears it, and settling when it is not big changes nothing", () => {
+    const big = run([{ type: "DEV_UNLOCK_ALL" }, { type: "START_TRAVEL", to: "ryuji" }, { type: "ARRIVE" }]);
+    expect(reducer(big, { type: "SIGN_SETTLED" }).signArriving).toBe(false);
+    const quiet = reducer(big, { type: "SIGN_SETTLED" });
+    expect(reducer(quiet, { type: "SIGN_SETTLED" })).toBe(quiet);
+  });
+});
+
+describe("travel rules", () => {
+  const open = run([{ type: "DEV_UNLOCK_ALL" }]);
+
+  it("only to a place that is open: a locked or unknown place changes nothing", () => {
+    const locked = run([{ type: "SET_PHONE", open: false }]); // level 1: only LeBlanc
+    expect(reducer(locked, { type: "START_TRAVEL", to: "ryuji" })).toBe(locked);
+    expect(reducer(open, { type: "START_TRAVEL", to: "nowhere" })).toBe(open);
+  });
+
+  it("not to where you already are, and not while a trip is already going", () => {
+    expect(reducer(open, { type: "START_TRAVEL", to: "leblanc" })).toBe(open);
+    const going = reducer(open, { type: "START_TRAVEL", to: "ryuji" });
+    expect(going.travelTo).toBe("ryuji");
+    expect(reducer(going, { type: "START_TRAVEL", to: "ann" })).toBe(going); // the first trip is not replaced
+  });
+
+  it("a place held until it ships cannot be travelled to either (it is not open)", () => {
+    const grant = run([{ type: "DEV_GRANT", knowledge: 40 }]); // Ryuji open, Ann (level 5) not
+    expect(reducer(grant, { type: "START_TRAVEL", to: "ann" })).toBe(grant);
+    expect(reducer(grant, { type: "START_TRAVEL", to: "ryuji" }).layer).toBe("travel");
+  });
+
+  it("a session that finishes during the trip does not cut it off: the trip ends first, then the choice is shown", () => {
+    let s = run([{ type: "START_SESSION", now: T0 }, { type: "START_TRAVEL", to: "ryuji" }], open);
+    expect(s.layer).toBe("travel");
+    s = reducer(s, { type: "TIMER", event: { type: "TICK", now: T0 + 25 * 60_000 }, now: T0 + 25 * 60_000 });
+    expect(s.layer).toBe("travel"); // still travelling
+    expect(s.travelTo).toBe("ryuji"); // the trip was not dropped
+    expect(s.events.filter((e) => e.kind === "session")).toHaveLength(1); // and the session counted once
+    s = run([{ type: "TRAVEL_REVEAL" }, { type: "ARRIVE" }], s);
+    expect(s).toMatchObject({ layer: "choice", locationId: "ryuji", travelTo: null }); // arrived, and the finished session is waiting
+    expect(s.timer.status).toBe("complete");
+  });
+
+  it("a session that finishes during the trip is not shown a choice before travel ends, whichever phase it was in", () => {
+    for (const mid of [[], [{ type: "TRAVEL_REVEAL" }]] as Action[][]) {
+      let s = run([{ type: "START_SESSION", now: T0 }, { type: "START_TRAVEL", to: "ryuji" }, ...mid], open);
+      s = reducer(s, { type: "TIMER", event: { type: "TICK", now: T0 + 25 * 60_000 }, now: T0 + 25 * 60_000 });
+      expect(s.layer).toBe("travel");
+    }
   });
 });

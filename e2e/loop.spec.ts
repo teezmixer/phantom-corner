@@ -34,7 +34,8 @@ test("a user can run the whole loop and travel to a newly unlocked location", as
   await expect(ryuji).toBeEnabled();
   await ryuji.click();
   await expect(page.getByRole("status").filter({ hasText: "School rooftop" })).toBeVisible(); // travel title card
-  await page.clock.fastForward(2000);
+  await page.clock.runFor(1600); // all three chained timers of the trip (fastForward would fire only the first)
+  await expect(page.locator("[data-phase]")).toHaveCount(0);
   await expect(page.getByLabel("Current location: School rooftop")).toBeVisible();
 });
 

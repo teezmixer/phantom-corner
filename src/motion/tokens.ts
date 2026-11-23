@@ -17,9 +17,18 @@ export const motion = {
   hold: 900,
   /** Wipe out, title card, wipe in (spec: 1.2–1.6 s). PROPOSED. */
   travel: 1400,
+  /** The three parts of travel, which add up to `travel` (a test keeps it so): the red wipe that covers the screen, the least the title card is held (the next place's images load inside it), and the wipe that reveals the room. PROPOSED. */
+  travelCover: 300,
+  travelHold: 800,
+  travelReveal: 300,
+  /** One lap of the line that moves on the title card while the next place's images are slow. PROPOSED. */
+  travelMotif: 1200,
   /** What a wipe becomes when motion is reduced. */
   reducedCut: 100,
 } as const;
+
+/** How big the location sign is while it arrives (a multiple of its size). Big, but small enough to stay clear of the TV at every supported window size (an e2e checks). PROVISIONAL, D-33. */
+export const SIGN_ARRIVING_SCALE = 1.9;
 
 export const ENTER_EASING = "cubic-bezier(.2,.9,.3,1)";
 
