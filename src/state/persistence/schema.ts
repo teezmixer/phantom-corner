@@ -21,6 +21,8 @@ export interface Persisted {
   clientId: string;
   /** When this save was first made (ISO), for "member since". Absent in saves from before it; filled in at the next save. */
   createdAt?: string;
+  /** YouTube video ids the player added to the TV themselves (at most MAX_USER_TRACKS). Optional so older saves load; not synced. */
+  userTracks?: string[];
   name: string | null;
   settings: {
     muted: boolean;

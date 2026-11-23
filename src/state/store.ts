@@ -7,6 +7,7 @@ import { HOME_LOCATION_ID } from "@/content/registry";
 import { ui } from "@/content/copy";
 import { RELEASE_VERSION, THREADS } from "@/content/threads";
 import { clampText, MAX_EVENTS, MAX_TODOS } from "@/domain/limits";
+import { isVideoId, MAX_USER_TRACKS } from "@/domain/youtube";
 import { answer, pendingAsk, post, skip, stepAll, type Facts, type Progress } from "@/domain/story";
 import { HUD_SIZES, type HudSize, type WidgetId, TOGGLEABLE_WIDGETS } from "@/hud/slots";
 import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MenuStyle, type MotionSetting, type Volumes } from "./persistence/schema";
@@ -57,6 +58,8 @@ export interface AppState {
   adopted?: Partial<Record<"settings" | "mission" | "todos", { stamp: string; key: string }>>;
   /** This device's id, the prefix of its event ids (D-24). Empty in the demo and dev mode, which never sync. Not part of any visible state. */
   clientId: string;
+  /** YouTube video ids the player added to the TV (oldest first). Saved, not synced. */
+  userTracks: string[];
   /** When this player's save was first made (ISO), or null when unknown (saves from before it, the demo). Never changed by play. Not part of the synced state. */
   memberSince: string | null;
   /** Days studied, each with the stamp design earned at the time (calendar, spec §3.4). */
@@ -120,6 +123,7 @@ export const initialState: AppState = {
   missionsDone: 0,
   events: [],
   clientId: "",
+  userTracks: [],
   memberSince: null,
   accountsEnabled: false,
   communityEnabled: false,
@@ -159,6 +163,9 @@ export type Action =
   | { type: "SET_HUD_SIZE"; size: number }
   | { type: "SET_MOTION"; motion: MotionSetting }
   | { type: "SET_MENU_STYLE"; style: MenuStyle }
+  /** Add a YouTube video the player pasted to the TV (an 11-character id; the newest of MAX_USER_TRACKS are kept). */
+  | { type: "ADD_USER_TRACK"; id: string }
+  | { type: "REMOVE_USER_TRACK"; id: string }
   | { type: "SET_ANALYTICS"; on: boolean }
   | { type: "SET_TODO_COLLAPSED"; collapsed: boolean }
   | { type: "ADD_TODO"; text: string }
@@ -369,6 +376,11 @@ function coreReducer(state: AppState, action: Action): AppState {
       return { ...state, motion: action.motion };
     case "SET_ANALYTICS":
       return { ...state, analytics: action.on };
+    case "ADD_USER_TRACK":
+      if (!isVideoId(action.id) || state.userTracks.includes(action.id)) return state;
+      return { ...state, userTracks: [...state.userTracks, action.id].slice(-MAX_USER_TRACKS) };
+    case "REMOVE_USER_TRACK":
+      return state.userTracks.includes(action.id) ? { ...state, userTracks: state.userTracks.filter((id) => id !== action.id) } : state;
     case "SET_MENU_STYLE":
       return action.style === "text" || action.style === "illustrated" ? { ...state, menuStyle: action.style } : state;
     case "SET_TODO_COLLAPSED":
@@ -506,7 +518,7 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "RESET":
       // Demo mode stays demo, so a reset can never turn into writing real progress later (M3 persistence).
       // Demo stays demo, and the analytics choice is never silently undone by a reset.
-      return { ...initialState, layer: "splash", clientId: state.clientId, memberSince: state.memberSince, accountsEnabled: state.accountsEnabled, communityEnabled: state.communityEnabled, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
+      return { ...initialState, layer: "splash", clientId: state.clientId, userTracks: state.userTracks, memberSince: state.memberSince, accountsEnabled: state.accountsEnabled, communityEnabled: state.communityEnabled, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
   }
 }
 

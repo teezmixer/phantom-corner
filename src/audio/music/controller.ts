@@ -17,6 +17,10 @@ export interface MusicState {
 export type MusicEvent =
   /** A new playlist (travel). Playback stops: it only ever starts from the user pressing play. */
   | { type: "SET_PLAYLIST"; tracks: readonly TrackRef[] }
+  /** The playlist grew or shrank (the player added or removed a link of their own). Whatever is playing keeps playing if it is still there. */
+  | { type: "SET_TRACKS"; tracks: readonly TrackRef[] }
+  /** The player pasted a link and pressed Play: take this playlist, go to that track and play it now (a user action). */
+  | { type: "PLAY_TRACK"; tracks: readonly TrackRef[]; index: number }
   | { type: "PLAY" }
   | { type: "PAUSE" }
   | { type: "NEXT" }
@@ -61,6 +65,17 @@ export function musicReducer(state: MusicState, event: MusicEvent): MusicState {
     case "SET_PLAYLIST":
       // A new playlist (travel) stops playback. A failed script stays failed until the user presses play again.
       return state.apiFailed ? { ...initialMusic(event.tracks), apiFailed: true, status: "unavailable" } : initialMusic(event.tracks);
+    case "SET_TRACKS": {
+      if (event.tracks.length === 0) return initialMusic(event.tracks);
+      const current = currentTrack(state);
+      const at = current ? event.tracks.findIndex((t) => t.videoId === current.videoId) : -1;
+      // The playing track is still there: nothing changes but the list. It is gone (the player removed it): stop and cue the first.
+      if (at >= 0) return { ...state, tracks: event.tracks, index: at, failed: state.failed.filter((i) => i < event.tracks.length) };
+      return { ...initialMusic(event.tracks), apiFailed: state.apiFailed, status: state.apiFailed ? "unavailable" : "off" };
+    }
+    case "PLAY_TRACK":
+      if (event.index < 0 || event.index >= event.tracks.length) return state;
+      return { ...initialMusic(event.tracks), index: event.index, status: "loading" };
     case "API_FAILED":
       return { ...state, apiFailed: true, status: "unavailable" };
     case "PLAY":

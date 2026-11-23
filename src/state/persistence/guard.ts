@@ -50,6 +50,7 @@ export function isPersisted(v: unknown): v is Persisted {
   return (
     isStr(v.clientId) &&
     (v.createdAt === undefined || isStr(v.createdAt)) &&
+    (v.userTracks === undefined || (isStrArray(v.userTracks) && v.userTracks.length <= 1000)) && // each id is checked, and the list cut, when it is loaded
     (v.name === null || isStr(v.name)) &&
     isRec(settings) && (!isRec(settings.ambienceMix) || Object.keys(settings.ambienceMix).length <= 200) && // every field inside is defaulted or clamped by repairSettings, so one bad preference never discards a save
     
