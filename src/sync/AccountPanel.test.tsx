@@ -10,6 +10,7 @@ import { initialState, type Action, type AppState } from "@/state/store";
 import { StoreProvider, useStore } from "@/state/StoreProvider";
 import { AccountPanel } from "./AccountPanel";
 import { AccountProvider } from "./AccountProvider";
+import { SyncDot } from "./SyncDot";
 import { FAKE_CODE, FakeBackend, FakeServer } from "./fake";
 
 const t = settings.accountPanel;
@@ -24,7 +25,7 @@ function device(server: FakeServer, patch: Partial<AppState> = {}) {
   const api = new FakeBackend(server);
   const view = render(
     <StoreProvider initial={{ ...initialState, layer: "settings", entered: true, clientId: "c1", accountsEnabled: true, ...patch }}>
-      <AccountProvider backend={{ api, fake: true }} adapter={adapter} base={base}><AccountPanel /><Grab /></AccountProvider>
+      <AccountProvider backend={{ api, fake: true }} adapter={adapter} base={base}><AccountPanel /><SyncDot /><Grab /></AccountProvider>
     </StoreProvider>,
   );
   return { api, view, state: () => latest, send: (a: Action) => act(() => send(a)) };
@@ -137,11 +138,12 @@ describe("the account panel", () => {
     server.down = true;
     d.send({ type: "SET_MISSION", text: "Changed offline" });
     await user.click(screen.getByRole("button", { name: t.syncNow }));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.syncDown));
+    await waitFor(() => expect(screen.getAllByRole("status").some((s) => s.textContent === t.syncDown)).toBe(true));
+    expect(screen.getByLabelText(t.syncDown)).toBeInTheDocument(); // the corner dot
     expect(d.state().mission).toBe("Changed offline");
     server.down = false;
     await user.click(screen.getByRole("button", { name: t.syncNow }));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.synced));
+    await waitFor(() => expect(screen.queryByLabelText(t.syncDown)).not.toBeInTheDocument()); // the dot goes
     expect(server.userFor("ren@example.com").docs.mission?.data?.text).toBe("Changed offline");
   });
 });
