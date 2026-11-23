@@ -69,4 +69,14 @@
   --space-12: 12px;
   --space-16: 16px;
   --space-24: 24px;
+
+  /* Motion (spec §3.10). The same numbers are in src/motion/tokens.ts; a test keeps them equal. */
+  --motion-snap: 120ms;
+  --motion-wipe: 200ms;
+  --motion-enter: 420ms;
+  --motion-enter-easing: cubic-bezier(.2,.9,.3,1);
+  --motion-stagger: 60ms;
+  --motion-hold: 900ms;
+  --motion-travel: 1400ms;
+  --motion-reduced-cut: 100ms;
 }
