@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pause, Play, Stop } from "@phosphor-icons/react";
 import { TimerDisplay, TimerIcon, TimerRoot } from "@/components/ui/timer";
 import { useNow } from "@/hooks/useNow";
-import { clampCustomMinutes, formatClock, MAX_CUSTOM_MINUTES, MIN_CUSTOM_MINUTES, MINUTE, remainingMs, type TimerEvent } from "@/domain/timer";
+import { clampCustomMinutes, formatClock, timerAnnouncement, MAX_CUSTOM_MINUTES, MIN_CUSTOM_MINUTES, MINUTE, remainingMs, type TimerEvent } from "@/domain/timer";
 import { useStore } from "@/state/StoreProvider";
 import { Slab } from "../Slab";
 
@@ -23,6 +23,8 @@ export function TimerWidget() {
         <TimerIcon />
         <TimerDisplay time={formatClock(remainingMs(timer, now))} className="font-hud-timer text-3xl leading-none" />
       </TimerRoot>
+      {/* The clock above ticks every second and is not read out; this says the time left only every five minutes (spec §4.12). */}
+      <span role="status" aria-live="polite" className="sr-only">{timerAnnouncement(timer, now)}</span>
       <div className="flex items-center gap-1">
         {timer.status === "idle" && (
           <>
