@@ -23,6 +23,8 @@ export function levelForKnowledge(knowledge: number, thresholds: readonly number
 export type ProgressEvent =
   | { kind: "mission_first_set" }
   | { kind: "session"; plannedMs: number; focusedMs: number; outcome: "completed" | "stopped" }
+  /** Knowledge a thread gave (a `grant` step). `key` names the step, so the same grant is never counted twice. */
+  | { kind: "story_grant"; key: string; knowledge: number }
   /** Dev panel only. */
   | { kind: "dev_grant"; knowledge: number };
 
@@ -30,12 +32,16 @@ export type ProgressEvent =
 export function knowledgeFor(events: readonly ProgressEvent[], rules: typeof KNOWLEDGE_RULES = KNOWLEDGE_RULES): number {
   let total = 0;
   let firstMissionCounted = false;
+  const grantsSeen = new Set<string>();
   for (const event of events) {
     if (event.kind === "mission_first_set") {
       if (!firstMissionCounted) total += rules.firstMission;
       firstMissionCounted = true;
     } else if (event.kind === "dev_grant") {
       total += event.knowledge;
+    } else if (event.kind === "story_grant") {
+      if (!grantsSeen.has(event.key)) total += event.knowledge;
+      grantsSeen.add(event.key);
     } else {
       const minutes = Math.floor(event.focusedMs / 60_000);
       if (event.outcome === "completed") total += minutes * rules.perFocusedMinute + rules.completionBonus;

@@ -1,25 +1,68 @@
 /**
- * Phone thread list (spec §3.5, §3.6). M2 lists every thread; the message steps arrive with the
- * thread interpreter in M8. Titles are the speakers; bodies below are DRAFT placeholders (decision D-10).
+ * The phone's threads (spec §3.5, §3.6, §4.6): onboarding, one thread per character, what's new, and feedback. Each is a
+ * list of steps for the interpreter (domain/story.ts). The wording is in content/copy; the arrival exchange of a character's
+ * thread is that location's own `arrive` lines, so adding a location's lines adds its exchange.
+ * A character's thread: the invitation arrives when their place unlocks, then it waits for the player to arrive, then the
+ * arrival exchange plays (once, because a thread only runs once).
  */
-export interface ThreadMeta {
-  id: string;
-  title: string;
-  /** What starts the thread (spec §4.6). A location named here must exist: the content test checks it. */
-  trigger?: { on: "first_visit" } | { on: "unlock"; location: string } | { on: "release"; version: string };
-  /** Shown in the thread view until the interpreter ships. */
-  placeholder: string;
-}
+import type { Step, Thread } from "@/domain/story";
+import { invitations, noticeboard, onboarding, widgets } from "./copy";
+import { LOCATIONS } from "./registry";
 
-export const THREADS: readonly ThreadMeta[] = [
-  { id: "morgana", trigger: { on: "first_visit" }, title: "Morgana", placeholder: "Oi. I'll do the talking. You do the studying." },
-  { id: "ryuji", trigger: { on: "unlock", location: "ryuji" }, title: "Ryuji", placeholder: "Yo! Found a spot. Come up when you're ready." },
-  { id: "ann", trigger: { on: "unlock", location: "ann" }, title: "Ann", placeholder: "Got a sunny seat saved for you." },
-  { id: "yusuke", trigger: { on: "unlock", location: "yusuke" }, title: "Yusuke", placeholder: "I have found the ideal light. Come." },
-  { id: "makoto", trigger: { on: "unlock", location: "makoto" }, title: "Makoto", placeholder: "The library is quiet today. I reserved a table." },
-  { id: "futaba", trigger: { on: "unlock", location: "futaba" }, title: "Futaba", placeholder: "ok so. you can come over. don't be weird." },
-  { id: "haru", trigger: { on: "unlock", location: "haru" }, title: "Haru", placeholder: "The garden is lovely this morning. Join me?" },
-  { id: "akechi", trigger: { on: "unlock", location: "akechi" }, title: "Akechi", placeholder: "There's a seat at the bar. Late, as usual." },
-  { id: "whats-new", trigger: { on: "release", version: "0.1" }, title: "What's new", placeholder: "Release notes will appear here." },
-  { id: "feedback", title: "Feedback", placeholder: "Tell us what you think. It stays on this device for now." },
+/** The version this build is: a `release` thread starts for a player when it names this. Bump it with each release note. */
+export const RELEASE_VERSION = "0.1";
+
+const say = (text: string, from?: string): Step => (from ? { say: text, from } : { say: text });
+
+const place = (id: string) => {
+  const found = LOCATIONS.find((l) => l.id === id);
+  if (!found) throw new Error(`content/threads.ts: no location "${id}"`);
+  return found;
+};
+
+const character = (id: string, title: string): Thread => {
+  const here = place(id);
+  return {
+    id,
+    title,
+    from: here.speaker,
+    trigger: { on: "unlock", location: id },
+    steps: [...invitations[id]!.map((t) => say(t)), { waitFor: "arrived", location: id }, ...here.lines.arrive.map((t) => say(t))],
+  };
+};
+
+const leblanc = place("leblanc");
+
+export const THREADS: readonly Thread[] = [
+  {
+    id: "morgana",
+    title: "Morgana",
+    from: "morgana",
+    trigger: { on: "first_visit" },
+    steps: [
+      // The arrival at LeBlanc is Sojiro's own line, then Morgana takes over.
+      say(leblanc.lines.arrive[0]!, "sojiro"),
+      say(onboarding.greeting),
+      say(onboarding.askName),
+      { ask: "name" },
+      say(onboarding.afterName),
+      say(widgets.missionEmpty), // Ares's own line, VERBATIM
+      { waitFor: "mission_set" },
+      say(onboarding.afterMission),
+      say(onboarding.startTimer),
+      { waitFor: "session_completed" },
+      say(onboarding.afterSession),
+    ],
+  },
+  character("ryuji", "Ryuji"),
+  character("ann", "Ann"),
+  character("yusuke", "Yusuke"),
+  character("makoto", "Makoto"),
+  character("futaba", "Futaba"),
+  character("haru", "Haru"),
+  character("akechi", "Akechi"),
+  { id: "whats-new", title: "What's new", from: "morgana", trigger: { on: "release", version: RELEASE_VERSION }, steps: noticeboard.whatsNew.map((t) => say(t)) },
+  { id: "feedback", title: "Feedback", from: "morgana", compose: true, steps: noticeboard.feedback.map((t) => say(t)) },
 ];
+
+export const THREAD_IDS: readonly string[] = THREADS.map((t) => t.id);

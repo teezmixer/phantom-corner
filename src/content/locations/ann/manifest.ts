@@ -21,7 +21,7 @@ const manifest: LocationManifest = {
     start: ["Okay, focus mode. You too.", "Let's do this together!", "Ready, set, study!"],
     complete: ["See? Way less scary than it looked.", "You were so focused! I'm proud of you.", "Crepes. You've earned crepes."],
   },
-  threads: { unlock: "ann-unlock", arrival: "ann-arrival" },
+  threads: { unlock: "ann", arrival: "ann" },
 };
 
 export default manifest;

@@ -21,7 +21,7 @@ const manifest: LocationManifest = {
     start: ["Let's grow something today.", "Let's tend to this carefully.", "Quietly now. Things grow in quiet."],
     complete: ["Lovely work. That deserves a rest.", "That was beautiful to watch.", "Rest a little. Then perhaps tea."],
   },
-  threads: { unlock: "haru-unlock", arrival: "haru-arrival" },
+  threads: { unlock: "haru", arrival: "haru" },
 };
 
 export default manifest;

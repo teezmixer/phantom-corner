@@ -21,7 +21,7 @@ const manifest: LocationManifest = {
     start: ["Starting now. No distractions.", "Timer's running. Eyes forward.", "Let's be thorough."],
     complete: ["Efficient. I'm impressed.", "Well done. Consistency matters.", "That was a proper session."],
   },
-  threads: { unlock: "makoto-unlock", arrival: "makoto-arrival" },
+  threads: { unlock: "makoto", arrival: "makoto" },
 };
 
 export default manifest;

@@ -36,6 +36,40 @@ export const morgana = {
 } as const;
 
 /**
+ * The onboarding conversation, in Morgana's voice (spec §3.5). The mission question is Ares's own line, VERBATIM
+ * (`widgets.missionEmpty`). DRAFTS (D-10). `{name}` is the player's name.
+ */
+export const onboarding = {
+  greeting: "Oi. You made it. I'm Morgana, and I'll be doing the talking.", // draft
+  askName: "First things first. What do I call you?", // draft
+  afterName: "{name}. Fine. It suits you.", // draft
+  afterMission: "A mission, written down. That's already worth something. There — Knowledge. And look, a map.", // draft
+  startTimer: "Now start the timer. I'll stay out of your way.", // draft
+  afterSession: "Not bad at all. Someone's been waiting to hear from you. Check your phone.", // draft
+} as const;
+
+/**
+ * The first message each character sends when their place opens (spec §3.4: the reveal is always an IM from that
+ * character). Two lines each, in their voice. The spec says Ares has written Ryuji's and Futaba's; they are not in the
+ * handoff files, so these are DRAFTS standing in for them (D-10, D-32).
+ */
+export const invitations: Record<string, readonly string[]> = {
+  ryuji: ["Yo! Found a spot.", "Come up to the roof when you're ready. Bring notes. Snacks too, if you're a good person."],
+  ann: ["Got a sunny seat saved for you.", "Crepes after, okay? Come find me."],
+  yusuke: ["I have found the ideal light.", "Come. It will not wait forever."],
+  makoto: ["The library is quiet today. I reserved a table.", "Phones on silent, please. See you there."],
+  futaba: ["ok so. you can come over.", "don't be weird. also bring snacks. not optional."],
+  haru: ["The garden is lovely this morning. Join me?", "I'll have tea ready. No hurry at all."],
+  akechi: ["There's a seat at the bar. Late, as usual.", "Don't keep me waiting too long. Patience isn't my strong suit."],
+};
+
+/** The release note and the feedback thread, in Morgana's voice. DRAFTS (D-10). */
+export const noticeboard = {
+  whatsNew: ["New version. Here's what's in it.", "The room, the timer, the map, a few new faces, and a calendar of the days you studied.", "Everyone who asked for this: thank you. It's yours."], // draft
+  feedback: ["Tell me what you think. What's good, what's off, what you want next.", "It stays on this device for now. I can't send it anywhere yet."], // draft
+} as const;
+
+/**
  * What a level gives when it is not a location (spec §3.4, "no empty level-ups"), by level. Which levels give what is in
  * content/progression.ts. DRAFTS in voice (D-10); the tips are real study advice, not decoration.
  */
@@ -111,6 +145,8 @@ export const ui = {
     weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
     months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
   },
+  /** The phone's thread view. */
+  thread: { skip: "Skip (S)", you: "You", yourName: "Your name", writeFeedback: "Write feedback", send: "Send" },
   /** The hideout menu (spec §3.7). Joker's voice: two or three words, imperative. */
   menu: { title: "Hideout", study: "STUDY", map: "MAP", messages: "MESSAGES", profile: "PROFILE", settings: "SETTINGS", close: "CLOSE" },
   hideUi: "Hide UI",

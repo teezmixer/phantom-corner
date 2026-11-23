@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import * as copy from "./copy";
 import { LOCATIONS, type Location } from "./registry";
 import { THREADS } from "./threads";
-import { MIN_LINES_PER_GROUP, contentProblems, type CheckedLocation } from "./validate";
+import { MIN_LINES_PER_GROUP, contentProblems, type CheckedLocation, type CheckedThread } from "./validate";
 
 const publicDir = resolve(import.meta.dirname, "../../public");
 const imageExists = (src: string) => existsSync(resolve(publicDir, src.replace(/^\//, "")));
@@ -42,7 +42,7 @@ describe("content registry", () => {
   });
 
   it("passes every content rule: ids, canon order, unlock order, images and alt text, lines, track ids, thread targets", () => {
-    expect(contentProblems(LOCATIONS, { imageExists, threads: THREADS.map((t) => ({ id: t.id, trigger: t.trigger })) })).toEqual([]);
+    expect(contentProblems(LOCATIONS, { imageExists, threads: THREADS })).toEqual([]);
   });
 
   it("never uses a banned SaaS phrase (spec §3.8)", () => {
@@ -64,7 +64,7 @@ describe("content registry", () => {
 /** The content rules must be able to fail: each case breaks exactly one rule on a copy of real content. */
 describe("content rules catch broken content", () => {
   const base = (): CheckedLocation[] => structuredClone(LOCATIONS) as unknown as Location[];
-  const problems = (locations: CheckedLocation[], threads: { id: string; trigger?: { on: string; location?: string } }[] = []) => contentProblems(locations, { imageExists: () => true, threads });
+  const problems = (locations: CheckedLocation[], threads: readonly CheckedThread[] = THREADS) => contentProblems(locations, { imageExists: () => true, threads });
   const at = (locations: CheckedLocation[], id: string) => locations.find((l) => l.id === id)!;
 
   it("the untouched copy is clean", () => expect(problems(base())).toEqual([]));
@@ -120,20 +120,54 @@ describe("content rules catch broken content", () => {
   });
 
   it("two locations claim the same thread", () => {
-    const l = base(); at(l, "ann").threads = { unlock: "ryuji-unlock" };
-    expect(problems(l).join("\n")).toMatch(/thread "ryuji-unlock" is claimed by both "ryuji" and "ann"/);
+    const l = base(); at(l, "ann").threads = { unlock: "ryuji" };
+    expect(problems(l).join("\n")).toMatch(/thread "ryuji" is claimed by both "ryuji" and "ann"/);
   });
 });
 
 describe("the phone's threads", () => {
+  const base = (): CheckedLocation[] => structuredClone(LOCATIONS) as unknown as Location[];
+  const at = (locations: CheckedLocation[], id: string) => locations.find((l) => l.id === id)!;
+
   it("every thread that names a location names one that exists (this is not vacuous: the threads carry triggers)", () => {
     const named = THREADS.filter((t) => t.trigger && "location" in t.trigger);
     expect(named.length).toBeGreaterThanOrEqual(7); // the seven characters who send an unlock message
-    expect(contentProblems(LOCATIONS, { imageExists, threads: THREADS.map((t) => ({ id: t.id, trigger: t.trigger })) })).toEqual([]);
+    expect(contentProblems(LOCATIONS, { imageExists, threads: THREADS })).toEqual([]);
   });
 
   it("an unlock thread for a location that is not in the registry would fail the build", () => {
-    const broken = THREADS.map((t) => (t.id === "ryuji" ? { id: t.id, trigger: { on: "unlock", location: "rooftop" } } : { id: t.id, trigger: t.trigger }));
+    const broken = THREADS.map((t) => (t.id === "ryuji" ? { ...t, trigger: { on: "unlock" as const, location: "rooftop" } } : t));
     expect(contentProblems(LOCATIONS, { imageExists, threads: broken }).join("\n")).toMatch(/thread "ryuji" refers to the location "rooftop"/);
+  });
+
+  it("every thread a location names exists, and a missing one fails the build", () => {
+    const l = base(); at(l, "ann").threads = { unlock: "ann-gone", arrival: "ann" };
+    expect(contentProblems(l, { imageExists: () => true, threads: THREADS }).join("\n")).toMatch(/"ann" names the thread "ann-gone", which does not exist/);
+  });
+
+  it("two threads cannot share an id", () => {
+    expect(contentProblems(base(), { imageExists: () => true, threads: [...THREADS, THREADS[1]!] }).join("\n")).toMatch(/two threads have the id "ryuji"/);
+  });
+
+  it("a line that says nothing, or a wait for an arrival at a place that does not exist, fails the build", () => {
+    const bad = [{ id: "x", steps: [{ say: "  " }, { waitFor: "arrived" as const, location: "atlantis" }] }];
+    const text = contentProblems(base(), { imageExists: () => true, threads: bad }).join("\n");
+    expect(text).toMatch(/thread "x" step 0 says nothing/);
+    expect(text).toMatch(/thread "x" step 1 waits for an arrival at "atlantis"/);
+  });
+
+  it("every character's thread waits for the player to arrive at that character's own place, then plays that place's arrival lines", () => {
+    for (const id of ["ryuji", "ann", "yusuke", "makoto", "futaba", "haru", "akechi"]) {
+      const thread = THREADS.find((t) => t.id === id)!;
+      const wait = thread.steps.findIndex((s) => "waitFor" in s);
+      expect(thread.steps[wait], id).toEqual({ waitFor: "arrived", location: id });
+      expect(thread.steps.slice(wait + 1).map((s) => ("say" in s ? s.say : "")), id).toEqual(LOCATIONS.find((l) => l.id === id)!.lines.arrive);
+    }
+  });
+
+  it("onboarding opens with Sojiro's own arrival line at LeBlanc and asks Ares's mission question word for word", () => {
+    const morgana = THREADS.find((t) => t.id === "morgana")!;
+    expect(morgana.steps[0]).toEqual({ say: "Door's open. Sit wherever.", from: "sojiro" });
+    expect(morgana.steps.some((s) => "say" in s && s.say === "What's today's mission?")).toBe(true);
   });
 });

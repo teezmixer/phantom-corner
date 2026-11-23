@@ -21,7 +21,7 @@ const manifest: LocationManifest = {
     start: ["Quiet hours. Good.", "Go on, then. I'll be here.", "Books open. Phone down."],
     complete: ["Not bad. Coffee's on me. Once.", "Hm. Acceptable work.", "Don't let it go to your head."],
   },
-  threads: { arrival: "leblanc-first-visit" },
+  threads: { arrival: "morgana" },
 };
 
 export default manifest;
