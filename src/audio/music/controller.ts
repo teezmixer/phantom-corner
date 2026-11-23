@@ -1,7 +1,8 @@
 import type { TrackRef } from "@/content/types";
 
 /** What the TV shows (spec §3.6). */
-export type MusicStatus = "off" | "loading" | "playing" | "paused" | "blocked" | "unavailable";
+/** `link_failed`: a link the player pasted cannot play here (often the video's owner forbids embedding). It says so and stays put. */
+export type MusicStatus = "off" | "loading" | "playing" | "paused" | "blocked" | "unavailable" | "link_failed";
 
 export interface MusicState {
   tracks: readonly TrackRef[];
@@ -17,6 +18,10 @@ export interface MusicState {
 export type MusicEvent =
   /** A new playlist (travel). Playback stops: it only ever starts from the user pressing play. */
   | { type: "SET_PLAYLIST"; tracks: readonly TrackRef[] }
+  /** The playlist grew or shrank (the player added or removed a link of their own). Whatever is playing keeps playing if it is still there. */
+  | { type: "SET_TRACKS"; tracks: readonly TrackRef[] }
+  /** The player pasted a link and pressed Play: take this playlist, go to that track and play it now (a user action). */
+  | { type: "PLAY_TRACK"; tracks: readonly TrackRef[]; index: number }
   | { type: "PLAY" }
   | { type: "PAUSE" }
   | { type: "NEXT" }
@@ -61,6 +66,21 @@ export function musicReducer(state: MusicState, event: MusicEvent): MusicState {
     case "SET_PLAYLIST":
       // A new playlist (travel) stops playback. A failed script stays failed until the user presses play again.
       return state.apiFailed ? { ...initialMusic(event.tracks), apiFailed: true, status: "unavailable" } : initialMusic(event.tracks);
+    case "SET_TRACKS": {
+      if (event.tracks.length === 0) return initialMusic(event.tracks);
+      const current = currentTrack(state);
+      const at = current ? event.tracks.findIndex((t) => t.videoId === current.videoId) : -1;
+      // The playing track is still there: nothing changes but the list. It is gone (the player removed it): stop and cue the first.
+      // Failure marks are positions, so they are carried over by video, not by place in the list.
+      if (at >= 0) {
+        const failedIds = state.failed.flatMap((i) => (state.tracks[i] ? [state.tracks[i]!.videoId] : []));
+        return { ...state, tracks: event.tracks, index: at, failed: event.tracks.flatMap((t, i) => (failedIds.includes(t.videoId) ? [i] : [])) };
+      }
+      return { ...initialMusic(event.tracks), apiFailed: state.apiFailed, status: state.apiFailed ? "unavailable" : "off" };
+    }
+    case "PLAY_TRACK":
+      if (event.index < 0 || event.index >= event.tracks.length) return state;
+      return { ...initialMusic(event.tracks), index: event.index, status: "loading" };
     case "API_FAILED":
       return { ...state, apiFailed: true, status: "unavailable" };
     case "PLAY":
@@ -94,6 +114,8 @@ export function musicReducer(state: MusicState, event: MusicEvent): MusicState {
     case "PLAYER_ERROR": {
       if (!(SKIP_ERROR_CODES as readonly number[]).includes(event.code)) return state;
       const failed = state.failed.includes(state.index) ? state.failed : [...state.failed, state.index];
+      // A link the player pasted that cannot play is not skipped past in silence: it says so and stays, so they know.
+      if (currentTrack(state)?.source === "user") return { ...state, failed, status: "link_failed" };
       const i = nextIndex({ tracks: state.tracks, failed }, state.index, 1);
       // Skip silently to the next playable track; only when all have failed does the TV say it is unavailable.
       return i === null ? { ...state, failed, status: "unavailable" } : { ...state, failed, index: i, status: state.status === "loading" || state.status === "playing" ? "loading" : state.status };

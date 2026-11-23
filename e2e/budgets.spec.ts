@@ -5,7 +5,7 @@ import type { Page, Response } from "@playwright/test";
 import { expect, test } from "./fixtures";
 
 // Spec §4.15. The numbers live in scripts/budgets.json, which scripts/check-budgets.mjs also reads.
-const budgets = JSON.parse(readFileSync(path.resolve(import.meta.dirname, "../scripts/budgets.json"), "utf8")) as { initialJsGzipKB: number; firstLoadKB: number; imageKB: number; exemptImagePrefixes: string[] };
+const budgets = JSON.parse(readFileSync(path.resolve(import.meta.dirname, "../scripts/budgets.json"), "utf8")) as { initialJsGzipKB: number; firstLoadKB: number; imageKB: number; mediaKB: number; };
 const kb = (bytes: number) => bytes / 1000;
 
 /** What a response costs on the wire: text is measured gzipped (as a CDN serves it), binary files as they are. */
@@ -47,17 +47,18 @@ test.describe("performance budgets", () => {
     expect((await collect()).filter((r) => r.type.startsWith("image/png"))).toEqual([]);
   });
 
-  test("every image the room loads is within the image budget, except the screenshot exempt by name", async ({ page }) => {
+  test("every image the room loads is within the image budget, and the background loop within the media budget", async ({ page }) => {
     const collect = record(page);
     await page.goto("/");
     await page.getByRole("button", { name: "Press to enter" }).click();
     await expect(page.getByRole("timer").first()).toBeVisible();
-    await expect(page.getByAltText("Background scene")).toBeVisible();
+    await expect(page.getByLabel("Background scene")).toBeVisible();
     const images = (await collect()).filter((r) => r.type.startsWith("image/"));
-    expect(images.length).toBeGreaterThan(0);
-    const over = images.filter((r) => kb(r.bytes) > budgets.imageKB && !budgets.exemptImagePrefixes.some((p) => path.basename(r.url).startsWith(p)));
+    const over = images.filter((r) => kb(r.bytes) > budgets.imageKB);
     expect(over).toEqual([]);
-    expect(images.some((r) => path.basename(r.url).startsWith("screenshot-"))).toBe(true); // the exemption really applies to something
+    const loops = (await collect()).filter((r) => r.url.endsWith(".mp4"));
+    expect(loops.length).toBeGreaterThan(0); // the background loop really is fetched
+    for (const l of loops) expect(kb(l.bytes), l.url).toBeLessThanOrEqual(budgets.mediaKB);
   });
 
   test("the room and the rarely opened screens are their own chunks, fetched on idle, so nothing waits when first opened", async ({ page }) => {

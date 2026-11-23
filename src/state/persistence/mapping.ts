@@ -1,5 +1,6 @@
 import { recordSession, repairStampedDays } from "@/domain/calendar";
 import { clampText, MAX_TODOS } from "@/domain/limits";
+import { isVideoId, MAX_USER_TRACKS } from "@/domain/youtube";
 import { stampEventIds } from "@/domain/progress";
 import { isEvent } from "./guard";
 import { repairDeadline, repairSettings, repairStory } from "./repair";
@@ -31,6 +32,13 @@ export function repairTodos(todos: readonly Todo[], nextTodoId: number): { todos
     repaired.push({ id, text, done: t.done });
   }
   return { todos: repaired, nextTodoId: next };
+}
+
+/** The links a player added: only real video ids, no repeats, at most the limit (the newest kept). */
+export function repairUserTracks(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const ids = [...new Set(raw.filter(isVideoId))];
+  return ids.slice(-MAX_USER_TRACKS);
 }
 
 export function stateFromPersisted(p: Persisted, now: number, flags: { recovered: boolean; storageBlocked: boolean; firstVisit?: boolean }): AppState {
@@ -73,6 +81,7 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     visited: p.visited,
     events,
     clientId: p.clientId,
+    userTracks: repairUserTracks(p.userTracks),
     memberSince: typeof p.createdAt === "string" && !Number.isNaN(Date.parse(p.createdAt)) ? p.createdAt : null,
     studiedDays,
     banners: offlineBanners.slice(-MAX_BANNERS),
@@ -113,6 +122,7 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
     schema: 5,
     clientId: prev.clientId,
     createdAt: prev.createdAt ?? nowIso,
+    userTracks: [...state.userTracks],
     name: state.name === "" ? null : state.name,
     settings,
     mission: state.mission === "" ? null : { text: state.mission, setAt: missionChanged && (prev.mission?.text ?? "") !== state.mission ? nowIso : (prev.mission?.setAt ?? nowIso), done: state.missionDone, ...(state.missionDeadline ? { deadline: state.missionDeadline } : {}) },

@@ -274,3 +274,76 @@ describe("TV analytics (spec §4.16)", () => {
     for (const e of sent) { expect(EVENT_NAMES).toContain(e.name); expect(Object.keys(e.props)).toEqual(["location"]); }
   });
 });
+
+describe("the player's own links", () => {
+  beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
+  afterEach(() => vi.useRealTimers());
+  const VIDEO = "dQw4w9WgXcQ";
+  const openPanel = () => click("Add your own link");
+  const paste = (text: string) => { fireEvent.change(screen.getByLabelText("Paste a YouTube link"), { target: { value: text } }); };
+  const submit = () => act(() => { fireEvent.submit(screen.getByLabelText("Paste a YouTube link").closest("form")!); });
+
+  it("a pasted link plays in the window at once (the Play press is the user's action), under a name of its own", async () => {
+    const { latest } = await setup();
+    await openPanel();
+    paste(`https://youtu.be/${VIDEO}?si=abc`);
+    submit();
+    await act(async () => { await Promise.resolve(); });
+    expect(latest().backend.load).toHaveBeenCalledWith(VIDEO, true);
+    expect(caption()).toBe("Tuning in.");
+    emit(() => latest().handlers.onState("playing"));
+    expect(caption()).toBe("Your link 1");
+    expect(screen.queryByLabelText("Paste a YouTube link")).not.toBeInTheDocument(); // the panel closes
+  });
+
+  it("adding a link does not stop what is playing until Play is pressed", async () => {
+    const { latest, dispatch } = await setup();
+    await click("Play");
+    emit(() => latest().handlers.onState("playing"));
+    expect(caption()).toBe("Beneath the Mask");
+    await dispatch({ type: "ADD_USER_TRACK", id: VIDEO }); // added without pressing its Play
+    expect(caption()).toBe("Beneath the Mask");
+    expect(latest().backend.pause).not.toHaveBeenCalled();
+  });
+
+  it("something that is not a single YouTube video is refused in words, and nothing is added or played", async () => {
+    const { latest } = await setup();
+    await openPanel();
+    for (const bad of ["hello", "https://example.com/watch?v=" + VIDEO, "https://www.youtube.com/playlist?list=PLabc"]) {
+      paste(bad);
+      submit();
+      expect(screen.getByRole("alert")).toHaveTextContent("isn't a link to a single YouTube video");
+    }
+    expect(latest().backend.load).not.toHaveBeenCalledWith(expect.anything(), true);
+    expect(screen.queryByRole("list", { name: "Your links" })).not.toBeInTheDocument();
+  });
+
+  it("lists the links, plays one on request, and removes one without stopping the others", async () => {
+    const { latest, dispatch } = await setup();
+    await dispatch({ type: "ADD_USER_TRACK", id: VIDEO });
+    await dispatch({ type: "ADD_USER_TRACK", id: "9bZkp7q19f0" });
+    await openPanel();
+    expect(screen.getByRole("list", { name: "Your links" }).querySelectorAll("li")).toHaveLength(2);
+    await click("Play your link 2");
+    expect(latest().backend.load).toHaveBeenCalledWith("9bZkp7q19f0", true);
+    await openPanel();
+    await click("Remove your link 1");
+    expect(screen.getByRole("list", { name: "Your links" }).querySelectorAll("li")).toHaveLength(1);
+  });
+
+  it("a link that cannot play says so, and does not slide on to another track in silence", async () => {
+    const { latest } = await setup();
+    await openPanel();
+    paste(`https://youtu.be/${VIDEO}`);
+    submit();
+    await act(async () => { await Promise.resolve(); });
+    emit(() => latest().handlers.onError(150));
+    expect(caption()).toBe("That video can't play here.");
+    expect(latest().backend.load).not.toHaveBeenCalledWith(PLACEHOLDER_PLAYLIST[0]!.videoId, true);
+  });
+
+  it("the caption box is only as wide as its words", async () => {
+    await setup();
+    expect(screen.getByRole("status").className).toContain("w-fit");
+  });
+});

@@ -24,9 +24,14 @@ if (kb(initialGz) > budgets.initialJsGzipKB) failures.push(`initial JS ${kb(init
 const assets = readdirSync(path.join(dist, "assets"));
 for (const f of assets.filter((a) => /\.(png|jpe?g|webp|avif|gif|svg)$/i.test(a))) {
   const size = statSync(path.join(dist, "assets", f)).size;
-  const exempt = budgets.exemptImagePrefixes.some((p) => f.startsWith(p));
-  console.log(`Image ${f}  ${kb(size).toFixed(1)} kB${exempt ? "  (exempt by name: B-05)" : ""}`);
-  if (!exempt && kb(size) > budgets.imageKB) failures.push(`image ${f} is ${kb(size).toFixed(1)} kB, over ${budgets.imageKB} kB`);
+  console.log(`Image ${f}  ${kb(size).toFixed(1)} kB`);
+  if (kb(size) > budgets.imageKB) failures.push(`image ${f} is ${kb(size).toFixed(1)} kB, over ${budgets.imageKB} kB`);
+}
+
+for (const f of assets.filter((a) => /\.(mp4|webm)$/i.test(a))) {
+  const size = statSync(path.join(dist, "assets", f)).size;
+  console.log(`Media ${f}  ${kb(size).toFixed(1)} kB (budget ${budgets.mediaKB} kB)`);
+  if (kb(size) > budgets.mediaKB) failures.push(`media ${f} is ${kb(size).toFixed(1)} kB, over ${budgets.mediaKB} kB`);
 }
 
 if (failures.length) {

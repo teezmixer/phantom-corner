@@ -41,14 +41,22 @@ export function useMusic({ tracks, resetKey, volume, muted, enabled = true, fact
   const pausedWhileLoading = useRef<number | null>(null);
 
   // Travel: a new location always stops the TV and starts from its first track, cued (spec D-26).
-  const trackIds = tracks.map((t) => t.videoId).join(",");
-  const key = `${resetKey}|${trackIds}`;
+  // The key leaves out the player's own links: adding or removing one must not stop what is playing.
+  const baseIds = tracks.filter((t) => t.source !== "user").map((t) => t.videoId).join(",");
+  const key = `${resetKey}|${baseIds}`;
   const lastKey = useRef(key);
+  const allIds = tracks.map((t) => t.videoId).join(",");
+  const lastAll = useRef(allIds);
   useEffect(() => {
-    if (key === lastKey.current) return;
-    lastKey.current = key;
-    dispatch({ type: "SET_PLAYLIST", tracks });
-  }, [key, tracks]);
+    if (key !== lastKey.current) {
+      lastKey.current = key;
+      lastAll.current = allIds;
+      dispatch({ type: "SET_PLAYLIST", tracks });
+    } else if (allIds !== lastAll.current) {
+      lastAll.current = allIds;
+      dispatch({ type: "SET_TRACKS", tracks });
+    }
+  }, [key, allIds, tracks]);
 
   // The latest state, readable from event handlers without making them depend on it.
   const stateRef = useRef(state);
@@ -57,7 +65,7 @@ export function useMusic({ tracks, resetKey, volume, muted, enabled = true, fact
   // Pressing play after the script failed to load tries again.
   const apiFailed = state.apiFailed;
   const send = useCallback((event: MusicEvent) => {
-    if (event.type === "PLAY" && apiFailed) setAttempt((a) => a + 1);
+    if ((event.type === "PLAY" || event.type === "PLAY_TRACK") && apiFailed) setAttempt((a) => a + 1);
     pausedWhileLoading.current = event.type === "PAUSE" && stateRef.current.status === "loading" ? Date.now() : null;
     dispatch(event);
   }, [apiFailed]);
