@@ -317,7 +317,8 @@ test.describe("TV rules (review of M4)", () => {
     await page.setViewportSize({ width: 1024, height: 600 });
     await page.goto("/?demo=true&at=menu");
     await page.mouse.click(5, 5); // a gesture, so the TV exists
-    await page.getByRole("region", { name: "TV" }).waitFor(); // the room is its own chunk
+    await page.getByRole("region", { name: "TV" }).waitFor(); // the room is its own chunk…
+    await page.getByRole("dialog", { name: "Hideout" }).waitFor(); // …and so is the menu: wait for both before measuring
     const rects = await page.evaluate(() => {
       const panel = document.querySelector('[role="dialog"] > div')!.getBoundingClientRect();
       const tv = document.querySelector('section[aria-label="TV"]')!.getBoundingClientRect();
