@@ -1,4 +1,4 @@
-import { splash } from "@/content/copy";
+import { settings, splash } from "@/content/copy";
 import { Overlay } from "../Overlay";
 
 /** About, credits and privacy. Text is DRAFT (decision D-10, D-14): the privacy policy is Ares's call. */
@@ -35,7 +35,7 @@ export function CreditsScreen() {
 export function PrivacyScreen() {
   return (
     <Overlay title="Privacy">
-      <p>What you do here is saved in this browser on this device: your name, mission, todos, sessions and settings. There are no accounts yet, and nothing you write is sent anywhere. Settings → Delete everything removes it.</p>
+      <p>What you do here is saved in this browser on this device: your name, mission, todos, sessions and settings. There are no accounts yet, and nothing you write is sent anywhere. Settings → {settings.erase} removes it.</p>
       <p>Optionally, the page counts visits and speed, and a few events: which place you are in, how long a session was, and what level you are. Never your name, mission or todos. Turn it off any time in Settings. The events are not sent in the demo.</p>
       <p>The TV plays music through YouTube's player, which loads once you press enter. It is the privacy-enhanced version, but it is YouTube's, and its own policy applies to what it collects.</p>
       <p className="text-sm text-greylight">Draft: the final wording and a contact address are still to be decided by the project owner.</p>

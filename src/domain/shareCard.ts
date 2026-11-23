@@ -1,3 +1,5 @@
+import { shareCardText } from "@/content/copy";
+
 /**
  * What the shareable session card says. Pure and deliberately narrow: it takes only the three numbers and words that are
  * safe to show anyone (minutes, Knowledge, the place), so the player's name, mission and todos cannot reach the image
@@ -26,11 +28,11 @@ const whole = (n: number): number => (Number.isFinite(n) ? Math.max(0, Math.floo
 
 export function shareCardLines({ minutes, knowledge, location }: ShareCardInput): ShareCardLines {
   return {
-    title: "PHANTOM CORNER",
+    title: shareCardText.title,
     minutes: String(whole(minutes)),
-    minutesLabel: "minutes focused",
-    knowledge: `+${whole(knowledge)} Knowledge`,
+    minutesLabel: shareCardText.minutesLabel,
+    knowledge: `+${whole(knowledge)} ${shareCardText.knowledge}`,
     place: location,
-    fan: "A fan-made study room. Not affiliated with ATLUS or SEGA.",
+    fan: shareCardText.fan,
   };
 }

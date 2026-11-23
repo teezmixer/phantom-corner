@@ -16,8 +16,8 @@ html, body, #root {
 }
 
 /* Every control in the HUD gets a 24 CSS px target on screen (WCAG 2.2, 2.5.8), however small it is drawn. The HUD is drawn on a
-   reference screen and scaled, so the minimum is divided by the scale each corner group publishes as --hud-scale. The look stays
-   the same; only the hit area grows. Covers controls added later too. */
+   reference screen and scaled, so the minimum is divided by the scale each corner group publishes as --hud-scale. A control
+   smaller than that grows to it, so a few take a little more room (D-34). Covers controls added later too. */
 .hud-group :is(button, input, select, textarea, a[href], [role="checkbox"]) {
   min-width: calc(24px / var(--hud-scale, 1));
   min-height: calc(24px / var(--hud-scale, 1));

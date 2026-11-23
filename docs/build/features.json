@@ -1551,7 +1551,7 @@
       "description": "Budgets checked in CI: first load ≤800 KB, initial JS ≤120 KB gz, largest first-load image ≤250 KB.",
       "steps": "CI size script output.",
       "status": "pass",
-      "evidence": "npm run budgets (scripts/check-budgets.mjs, in CI after the build): initial JS 118.4 kB gzipped of 120; e2e/budgets.spec.ts: real first load 252 kB of 800, the splash loads no image, every image the room loads is under 250 kB except the screenshot exempt by name (B-05); the room and five screens are idle-prefetched chunks. The check fails when a budget is tightened (mutation-checked)."
+      "evidence": "npm run budgets (scripts/check-budgets.mjs, in CI after the build): initial JS 118.4 kB gzipped of 120; e2e/budgets.spec.ts: real first load about 266 kB of 800, the splash loads no image, every image the room loads is under 250 kB except the screenshot exempt by name (B-05); the room and five screens are idle-prefetched chunks. The check fails when a budget is tightened (mutation-checked)."
     },
     {
       "id": "q-analytics",

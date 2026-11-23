@@ -129,6 +129,14 @@ export const demo = {
   howBuilt: "How this was built",
 } as const;
 
+/** The words on the shareable session card (spec §5). DRAFT (D-10); never the player's own words. */
+export const shareCardText = {
+  title: "PHANTOM CORNER",
+  minutesLabel: "minutes focused",
+  knowledge: "Knowledge",
+  fan: "A fan-made study room. Not affiliated with ATLUS or SEGA.",
+} as const;
+
 /** Where "How this was built" goes: the README's section of that name in the public repository. */
 export const HOW_BUILT_URL = "https://github.com/teezmixer/phantom-corner#how-this-was-built";
 
@@ -199,7 +207,7 @@ export const settings = {
   menuStyleNow: "Hideout (text)",
   menuStyleLater: "Illustrated Student Ren — not yet.",
   analytics: "Anonymous visit statistics",
-  analyticsNote: "Page views, speed, and which place, how long and how far you went. Never anything you write. A change applies the next time the page loads.",
+  analyticsNote: "Page views, speed, and which place, how long and how far you went. Never anything you write. A change applies at once.",
   account: "Account",
   accountNote: "Accounts: not yet. Everything is saved in this browser.",
   data: "Your data",
