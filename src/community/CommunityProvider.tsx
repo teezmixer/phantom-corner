@@ -1,36 +1,21 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { community as copy } from "@/content/copy";
 import { LOCATIONS } from "@/content/registry";
 import { useStore } from "@/state/StoreProvider";
+import { CommunityContext, type Community } from "./context";
 import { FakeCommunity } from "./fake";
 import type { CommunityBackend } from "./types";
-
-export interface Community {
-  /** True while the numbers are the made-up practice ones. */
-  practice: boolean;
-  /** People in this place now, or null before the first answer or when the server is out of reach (nothing is shown then). */
-  presence: number | null;
-  /** The bonus places that can be voted for, with their votes so far. */
-  options: { id: string; name: string; votes: number }[];
-  voted: string | null;
-  vote(id: string): Promise<void>;
-}
-
-const CommunityContext = createContext<Community | null>(null);
-/** The community, or null when it is switched off for this visit. */
-// eslint-disable-next-line react-refresh/only-export-components -- hook colocated with its provider
-export const useCommunity = (): Community | null => useContext(CommunityContext);
 
 const BONUS = LOCATIONS.filter((l) => l.canonIndex === null);
 const REFRESH_MS = 60_000;
 let shared: CommunityBackend | undefined;
 /** The one backend of this visit. The fake until a real one exists (B-11). */
-const backend = (): CommunityBackend => (shared ??= new FakeCommunity(BONUS.map((l) => l.id)));
+const defaultBackend = (): CommunityBackend => (shared ??= new FakeCommunity(BONUS.map((l) => l.id)));
 
 /** The presence count and the vote, for one visit; and the line that says how many are here. */
-export default function CommunityProvider({ children }: { children: ReactNode }) {
+export default function CommunityProvider({ children, backend }: { children: ReactNode; /** For tests: a backend of their own. */ backend?: CommunityBackend }) {
   const { state } = useStore();
-  const api = backend();
+  const api = backend ?? defaultBackend();
   const [presence, setPresence] = useState<number | null>(null);
   const [tally, setTally] = useState<Record<string, number>>({});
   const [voted, setVoted] = useState<string | null>(api.myVote());

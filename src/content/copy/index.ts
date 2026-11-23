@@ -121,7 +121,8 @@ export const community = {
   voteTitle: "Which place should open next?",
   votes: (n: number) => (n === 1 ? "1 vote" : `${n} votes`),
   voted: "Your vote is in; pressing another place moves it.",
-  voteNote: "A practice vote: it stays in this browser.",
+  voteNote: "A practice vote: it does not decide the order places open in, and it is gone when you reload.",
+  voteFailed: "The vote didn't go through. Try again in a moment.",
 } as const;
 
 /** Splash and footer. */

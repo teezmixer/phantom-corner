@@ -106,3 +106,9 @@ Findings and Tier 3 proposals are recorded under each milestone heading below.
 - **Open (not blocking):** a permanently refused event is re-sent on every sync (follow-up: remember refused ids or bisect); the live run against Supabase (B-10); the calendar, story and name do not sync (D-35).
 - **Lessons:** a test double that is more permissive than the real system hides the bugs that matter (PGlite needed Supabase's default grants; the fake keyed events per user while SQL did not); an effect that only schedules a timer is not "the sync was requested" — a test that models the real trigger found my first queue test was wrong.
 - **Tier 3 for Ares:** D-35, B-10.
+
+## M12 — everything else
+**Round 1** (fresh Opus reviewer): Readiness 4, Build quality 4, Vision fit 4. No blockers. The reviewer ran the build, the budgets and 42 e2e tests, and mutation-checked the break guard and the reduced-motion fold (both fail when broken).
+- **Fixed after round 1:** the mission-done sound (and banner) fired when a mission arrived done through a sync or a load; both now follow a counter that only a tick on this device moves; tests that could not fail (the sound for a text edit; the presence line at zero, when down, over a screen; the evidence claimed them) now exist and are mutation-checked; the community context moved into its own small module so the map does not load the provider and its fake; the vote lists only places still closed, says it does not decide the order and is gone on reload (the old note said it stayed in the browser, which was untrue), and shows a message when a vote fails; the break-over banner id no longer repeats; an axe check with the vote panel showing.
+- **Open (not blocking):** the presence line sits over the background screenshot's own seek bar at 1024×640 (harmless, `pointer-events-none`); the vote still names closed bonus places (D-36 asks Ares); initial JS 116.3 of 120 kB.
+- **Tier 3 for Ares:** D-36, B-11.

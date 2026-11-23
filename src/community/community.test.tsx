@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { community as copy } from "@/content/copy";
+import type { CommunityBackend } from "./types";
 import { initialState, type AppState } from "@/state/store";
 import { StoreProvider } from "@/state/StoreProvider";
 import CommunityProvider from "./CommunityProvider";
@@ -41,6 +42,35 @@ describe("FakeCommunity", () => {
 const show = (patch: Partial<AppState>, ui: React.ReactNode) =>
   render(<StoreProvider initial={{ ...initialState, entered: true, layer: "main", communityEnabled: true, ...patch }}><CommunityProvider>{ui}</CommunityProvider></StoreProvider>);
 
+const stub = (n: number | "down"): CommunityBackend => ({
+  presence: async () => { if (n === "down") throw new Error("offline"); return n; },
+  tally: async () => ({}),
+  vote: async () => {},
+  myVote: () => null,
+});
+const showWith = (backend: CommunityBackend, patch: Partial<AppState> = {}) =>
+  render(<StoreProvider initial={{ ...initialState, entered: true, layer: "main", communityEnabled: true, ...patch }}><CommunityProvider backend={backend}>{null}</CommunityProvider></StoreProvider>);
+
+describe("the presence line", () => {
+  it("says how many are here, in the singular for one, and says the number is practice", async () => {
+    const { unmount } = showWith(stub(3));
+    expect(await screen.findByText(copy.presence(3))).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(copy.practice))).toBeInTheDocument();
+    unmount();
+    showWith(stub(1));
+    expect(await screen.findByText("1 Phantom Thief is studying here")).toBeInTheDocument();
+  });
+  it("shows nothing at zero, when the server is down, over a screen, or before the player has entered", async () => {
+    for (const [backend, patch] of [[stub(0), {}], [stub("down"), {}], [stub(4), { layer: "menu" as const }], [stub(4), { entered: false }]] as const) {
+      const { container, unmount } = showWith(backend, patch);
+      await new Promise((r) => setTimeout(r, 20));
+      expect(container.textContent).toBe("");
+      expect(screen.queryByText(/studying here/)).not.toBeInTheDocument();
+      unmount();
+    }
+  });
+});
+
 describe("the presence line and the vote panel", () => {
   it("the vote panel lists the four bonus places, takes one vote, and moves it", async () => {
     const user = userEvent.setup();
@@ -53,6 +83,11 @@ describe("the presence line and the vote panel", () => {
     await waitFor(() => expect(screen.getByRole("button", { pressed: true })).toBe(buttons[1]));
     expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(1);
     expect(screen.getByText(new RegExp(copy.voteNote))).toBeInTheDocument();
+  });
+  it("lists only bonus places that are still closed", async () => {
+    show({ devUnlockAll: true }, <VotePanel />);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByRole("region", { name: copy.voteTitle })).not.toBeInTheDocument();
   });
   it("without community, the vote panel renders nothing", () => {
     const { container } = render(<StoreProvider initial={initialState}><VotePanel /></StoreProvider>);

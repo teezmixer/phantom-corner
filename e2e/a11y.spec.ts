@@ -41,6 +41,17 @@ test.describe("axe", () => {
     expect(await seriousViolations(page)).toEqual([]);
   });
 
+  test("the map with the community vote and presence line showing has none", async ({ page }) => {
+    await page.goto("/?community=true");
+    await page.getByRole("button", { name: "Press to enter" }).click();
+    await page.keyboard.press("s");
+    await page.getByLabel("Today's mission").fill("x");
+    await page.getByRole("button", { name: "Set" }).click();
+    await page.getByRole("button", { name: "Map (N)" }).click();
+    await expect(page.getByRole("region", { name: "Which place should open next?" })).toBeVisible();
+    expect(await seriousViolations(page)).toEqual([]);
+  });
+
   for (const screen of SCREENS) {
     test(`the ${screen} screen has none`, async ({ page }) => {
       await page.goto("/?dev=true");

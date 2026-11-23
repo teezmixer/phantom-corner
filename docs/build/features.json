@@ -407,7 +407,7 @@
       "description": "Marking a mission done plays a mission-complete moment (banner + sound, reduced-motion safe).",
       "steps": "Playwright: tick mission, moment visible; reduced motion variant.",
       "status": "pass",
-      "evidence": "src/state/moments.test.ts: ticking the mission done adds a banner and the missionDone sound (a rising pair, quieter than the session fanfare); un-ticking and editing the text do neither; each tick is its own banner. e2e/moments.spec.ts shows the banner. Reduced motion is handled by the banner's existing motion-safe class."
+      "evidence": "src/state/moments.test.ts: ticking the mission done adds a banner and the missionDone sound (a rising pair, quieter than the session fanfare); un-ticking and editing the text do neither; each tick is its own banner. e2e/moments.spec.ts shows the banner. Reduced motion is handled by the banner's existing motion-safe class. After review: the sound and the banner both fire only on a tick on this device (a counter), so a mission that arrives done through a sync or a load makes neither (tested; mutation-checked)."
     },
     {
       "id": "todo-add-tick-delete",
@@ -1452,7 +1452,7 @@
       "description": "\"X Phantom Thieves are studying here\" behind a flag, using a local fake.",
       "steps": "Unit + Playwright with flag on.",
       "status": "pass",
-      "evidence": "src/community/community.test.tsx and e2e/community.spec.ts: behind ?community=true the room says how many are studying here and says the number is practice; nothing is shown at zero or when the (fake) server is down; without the switch nothing shows. Numbers are made up until a backend exists (B-11)."
+      "evidence": "src/community/community.test.tsx (with a stand-in backend): the line says how many are here, singular for one, and says the numbers are practice; nothing shows at zero, when the server is down, over a screen, or before entering (mutation-checked: removing the zero rule fails a test); e2e/community.spec.ts shows it in the room and that nothing shows without the switch. Numbers are made up until a backend exists (B-11)."
     },
     {
       "id": "comm-vote",
@@ -1463,7 +1463,7 @@
       "description": "A bonus-location vote behind a flag, local fake.",
       "steps": "Playwright: vote recorded locally.",
       "status": "pass",
-      "evidence": "src/community/community.test.tsx and e2e/community.spec.ts: the map lists the four bonus places, takes one vote and a second moves it, labelled as a practice vote; absent without the switch. The vote lives in memory (B-11)."
+      "evidence": "src/community/community.test.tsx and e2e/community.spec.ts: the map lists the bonus places still closed, takes one vote and a second moves it, says it is a practice vote that does not decide the order and is gone on reload, shows a message if the vote fails, and is absent without the switch; e2e/a11y.spec.ts: no serious axe violation with it showing. The vote lives in memory (B-11)."
     },
     {
       "id": "comm-feedback",
