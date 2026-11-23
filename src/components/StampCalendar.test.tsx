@@ -53,4 +53,16 @@ describe("StampCalendar", () => {
     const text = container.textContent ?? "";
     expect(text).not.toMatch(/streak|in a row|consecutive|broken|\bdays? studied\b|\d+\s*days/i);
   });
+
+  it("shows the year (in the face that has digits) and names the table after the month, which is announced when it changes", () => {
+    render(<StampCalendar days={[]} now={NOW} />);
+    const heading = screen.getByRole("heading", { name: "November 2026" });
+    expect(heading).toHaveAttribute("aria-live", "polite");
+    expect(heading.textContent).toContain("2026");
+    expect(screen.getByRole("table", { name: "November 2026" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByRole("table", { name: "February 2027" })).toBeInTheDocument(); // across the year end, with the new year shown
+  });
 });

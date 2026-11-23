@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayKey, isStudied, monthGrid, shiftMonth, stampDay, stampStyleFor } from "./calendar";
+import { MAX_STAMPED_DAYS, dayKey, isStudied, monthGrid, repairStampedDays, shiftMonth, stampDay, stampStyleFor, type StampedDay } from "./calendar";
 
 const at = (y: number, m: number, d: number, h = 12) => new Date(y, m, d, h).getTime();
 
@@ -38,6 +38,36 @@ describe("stampDay", () => {
     days = stampDay(days, at(2026, 10, 23, 18), 0);
     days = stampDay(days, at(2026, 10, 24, 9), 0);
     expect(days.map((d) => d.day)).toEqual(["2026-11-23", "2026-11-24"]);
+  });
+});
+
+describe("stampDay keeps the list in date order and trims by date", () => {
+  const full = (): StampedDay[] => Array.from({ length: MAX_STAMPED_DAYS }, (_, i) => ({ day: dayKey(new Date(2020, 0, 1 + i).getTime()), style: 0 }));
+
+  it("inserts an earlier day in its place, not at the end", () => {
+    const days = stampDay([{ day: "2026-11-20", style: 0 }], at(2026, 10, 10), 0);
+    expect(days.map((d) => d.day)).toEqual(["2026-11-10", "2026-11-20"]);
+  });
+
+  it("when full, a newer day pushes out the oldest DATE", () => {
+    const days = stampDay(full(), at(2040, 5, 1), 0);
+    expect(days).toHaveLength(MAX_STAMPED_DAYS);
+    expect(days[0]!.day).toBe("2020-01-02"); // 2020-01-01 went
+    expect(days.at(-1)!.day).toBe("2040-06-01");
+  });
+
+  it("when full, a stamp from a wrong clock far in the past does not displace a real day, and does not stay", () => {
+    const base = full();
+    const days = stampDay(base, at(1999, 0, 1), 0);
+    expect(days).toHaveLength(MAX_STAMPED_DAYS);
+    expect(days.some((d) => d.day === "1999-01-01")).toBe(false);
+    expect(days[0]!.day).toBe("2020-01-01");
+  });
+});
+
+describe("repairStampedDays", () => {
+  it("returns the days in date order, whatever order they were stored in", () => {
+    expect(repairStampedDays([{ day: "2026-11-22", style: 0 }, { day: "2026-11-02", style: 1 }]).map((d) => d.day)).toEqual(["2026-11-02", "2026-11-22"]);
   });
 });
 

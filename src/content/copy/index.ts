@@ -103,7 +103,14 @@ export const sessionEnd = {
 /** Labels used by screens and widgets. DRAFTS (decision D-10). */
 export const ui = {
   /** The calendar of studied days (spec §3.4): a stamp on each day, and never a count or a streak. */
-  calendar: { label: "Days you studied", previous: "Previous month", next: "Next month", studied: "studied", weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] },
+  calendar: {
+    label: "Days you studied",
+    previous: "Previous month",
+    next: "Next month",
+    studiedDay: (day: number) => `${day}, studied`,
+    weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  },
   /** The hideout menu (spec §3.7). Joker's voice: two or three words, imperative. */
   menu: { title: "Hideout", study: "STUDY", map: "MAP", messages: "MESSAGES", profile: "PROFILE", settings: "SETTINGS", close: "CLOSE" },
   hideUi: "Hide UI",

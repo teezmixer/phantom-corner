@@ -43,7 +43,10 @@ export function buildInitialState(mode: UrlMode, now: number): AppState {
   if (!layer) return base;
   const done = { kind: "session", plannedMs: 25 * MINUTE, focusedMs: 25 * MINUTE, outcome: "completed" } as const;
   if (layer !== "summary") return { ...base, layer };
-  // The demo summary shows a lived-in calendar: today, and a few earlier days with the designs earned over time.
-  const studiedDays = [-9, -8, -6, -5, -2, -1, 0].map((back, i) => ({ day: dayKey(now + back * 24 * 60 * MINUTE), style: i < 4 ? 0 : 1 }));
-  return { ...base, layer, timer: { status: "idle", durationMs: 25 * MINUTE }, events: [...base.events, done], studiedDays };
+  // The demo summary shows a lived-in calendar: today and a scatter of earlier days, in the designs earned by then. The demo
+  // player has 125 Knowledge (level 4), so the newest design (the star, from level 4) is only on the most recent days.
+  // Days are stepped with the calendar (not by 24 hours) so a daylight-saving change cannot skip or repeat one.
+  const dayAgo = (back: number) => { const d = new Date(now); d.setDate(d.getDate() - back); return dayKey(d.getTime()); };
+  const studiedDays = [13, 11, 8, 7, 4, 2, 0].map((back, i) => ({ day: dayAgo(back), style: i < 4 ? 0 : 1 })).sort((a, b) => (a.day < b.day ? -1 : 1));
+  return { ...base, layer, timer: { status: "idle", durationMs: 25 * MINUTE }, events: [...base.events, { kind: "dev_grant", knowledge: 85 }, done], studiedDays };
 }

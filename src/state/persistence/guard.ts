@@ -1,4 +1,3 @@
-import { MAX_STAMPED_DAYS } from "@/domain/calendar";
 import { MAX_EVENTS } from "@/domain/limits";
 import { MAX_CUSTOM_MINUTES, MINUTE } from "@/domain/timer";
 import type { Persisted } from "./schema";
@@ -60,9 +59,8 @@ export function isPersisted(v: unknown): v is Persisted {
     // Events are only checked to be a bounded array here: a single impossible event is dropped on load (mapping),
     // so one bad record never costs the user their whole history.
     Array.isArray(v.events) && v.events.length <= MAX_EVENTS &&
-    // Stamps are repaired on load (repairStampedDays): a bad entry is dropped, a missing or broken list becomes empty; never the whole save.
-    (!Array.isArray(v.studiedDays) || v.studiedDays.length <= MAX_STAMPED_DAYS) &&
-    isStrArray(v.unreadThreads) && v.unreadThreads.length <= MAX_STORED_ITEMS &&
+    // studiedDays is not checked here on purpose: repairStampedDays drops bad entries, trims a too-long list and turns a missing or broken one into an empty calendar, so it never costs the whole save.
+        isStrArray(v.unreadThreads) && v.unreadThreads.length <= MAX_STORED_ITEMS &&
     isRec(stamps) && isStr(stamps.settings) && isStr(stamps.mission) && isStr(stamps.todos)
   );
 }

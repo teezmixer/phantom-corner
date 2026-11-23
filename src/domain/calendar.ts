@@ -31,11 +31,17 @@ export function isStudied(event: ProgressEvent): boolean {
   return Math.floor(event.focusedMs / 60_000) >= KNOWLEDGE_RULES.cutShortMinimumMinutes;
 }
 
-/** Stamp a day. A day already stamped keeps its first stamp (so history does not change). Returns the same array when nothing changes. */
+const byDay = (a: StampedDay, b: StampedDay) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0);
+
+/**
+ * Stamp a day. A day already stamped keeps its first stamp (so history does not change). Returns the same array when
+ * nothing changes. The list is kept in date order, and when it grows past the cap the OLDEST DATES go, not the oldest entries:
+ * a stamp written while the clock was wrong cannot squat in the list forever.
+ */
 export function stampDay(days: readonly StampedDay[], ms: number, style: number): readonly StampedDay[] {
   const day = dayKey(ms);
   if (days.some((d) => d.day === day)) return days;
-  const next = [...days, { day, style }];
+  const next = [...days, { day, style }].sort(byDay);
   return next.length > MAX_STAMPED_DAYS ? next.slice(next.length - MAX_STAMPED_DAYS) : next;
 }
 
@@ -80,7 +86,7 @@ export function repairStampedDays(raw: unknown): StampedDay[] {
   if (!Array.isArray(raw)) return [];
   const out: StampedDay[] = [];
   const seen = new Set<string>();
-  for (const item of raw.slice(-MAX_STAMPED_DAYS)) {
+  for (const item of raw) {
     if (typeof item !== "object" || item === null) continue;
     const { day, style } = item as Record<string, unknown>;
     if (typeof day !== "string" || !DAY_KEY.test(day) || seen.has(day)) continue;
@@ -90,5 +96,6 @@ export function repairStampedDays(raw: unknown): StampedDay[] {
     out.push({ day, style: typeof style === "number" && Number.isInteger(style) && style >= 0 && style < STAMP_STYLES.length ? style : 0 });
     seen.add(day);
   }
-  return out;
+  // In date order and never above the cap: a longer list is trimmed (oldest dates first), not thrown away with the whole save.
+  return out.sort(byDay).slice(-MAX_STAMPED_DAYS);
 }

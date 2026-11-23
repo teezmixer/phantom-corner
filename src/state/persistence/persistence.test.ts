@@ -485,8 +485,14 @@ describe("the calendar survives storage", () => {
     }
   });
 
-  it("refuses an absurdly long list as a corrupt save", () => {
-    expect(load(JSON.stringify({ ...fresh(), studiedDays: Array.from({ length: 4000 }, () => ({ day: "2026-11-20", style: 0 })) })).recovered).toBe(true);
+  it("an absurdly long list is trimmed to the newest days; the save is kept", () => {
+    const days = Array.from({ length: 4000 }, (_, i) => ({ day: new Date(2000, 0, 1 + i).toISOString().slice(0, 10), style: 0 })).reverse(); // newest first, to prove order does not matter
+    const { r, state } = load2({ ...fresh(), name: "Ren", studiedDays: days });
+    expect(r.recovered).toBe(false);
+    expect(state.name).toBe("Ren");
+    expect(state.studiedDays).toHaveLength(3660);
+    expect(state.studiedDays.at(-1)!.day).toBe(days[0]!.day); // the newest day is kept
+    expect(state.studiedDays[0]!.day < state.studiedDays.at(-1)!.day).toBe(true); // and the list is in date order
   });
 });
 

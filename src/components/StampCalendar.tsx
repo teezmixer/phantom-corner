@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { CaretLeft, CaretRight, Crown, Heart, Lightning, Moon, Star, Stamp, type Icon } from "@phosphor-icons/react";
 import { ui } from "@/content/copy";
 import { STAMP_STYLES } from "@/content/progression";
@@ -20,18 +20,19 @@ export function StampCalendar({ days, now }: { days: readonly StampedDay[]; now:
   const [shown, setShown] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const stamps = new Map(days.map((d) => [d.day, d.style]));
   const todayKey = dayKey(now);
-  const title = new Date(shown.year, shown.month, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
+  const titleId = useId();
   const weeks = monthGrid(shown.year, shown.month);
   const step = (delta: number) => setShown((s) => shiftMonth(s.year, s.month, delta));
 
   return (
     <section aria-label={ui.calendar.label} className="border border-white p-3">
       <header className="mb-2 flex items-center justify-between">
-        <button type="button" aria-label={ui.calendar.previous} onClick={() => step(-1)} className="p-1 hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal"><CaretLeft size={18} aria-hidden="true" /></button>
-        <h3 className="font-display-label text-lg">{title}</h3>
-        <button type="button" aria-label={ui.calendar.next} onClick={() => step(1)} className="p-1 hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal"><CaretRight size={18} aria-hidden="true" /></button>
+        <button type="button" aria-label={ui.calendar.previous} onClick={() => step(-1)} className="p-2 hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal"><CaretLeft size={18} aria-hidden="true" /></button>
+        {/* The year is in the body face: the display face has no digits. aria-live announces a change of month to a screen reader. */}
+        <h3 id={titleId} aria-live="polite" className="text-lg"><span className="font-display-label">{ui.calendar.months[shown.month]}</span> <span className="font-body-primary">{shown.year}</span></h3>
+        <button type="button" aria-label={ui.calendar.next} onClick={() => step(1)} className="p-2 hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal"><CaretRight size={18} aria-hidden="true" /></button>
       </header>
-      <table className="w-full table-fixed border-collapse text-center text-xs">
+      <table aria-labelledby={titleId} className="w-full table-fixed border-collapse text-center text-xs">
         <thead>
           <tr>{ui.calendar.weekdays.map((d) => <th key={d} scope="col" className="pb-1 font-normal text-greylight">{d}</th>)}</tr>
         </thead>
@@ -47,7 +48,7 @@ export function StampCalendar({ days, now }: { days: readonly StampedDay[]; now:
                   <td key={i} aria-current={key === todayKey ? "date" : undefined} data-day={key} data-stamp={style === undefined ? undefined : STAMP_STYLES[style] ?? STAMP_STYLES[0]}
                     className={cn("h-7 border border-greydark align-middle", key === todayKey && "border-2 border-white", StampIcon ? "bg-redbright text-white" : "text-greylight")}>
                     {StampIcon ? <StampIcon size={18} weight="fill" className="mx-auto" aria-hidden="true" /> : day}
-                    {StampIcon && <span className="sr-only">{day}, {ui.calendar.studied}</span>}
+                    {StampIcon && <span className="sr-only">{ui.calendar.studiedDay(day)}</span>}
                   </td>
                 );
               })}
