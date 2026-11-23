@@ -78,6 +78,7 @@ test.describe("keyboard, announcements, targets and landmarks", () => {
     await page.goto("/");
     await expect(page.getByRole("button", { name: "Press to enter" })).toBeFocused();
     await page.keyboard.press("Enter");
+    await expect(page.getByRole("main")).toBeVisible(); // the room is its own chunk: wait for it before pressing Tab
     await tabTo(page, (l) => l === "Today's mission");
     await page.keyboard.type("Read chapter 3");
     await page.keyboard.press("Enter");

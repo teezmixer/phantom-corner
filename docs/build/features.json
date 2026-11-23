@@ -1816,6 +1816,39 @@
       "steps": "Component: fold after settle, once; not with reduced motion.",
       "status": "pass",
       "evidence": "src/widgets/Location/LocationWidget.test.tsx: as the big sign settles its name folds once by a transform animation (motion token signFold, motion-safe only) and stops; nothing folds when nothing arrives or with reduced motion; mutation-checked. Added during the M12 inventory diff: BUILD-PROMPT lists the sign fold but no entry existed. The look is a placeholder (D-36)."
+    },
+    {
+      "id": "loc-leblanc-loop",
+      "milestone": "M14",
+      "area": "Main screen",
+      "inventory": "LeBlanc background",
+      "spec": "Owner instruction 2026-11-23",
+      "description": "LeBlanc's background is the supplied silent looped video (a placeholder); every other place keeps its solid placeholder; with reduced motion the loop does not play.",
+      "steps": "Component: loop attributes, reduced motion; budget: media size; e2e: room loads.",
+      "status": "pass",
+      "evidence": "src/app/Scene.test.tsx (a muted, looped, autoplaying video as a labelled picture; not autoplaying with reduced motion); scripts/check-budgets.mjs and e2e/budgets.spec.ts (media budget 500 kB; the loop is 55.8 kB); the borrowed screenshot is no longer imported. Whether the loop plays in a real browser was not seen by eye (headless Chromium lacks H.264)."
+    },
+    {
+      "id": "tv-own-links",
+      "milestone": "M14",
+      "area": "Main screen",
+      "inventory": "Music",
+      "spec": "Owner instruction 2026-11-23, §4.8",
+      "description": "The player can paste their own YouTube link into the TV and hear it in the window; links are kept (up to ten), listed, removable; the caption box is only as wide as its words.",
+      "steps": "Unit: parser, state, persistence, controller, TV component; e2e: paste, play, reload, remove.",
+      "status": "pass",
+      "evidence": "src/domain/youtube.test.ts (26 cases: only a single video's 11-character id is accepted, from watch, youtu.be, embed, shorts, live and nocookie links; lookalike hosts, playlists, channels and non-https refused); src/audio/music/controller.test.ts (PLAY_TRACK, SET_TRACKS keep what plays); src/app/Tv.test.tsx (pasted link plays in the window, a bad one is refused in words, adding does not stop what plays, list/play/remove, caption w-fit); src/state/userTracks.test.ts (state, storage, repair); e2e/audio.spec.ts (through the real page and a stubbed player). The player's rules hold: the link plays only when Play is pressed, one player, beside not over the video."
+    },
+    {
+      "id": "onb-mission-focus",
+      "milestone": "M14",
+      "area": "Entry and onboarding",
+      "inventory": "Onboarding",
+      "spec": "Owner report 2026-11-23",
+      "description": "When Morgana asks for the mission, the cursor moves to the mission box.",
+      "steps": "Component and e2e: focus after the name is given.",
+      "status": "pass",
+      "evidence": "src/widgets/Mission/MissionWidget.test.tsx (focus once the name is given and the mission is awaited; not before, not for a non-onboarded player, not repeatedly; mutation-checked) and e2e/journeys.spec.ts. The reported stall itself could not be reproduced: on a fresh browser and on the live site the thread advances as soon as a mission is set."
     }
   ]
 }

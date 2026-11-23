@@ -1,5 +1,7 @@
 # Phantom Corner — final report
 
+> **Update, 2026-11-23, after your first read:** LeBlanc's background is now your looped video (the borrowed screenshot is no longer shipped, so B-05 and the reviewers' main complaint are gone from the live app); the TV takes a YouTube link you paste; the "TV's off." box is shorter; the unlock thresholds and the seven messages are written up as a working draft in `docs/build/unlock-schedule.md`; the mission box takes the cursor when Morgana asks for the mission. See D-37. I could not reproduce the onboarding stall you described (details in D-37); to test other places at once use `?dev=true`. Counts and scores below are as they were when the report was written, except where this note says otherwise.
+
 Written at the end of M13, 2026-11-23. Everything below is checked against the repo, not remembered: the numbers come from `docs/build/features.json`, the scores from `docs/build/taste-review.md`, the questions from `docs/build/decisions.md` and `docs/build/blocked.md`.
 
 ## 1. State

@@ -40,7 +40,9 @@ test.describe("onboarding", () => {
     await expect(log(page, "Morgana")).toContainText("What's today's mission?"); // Ares's line, word for word
     await expect(phone(page).getByRole("textbox", { name: "Your name" })).toHaveCount(0);
     // The name is the player's name from here on: it shows in the profile.
+    await expect(page.getByLabel("Today\'s mission")).toBeFocused(); // Morgana asked for the mission: the cursor is in the box
     await page.keyboard.press("Escape"); // close the phone
+    await page.locator("main").click({ position: { x: 5, y: 5 } }); // leave the box, so M is a shortcut again and not a letter
     await page.keyboard.press("m");
     await page.getByRole("button", { name: /PROFILE/ }).click();
     await expect(page.getByRole("dialog", { name: "Profile" })).toContainText("Ren");
