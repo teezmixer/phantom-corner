@@ -63,7 +63,8 @@ export function Menu() {
                 ref={(el) => { buttons.current[i] = el; }}
                 aria-disabled={notYet || undefined}
                 onClick={() => { if (!notYet) item.run(); }}
-                onMouseEnter={(e) => e.currentTarget.focus()}
+                // Only real pointer movement moves the highlight: a menu that opens under a resting mouse must not steal it from the keyboard.
+                onMouseMove={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.focus(); }}
                 className={cn(buttonClass, "w-full font-display-hero text-2xl focus-visible:bg-redbright", notYet && "cursor-not-allowed border-dashed text-greylight hover:bg-black focus-visible:bg-black")}
               >
                 <span className={notYet ? "line-through" : ""}>{item.label}</span>

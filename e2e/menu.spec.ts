@@ -106,4 +106,59 @@ test.describe("hideout menu", () => {
     await expect(dialog).toBeVisible(); // still the menu
     await expect(page.getByRole("dialog", { name: "Map" })).toHaveCount(0);
   });
+
+  test("each label does what it says: STUDY starts a session, MAP, PROFILE and SETTINGS open their screens, MESSAGES opens the phone, CLOSE returns to the room", async ({ page }) => {
+    await page.goto("/?demo=true&dev=true");
+    const open = async () => { await page.keyboard.press("m"); await expect(page.getByRole("dialog", { name: "Hideout" })).toBeVisible(); };
+    const item = (name: string) => page.getByRole("dialog", { name: "Hideout" }).getByRole("button", { name });
+    await page.getByLabel("Jump to location").waitFor(); // dev panel: unlocks the map for this check
+    await page.getByRole("button", { name: /unlock all/i }).click();
+    await open(); await item("MAP").click();
+    await expect(page.getByRole("dialog", { name: "Map" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await open(); await item("PROFILE").click();
+    await expect(page.getByRole("dialog", { name: "Profile" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await open(); await item("SETTINGS").click();
+    await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await open(); await item("MESSAGES").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^Phone/ })).toHaveAttribute("aria-expanded", "true");
+    await page.keyboard.press("Escape");
+    await open(); await item("CLOSE").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await open(); await item("STUDY").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByRole("group", { name: "Timer" })).not.toContainText("25:00"); // a session is running
+  });
+
+  test("opening the menu does not pause a running timer", async ({ page }) => {
+    await page.clock.install({ time: new Date("2026-11-22T12:00:00") });
+    await page.goto("/?demo=true");
+    await page.clock.resume();
+    await page.keyboard.press(" "); // start
+    await page.clock.fastForward("00:30");
+    await page.keyboard.press("m");
+    await expect(page.getByRole("dialog", { name: "Hideout" })).toBeVisible();
+    await page.clock.fastForward("01:00"); // a minute passes behind the menu
+    await page.keyboard.press("Escape");
+    const timer = page.getByRole("group", { name: "Timer" });
+    await expect(timer).not.toContainText("25:00");
+    await expect(timer).not.toContainText("24:30"); // the minute behind the menu counted
+  });
+
+  test("a mouse resting over the list does not take the highlight from the keyboard, but moving it does", async ({ page }) => {
+    await page.goto("/?demo=true");
+    await page.mouse.move(520, 420); // where the menu's list will appear
+    await page.keyboard.press("m");
+    const dialog = page.getByRole("dialog", { name: "Hideout" });
+    await expect(dialog).toBeVisible();
+    await page.waitForTimeout(700); // the labels have finished flying in
+    await expect(dialog.getByRole("button", { name: "STUDY" })).toBeFocused(); // the resting pointer did not move it
+    await page.keyboard.press("ArrowDown");
+    await expect(dialog.getByRole("button", { name: "MAP" })).toBeFocused();
+    await dialog.getByRole("button", { name: "SETTINGS" }).hover(); // an actual move
+    await expect(dialog.getByRole("button", { name: "SETTINGS" })).toBeFocused();
+  });
 });
