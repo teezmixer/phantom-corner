@@ -1,3 +1,4 @@
+import { ui } from "@/content/copy";
 import { EyeSlash, List, MapTrifold } from "@phosphor-icons/react";
 import { Dock, DockCard } from "@/components/ui/dock";
 import { useStore } from "@/state/StoreProvider";
@@ -13,15 +14,15 @@ export function ButtonBar() {
   return (
     <nav aria-label="Main controls" className="pointer-events-auto">
       <Dock className="h-12 gap-2 p-1">
-        <DockCard id="0" label="Menu (M)" onSelect={() => dispatch({ type: "SET_LAYER", layer: "menu" })}>
+        <DockCard id="0" label={ui.bar.menu} onSelect={() => dispatch({ type: "SET_LAYER", layer: "menu" })}>
           <span className="flex flex-col items-center gap-0.5"><List size={16} /><Key k="M" /></span>
         </DockCard>
         {derived.mapOpen && (
-          <DockCard id="1" label="Map (N)" onSelect={() => dispatch({ type: "SET_LAYER", layer: "map" })}>
+          <DockCard id="1" label={ui.bar.map} onSelect={() => dispatch({ type: "SET_LAYER", layer: "map" })}>
             <span className="flex flex-col items-center gap-0.5"><MapTrifold size={16} /><Key k="N" /></span>
           </DockCard>
         )}
-        <DockCard id="2" label="Hide UI (H)" onSelect={() => dispatch({ type: "TOGGLE_HUD" })}>
+        <DockCard id="2" label={ui.bar.hide} onSelect={() => dispatch({ type: "TOGGLE_HUD" })}>
           <span className="flex flex-col items-center gap-0.5"><EyeSlash size={16} /><Key k="H" /></span>
         </DockCard>
       </Dock>

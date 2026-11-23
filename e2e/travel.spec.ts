@@ -43,6 +43,17 @@ async function freeze(page: Page) {
   await page.clock.pauseAt(new Date((await page.evaluate(() => Date.now())) + 1000));
 }
 
+/**
+ * Let `ms` of fake time pass in small steps, giving the page a moment to render between them. Each phase's timer is only created once the
+ * phase before it has rendered, so one big `runFor` can reach its end before the last timer exists; stepping cannot.
+ */
+async function play(page: Page, ms: number) {
+  for (let left = ms; left > 0; left -= 50) {
+    await page.clock.runFor(Math.min(50, left));
+    await page.waitForTimeout(4);
+  }
+}
+
 async function toTheMap(page: Page) {
   await page.clock.install({ time: T0 });
   await page.goto("/?demo=true&dev=true");
@@ -58,7 +69,7 @@ test.describe("travel", () => {
     await record(page);
     await toTheMap(page);
     await page.getByRole("button", { name: /School rooftop/ }).click();
-    await page.clock.runFor(1600);
+    await play(page, 1600);
     expect(await values(page, "phase")).toEqual(["covering", "title", "revealing", "done"]); // done is the instant before the card unmounts
     const phases = (await log(page)).filter((e) => e.kind === "phase");
     const start = phases[0]!.at;
@@ -76,7 +87,7 @@ test.describe("travel", () => {
     await record(page);
     await toTheMap(page);
     await page.getByRole("button", { name: /School rooftop/ }).click();
-    await page.clock.runFor(1600);
+    await play(page, 1600);
     const phases = (await log(page)).filter((e) => e.kind === "phase");
     const during = (phase: string) => phases.find((e) => e.value === phase)!.animations;
     expect(during("covering")).toEqual([{ name: "menu-wipe", duration: 300, props: ["clipPath"] }]); // exactly this: no fade, no second animation
@@ -89,7 +100,7 @@ test.describe("travel", () => {
     await toTheMap(page);
     await expect(page.getByLabel("Current location: Café Leblanc")).toBeVisible();
     await page.getByRole("button", { name: /School rooftop/ }).click();
-    await page.clock.runFor(300 + 800 + 50); // just into the reveal
+    await play(page, 300 + 800 + 50); // just into the reveal
     expect((await values(page, "phase")).slice(0, 3)).toEqual(["covering", "title", "revealing"]);
     await expect(page.getByLabel("Current location: School rooftop")).toBeVisible(); // already the rooftop behind the wipe
   });
@@ -99,7 +110,7 @@ test.describe("travel", () => {
     await record(page);
     await toTheMap(page);
     await page.getByRole("button", { name: /School rooftop/ }).click();
-    await page.clock.runFor(1600);
+    await play(page, 1600);
     const phases = (await log(page)).filter((e) => e.kind === "phase");
     expect(phases.map((e) => e.value)).toEqual(["covering", "title", "revealing", "done"]);
     expect(phases[1]!.at - phases[0]!.at).toBeLessThan(200); // a cut, not a 300 ms wipe
@@ -120,17 +131,33 @@ test.describe("travel", () => {
     await page.getByRole("button", { name: "Unlock all" }).click();
     await page.keyboard.press("n");
     await page.getByRole("button", { name: /School rooftop/ }).click();
-    await page.clock.runFor(1600);
+    await play(page, 1600);
     const phases = (await log(page)).filter((e) => e.kind === "phase");
     expect(phases[1]!.at - phases[0]!.at).toBeLessThan(200);
     for (const p of phases) expect(p.animations).toEqual([]); // and no wipe is drawn at all
+  });
+
+  test("with the HUD hidden (the map opens with N all the same) focus goes to the Show UI button when the trip ends", async ({ page }) => {
+    await record(page);
+    await page.clock.install({ time: T0 });
+    await page.goto("/?demo=true&dev=true");
+    await page.clock.resume();
+    await page.getByRole("button", { name: "Unlock all" }).click();
+    await page.keyboard.press("h"); // hide the HUD: no map button, no menu button
+    await page.keyboard.press("n");
+    await expect(page.getByRole("dialog", { name: "Map" })).toBeVisible();
+    await freeze(page);
+    await page.getByRole("button", { name: /School rooftop/ }).click();
+    await play(page, 1600);
+    await expect(page.locator("[data-phase]")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Show UI" })).toBeFocused();
   });
 
   test("when the trip ends, focus is back on the map button, not lost on the page", async ({ page }) => {
     await record(page);
     await toTheMap(page);
     await page.getByRole("button", { name: /School rooftop/ }).click();
-    await page.clock.runFor(1600);
+    await play(page, 1600);
     await expect(page.locator("[data-phase]")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Map (N)" })).toBeFocused();
   });
@@ -144,7 +171,7 @@ test.describe("the location sign", () => {
     await page.clock.resume();
     await freeze(page);
     await page.getByRole("button", { name: "Press to enter" }).click();
-    await page.clock.runFor(2000);
+    await play(page, 2000);
     const signs = (await log(page)).filter((e) => e.kind === "sign");
     expect(signs.map((e) => e.value)).toEqual(["arriving", "settled"]);
     const held = signs[1]!.at - signs[0]!.at;
@@ -159,7 +186,7 @@ test.describe("the location sign", () => {
     await page.goto("/");
     await page.clock.resume();
     await page.getByRole("button", { name: "Press to enter" }).click();
-    await page.clock.runFor(2000);
+    await play(page, 2000);
     expect(await values(page, "sign")).not.toContain("arriving");
     expect((await values(page, "sign")).at(-1)).toBe("settled");
   });
@@ -168,12 +195,12 @@ test.describe("the location sign", () => {
     await record(page);
     await toTheMap(page);
     await page.getByRole("button", { name: /School rooftop/ }).click();
-    await page.clock.runFor(3000);
+    await play(page, 3000);
     expect(await values(page, "sign")).toEqual(["settled", "arriving", "settled"]); // settled at first, big on arriving, back in its corner
     // Back to LeBlanc, which the player has already seen: the sign just changes, it does not arrive big again.
     await page.keyboard.press("n");
     await page.getByRole("button", { name: /Café Leblanc/ }).click();
-    await page.clock.runFor(3000);
+    await play(page, 3000);
     expect(await values(page, "sign")).toEqual(["settled", "arriving", "settled"]);
   });
 });
@@ -212,7 +239,7 @@ test.describe("the map", () => {
     await record(page);
     await toTheMap(page);
     await page.getByRole("button", { name: /Atelier by the park/ }).click();
-    await page.clock.runFor(2000); // the trip, then into the sign's hold, with its move finished
+    await play(page, 2000); // the trip, then into the sign's hold, with its move finished
     await expect(page.locator('[data-sign="arriving"]')).toBeVisible();
     const tv = (await page.getByRole("region", { name: "TV" }).boundingBox())!;
     for (const part of [page.locator('[data-sign="arriving"] span'), page.locator('[data-sign="arriving"] svg')]) {

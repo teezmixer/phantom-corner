@@ -1,5 +1,6 @@
 import { useEffect, useReducer } from "react";
 import { imagesOf } from "@/content/assets";
+import { ui } from "@/content/copy";
 import { getLocation } from "@/content/registry";
 import { initialTravel, preload, travelStep, travelTimings } from "@/domain/travel";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -43,8 +44,13 @@ export function TravelScreen() {
     dispatch({ type: "ARRIVE" });
   }, [phase, reduced, dispatch]);
 
-  // When travel is over the room is live again, but focus was lost with the map: put it back on the map button, the way the trip began.
-  useEffect(() => () => { document.querySelector<HTMLElement>('[aria-label="Map (N)"]')?.focus(); }, []);
+  // When travel is over the room is live again, but focus was lost with the map: put it back where the trip began. That is the map
+  // button; if the HUD is hidden (the map opens with N all the same) the menu button is gone too, so the "Show UI" button is next.
+  useEffect(() => () => {
+    const byLabel = (label: string) => document.querySelector<HTMLElement>(`[aria-label="${label}"]`);
+    const showUi = [...document.querySelectorAll<HTMLElement>("button")].find((b) => b.textContent?.trim() === ui.showUi);
+    (byLabel(ui.bar.map) ?? byLabel(ui.bar.menu) ?? showUi)?.focus();
+  }, []);
 
   const waitingLong = phase === "title" && travel.holdElapsed && !travel.assetsReady;
   return (

@@ -150,6 +150,8 @@ export const ui = {
   /** The hideout menu (spec §3.7). Joker's voice: two or three words, imperative. */
   menu: { title: "Hideout", study: "STUDY", map: "MAP", messages: "MESSAGES", profile: "PROFILE", settings: "SETTINGS", close: "CLOSE" },
   hideUi: "Hide UI",
+  /** The bottom bar's buttons (their key hints are drawn as keycaps beside them). */
+  bar: { menu: "Menu (M)", map: "Map (N)", hide: "Hide UI (H)" },
   showUi: "Show UI",
   stamped: "Today is stamped.",
   defaultName: "Student Ren",
