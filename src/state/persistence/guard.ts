@@ -49,6 +49,7 @@ export function isPersisted(v: unknown): v is Persisted {
   const { settings, mission, stamps } = v;
   return (
     isStr(v.clientId) &&
+    (v.createdAt === undefined || isStr(v.createdAt)) &&
     (v.name === null || isStr(v.name)) &&
     isRec(settings) && (!isRec(settings.ambienceMix) || Object.keys(settings.ambienceMix).length <= 200) && // every field inside is defaulted or clamped by repairSettings, so one bad preference never discards a save
     

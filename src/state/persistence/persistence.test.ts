@@ -385,6 +385,28 @@ describe("one bad preference does not cost the user their save", () => {
   });
 });
 
+describe("member since (createdAt)", () => {
+  it("a fresh save records when it was made, and it is carried through every later save unchanged", () => {
+    const f = fresh();
+    expect(f.createdAt).toBe(f.stamps.settings);
+    const state = stateFromPersisted(f, NOW, { recovered: false, storageBlocked: false });
+    expect(state.memberSince).toBe(f.createdAt);
+    expect(toPersisted({ ...state, mission: "x" }, f, "2030-01-01T00:00:00.000Z").createdAt).toBe(f.createdAt);
+  });
+  it("an older save without it loads with no member-since, and the next save stamps it once", () => {
+    const { createdAt: _gone, ...old } = fresh();
+    void _gone;
+    const state = stateFromPersisted(old as typeof old & { createdAt?: string } as ReturnType<typeof fresh>, NOW, { recovered: false, storageBlocked: false });
+    expect(state.memberSince).toBeNull();
+    expect(toPersisted(state, old as ReturnType<typeof fresh>, "2030-01-01T00:00:00.000Z").createdAt).toBe("2030-01-01T00:00:00.000Z");
+  });
+  it("a createdAt that is not a date is not shown, and one that is not a string refuses the save", () => {
+    const state = stateFromPersisted({ ...fresh(), createdAt: "not a date" }, NOW, { recovered: false, storageBlocked: false });
+    expect(state.memberSince).toBeNull();
+    expect(isPersisted({ ...fresh(), createdAt: 5 })).toBe(false);
+  });
+});
+
 describe("one bad event does not cost the user their history", () => {
   const good = { kind: "session", plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed" } as const;
   const badEvents = [

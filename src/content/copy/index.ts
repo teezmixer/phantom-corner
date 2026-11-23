@@ -173,6 +173,7 @@ export const ui = {
   /** The phone's thread view. */
   thread: { saveYes: "Yes, save it", saveNo: "Not now", skip: "Skip (S)", you: "You", yourName: "Your name", writeFeedback: "Write feedback", send: "Send" },
   /** The hideout menu (spec §3.7). Joker's voice: two or three words, imperative. */
+  profile: { title: "Profile", portrait: "Portrait art slot", knowledge: "Knowledge", level: "Level", sessions: "Sessions", minutes: "Minutes focused", memberSince: "Member since", roster: "Roster", rosterEmpty: "No one yet." },
   menu: { title: "Hideout", study: "STUDY", map: "MAP", messages: "MESSAGES", profile: "PROFILE", settings: "SETTINGS", close: "CLOSE" },
   hideUi: "Hide UI",
   /** The bottom bar's buttons (their key hints are drawn as keycaps beside them). */

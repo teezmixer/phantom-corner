@@ -55,6 +55,8 @@ export interface AppState {
   adopted?: Partial<Record<"settings" | "mission" | "todos", { stamp: string; key: string }>>;
   /** This device's id, the prefix of its event ids (D-24). Empty in the demo and dev mode, which never sync. Not part of any visible state. */
   clientId: string;
+  /** When this player's save was first made (ISO), or null when unknown (saves from before it, the demo). Never changed by play. Not part of the synced state. */
+  memberSince: string | null;
   /** Days studied, each with the stamp design earned at the time (calendar, spec §3.4). */
   studiedDays: readonly StampedDay[];
   unreadThreads: string[];
@@ -115,6 +117,7 @@ export const initialState: AppState = {
   missionsDone: 0,
   events: [],
   clientId: "",
+  memberSince: null,
   accountsEnabled: false,
   signedIn: false,
   studiedDays: [],
@@ -494,7 +497,7 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "RESET":
       // Demo mode stays demo, so a reset can never turn into writing real progress later (M3 persistence).
       // Demo stays demo, and the analytics choice is never silently undone by a reset.
-      return { ...initialState, layer: "splash", clientId: state.clientId, accountsEnabled: state.accountsEnabled, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
+      return { ...initialState, layer: "splash", clientId: state.clientId, memberSince: state.memberSince, accountsEnabled: state.accountsEnabled, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
   }
 }
 

@@ -18,6 +18,8 @@ export interface Persisted {
   schema: 5;
   /** Random id generated on first run; used by sync later (M11). */
   clientId: string;
+  /** When this save was first made (ISO), for "member since". Absent in saves from before it; filled in at the next save. */
+  createdAt?: string;
   name: string | null;
   settings: {
     muted: boolean;
@@ -65,6 +67,7 @@ export function freshPersisted(clientId: string, nowIso: string, defaults: Pick<
   return {
     schema: 5,
     clientId,
+    createdAt: nowIso,
     name: null,
     settings: { muted: false, volumes: { ...DEFAULT_VOLUMES }, ambienceMix: {}, ...DEFAULT_PREFERENCES },
     mission: null,
