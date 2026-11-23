@@ -70,6 +70,30 @@ test.describe("TV", () => {
     expect((await ytCalls(page)).some((c) => c[0] === "pause")).toBe(true);
   });
 
+  test("the player can paste their own YouTube link and hear it in the window; it is kept, listed and removable", async ({ page }) => {
+    await page.goto("/");
+    await enter(page);
+    const tv = page.getByRole("region", { name: "TV" });
+    await tv.getByRole("button", { name: "Add your own link" }).click();
+    await tv.getByLabel("Paste a YouTube link").fill("https://example.com/watch?v=dQw4w9WgXcQ");
+    await tv.getByLabel("Paste a YouTube link").press("Enter");
+    await expect(tv.getByRole("alert")).toContainText("single YouTube video");
+    expect((await ytCalls(page)).some((c) => c[0] === "load" && c[1] === "dQw4w9WgXcQ")).toBe(false);
+    await tv.getByLabel("Paste a YouTube link").fill("https://youtu.be/dQw4w9WgXcQ?si=abc");
+    await tv.getByLabel("Paste a YouTube link").press("Enter");
+    await expect(caption(page)).toHaveText("Your link 1");
+    expect(await ytCalls(page)).toContainEqual(["load", "dQw4w9WgXcQ"]);
+    // The caption box hugs its words.
+    expect((await caption(page).boundingBox())!.width).toBeLessThan(160);
+    await page.waitForFunction(() => (localStorage.getItem("pc:v1") ?? "").includes('"userTracks":["dQw4w9WgXcQ"]'));
+    await page.reload();
+    await enter(page);
+    await tv.getByRole("button", { name: "Add your own link" }).click();
+    await expect(tv.getByRole("button", { name: "Play your link 1" })).toBeVisible();
+    await tv.getByRole("button", { name: "Remove your link 1" }).click();
+    await expect(tv.getByRole("button", { name: "Play your link 1" })).toHaveCount(0);
+  });
+
   test("next and previous move through the playlist", async ({ page }) => {
     await page.goto("/");
     await enter(page);

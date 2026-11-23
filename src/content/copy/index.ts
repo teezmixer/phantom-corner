@@ -103,6 +103,14 @@ export const widgets = {
   todoEmpty: "Nothing on the list. Suspicious.", // draft (spec §3.6 sample)
   phoneEmpty: "No messages. Enjoy the quiet.", // draft (spec §3.6 sample)
   musicBlocked: "It won't start on its own. Press play on the screen.", // draft (spec §3.6 sample)
+  yourLink: (n: number) => `Your link ${n}`, // draft (the TV's own links)
+  linkHeading: "Your links",
+  linkPlaceholder: "Paste a YouTube link",
+  linkPlay: "Play",
+  linkInvalid: "That isn't a link to a single YouTube video.",
+  linkNote: "It plays in this window, through YouTube, and is kept on this device.",
+  linkRemove: (n: number) => `Remove your link ${n}`,
+  linkPlayThis: (n: number) => `Play your link ${n}`,
   musicUnavailable: "That tape's gone. Skipping it.", // draft
   musicOff: "TV's off.", // draft
   musicLoading: "Tuning in.", // draft
@@ -208,7 +216,7 @@ export const ui = {
     breakOver: "Break's over. Back to it when you're ready.", // draft
   },
   mixer: "Mixer",
-  tv: { region: "TV", previous: "Previous track", next: "Next track", play: "Play", pause: "Pause" },
+  tv: { region: "TV", previous: "Previous track", next: "Next track", play: "Play", pause: "Pause", link: "Add your own link" },
   mixerBuses: { music: "Music", ambience: "Ambience", ui: "Interface" },
   soundOn: "Sound on",
   soundOff: "Sound off",
