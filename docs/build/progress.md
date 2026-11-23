@@ -87,3 +87,7 @@
 - M12 on `m12-everything-else`: the mission-complete moment, the break in depth, day and night variants, the profile (member since, calendar, roster), the illustrated menu with Morgana's placeholder, the sign fold, presence and the bonus vote (flag + fake), Copy the card. The inventory diff found one line without an entry (the sign fold); added and built.
 - Slip: the mission-complete moment and the break share one commit (they share the store, banner and sound rules), and the share-card copy commit carries the community copy strings.
 - Found on the way: lazy menu/map needed the room's last focus remembered; a banner queue means e2e waits for banners of the session just finished; `useCallback` that closes over state setters trips the React Compiler lint.
+
+## 2026-11-23 — M12 merged, M13 final review
+- M12 merged (PR #13, 5db401d2) after round 1 (R4/BQ4/V4).
+- M13 on `m13-final-review`: the journeys walked and screenshotted; three fresh reviewers (fan 3/3/2, founder 3/4/3, engineer 4/4.5/4.5); Tier 1–2 findings fixed; `FINAL-REPORT.md` written. Features 156 pass, 9 blocked, 0 todo.
