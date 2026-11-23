@@ -92,7 +92,7 @@ test.describe("end of a session", () => {
     await page.getByRole("button", { name: "Call it" }).click();
     const summary = page.getByRole("dialog", { name: "Session complete" });
     await expect(summary).toContainText("25"); // minutes focused
-    await expect(summary).toContainText("Not bad. Coffee's on me. Once."); // Sojiro's completion line for LeBlanc
+    await expect(summary).toContainText(/Not bad\. Coffee's on me\. Once\.|Hm\. Acceptable work\.|Don't let it go to your head\./); // one of Sojiro's completion lines for LeBlanc
     await summary.getByRole("button", { name: "One more" }).click();
     await expect(page.getByRole("timer").first()).toContainText(/2[45]:\d\d/);
   });
