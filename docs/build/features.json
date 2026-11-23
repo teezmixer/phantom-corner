@@ -1572,8 +1572,8 @@
       "spec": "§4.17",
       "description": "vercel.json sets CSP, Referrer-Policy, X-Content-Type-Options, Permissions-Policy.",
       "steps": "curl -I on preview shows headers.",
-      "status": "todo",
-      "evidence": "IN PROGRESS: vercel.json sets the four headers; src/security/headers.test.ts and e2e/security.spec.ts prove them and that inline script, eval and a foreign script are refused. Waiting for the deployed preview to confirm with vercel curl."
+      "status": "pass",
+      "evidence": "vercel.json sets CSP, Referrer-Policy, X-Content-Type-Options and Permissions-Policy; src/security/headers.test.ts and e2e/security.spec.ts prove them and that inline script, eval and a foreign script are refused; `vercel curl / --deployment <preview of 08b6422d> -- -sI` showed all four headers on the deployed preview (plus HSTS from Vercel)."
     },
     {
       "id": "q-meta-tags",

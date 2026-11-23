@@ -91,3 +91,10 @@ Findings and Tier 3 proposals are recorded under each milestone heading below.
 - **Open (not blocking):** music stops at the reveal rather than the start of travel; a reload just after the reveal skips the big sign for that first visit; neither was checked on a real screen reader.
 - **Tier 3 for Ares:** D-33 (the look of travel, the sign's size and hold, the map's layout and "Place N" numbers, when the music stops).
 
+
+## M10 — hardening
+**Round 1** (fresh Opus reviewer): Readiness 4, Build quality 4, Vision fit 4. No blockers. The reviewer ran the budgets and the new e2e specs and mutation-checked four tests (the analytics gate, the 24 px rule, the focus hand-over, the timer steps); all four failed when the code was broken.
+- **Fixed after round 1:** developer mode still sent the TV's `music_played` / `track_unavailable` events (the claim "nothing sent in dev mode" was false; the gate now needs the events flag, with a dev-only e2e, mutation-checked); the Privacy page named a button that does not exist ("Delete everything"; now the real label from copy); the Settings analytics note said a change waits for the next load (it applies at once); a test title claimed it checked travel events but asserted silence (renamed; a real `travelled` assertion added to the real-visit test); docs said twelve events fire (ten today, two wait for accounts); a stale first-load number in evidence; a CSS comment that said the look does not change; share-card words moved into `content/copy`; the timer announced "25 minutes left" at the start of a 23-minute session.
+- **Open (not blocking):** a lazy chunk that fails to load keeps failing until a full reload (React caches the rejection; the crash card's Reload fixes it; a retry wrapper is optional); initial JS has 1.6 kB of headroom.
+- **Lessons:** a test that checks "nothing is sent" needs a case that would send something (the demo+dev combination hid the dev gap); splitting every screen into chunks was too eager (travel timing, focus hand-over).
+- **Tier 3 for Ares:** D-34.
