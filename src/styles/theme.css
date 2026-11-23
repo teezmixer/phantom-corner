@@ -36,10 +36,26 @@
 
   --animate-marquee: marquee 18s linear infinite;
   --animate-gate-in: gate-in 420ms cubic-bezier(.2,.9,.3,1) both;
+  /* Menu (spec §3.7, §3.10): a diagonal clip-path wipe, labels flying in at angles, and the 100 ms cut for reduced motion. */
+  --animate-menu-wipe: menu-wipe var(--motion-wipe) ease-out both;
+  --animate-menu-label: menu-label var(--motion-enter) var(--motion-enter-easing) both;
+  --animate-menu-cut: menu-cut var(--motion-reduced-cut) steps(1, end) both;
 
   @keyframes marquee {
     0% { transform: translateX(0); }
     100% { transform: translateX(-50%); }
+  }
+  @keyframes menu-wipe {
+    0% { clip-path: polygon(0 0, 0 0, -40% 100%, -40% 100%); }
+    100% { clip-path: polygon(0 0, 140% 0, 100% 100%, -40% 100%); }
+  }
+  @keyframes menu-label {
+    0% { opacity: 0; transform: translateX(-72px) rotate(calc(var(--tilt) - 10deg)); }
+    100% { opacity: 1; transform: rotate(var(--tilt)); }
+  }
+  @keyframes menu-cut {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
   }
   @keyframes gate-in {
     0% { opacity: 0; transform: translateY(16px) skewX(-6deg); }

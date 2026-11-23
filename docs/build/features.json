@@ -1165,8 +1165,8 @@
       "spec": "§3.7",
       "description": "The hideout menu has STUDY, MAP, MESSAGES, PROFILE, SETTINGS, CLOSE and each works.",
       "steps": "Playwright: each item opens its layer.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/menu.spec.ts \"each label does what it says\" (STUDY returns to the room, MAP/PROFILE/SETTINGS open their screens, MESSAGES opens the phone, CLOSE returns) and \"STUDY on an idle timer starts a session\" (idle 25:00 → counting down after STUDY); src/screens/Menu/Menu.test.tsx (the six labels; STUDY from idle starts a session, STUDY while running does not restart it, both mutation-checked; MAP selectable once the map is open)"
     },
     {
       "id": "menu-motion",
@@ -1176,8 +1176,8 @@
       "spec": "§3.7, §3.10",
       "description": "Menu opens with a clip-path diagonal wipe and staggered kinetic labels; only transform/opacity/clip-path animate.",
       "steps": "Screenshot sequence; CSS audit of animated properties.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/menu.spec.ts \"opens with a 200 ms diagonal wipe that animates only clip-path…\" reads the live CSS animations in the browser: wipe 200 ms on clip-path only; six labels 420 ms on opacity and transform only, delayed 0/60/…/300 ms in list order; \"the tilted labels never overlap\" measures the label boxes (mutation-checked). Screenshot sequence: docs/build/screens/M6/menu-wipe-mid-*. src/motion/tokens.test.ts keeps the TypeScript and CSS numbers equal. This audits the menu's animations, not every animation in the app."
     },
     {
       "id": "menu-keyboard",
@@ -1187,8 +1187,8 @@
       "spec": "§3.7, §4.12",
       "description": "Arrow keys move the highlight, Enter selects, Esc closes; focus is trapped and returned.",
       "steps": "Playwright keyboard test.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/menu.spec.ts: arrows wrap with a select sound and Enter selects; focus returns to the Menu button after menu → Esc, menu → Settings → Esc and menu → Profile → Esc (mutation-checked: fails if the opener is not carried across the swap); resting-mouse tests check the pointer really is over a label first; e2e/behaviour.spec.ts \"focus stays inside an open dialog and returns to the button that opened it\" (trap). Menu.test.tsx: wrap, Home/End, Enter, and arrows still work when a click left nothing focused (mutation-checked). Not covered: MESSAGES leaves focus on the Menu button rather than moving it to the phone."
     },
     {
       "id": "menu-sound",
@@ -1198,8 +1198,8 @@
       "spec": "§3.7, §3.9",
       "description": "Menu open/close and select play synthesised placeholder tones.",
       "steps": "Unit: sfx calls on actions.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/audio/triggers.test.ts (menuOpen on opening, menuClose on leaving the menu); Menu.test.tsx (one select sound per highlight move, none when the highlight cannot move); e2e/menu.spec.ts (the 880 Hz select tick is scheduled in the browser on an arrow key). All tones are synthesised placeholders (D-25)."
     },
     {
       "id": "menu-reduced-motion",
@@ -1209,8 +1209,8 @@
       "spec": "§3.10",
       "description": "Reduced motion turns wipes into 100 ms cuts.",
       "steps": "Playwright with reducedMotion.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/menu.spec.ts \"with the system asking for reduced motion…\": every menu animation is menu-cut, 100 ms, no delay, opacity only, with a step timing function (a 100 ms fade would fail it); mutation-checked. Note: the Settings \"Reduce motion\" override collapses all animation to ~0 ms instead of the 100 ms cut (D-30)."
     },
     {
       "id": "menu-not-yet",
@@ -1220,8 +1220,8 @@
       "spec": "§3.7",
       "description": "Unbuilt items show the struck-through 'not yet' state.",
       "steps": "Component test with an unbuilt flag.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/screens/Menu/Menu.test.tsx (struck through, says \"Not yet.\", focusable, aria-disabled, does nothing, accessible name \"MAP Not yet.\" with a real space; mutation-checked); e2e/menu.spec.ts \"a label that is not built yet can be focused, says so, and does nothing when pressed\" and \"moving the mouse onto a not-yet label highlights it\" (teal 2px outline). The strike-through is hard to see in the ransom-note display font (Tier 3, D-30)"
     },
     {
       "id": "menu-timer-continues",
@@ -1231,8 +1231,8 @@
       "spec": "§3.7",
       "description": "Opening the menu does not pause the timer.",
       "steps": "Playwright: running timer, open menu, still running.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/menu.spec.ts \"opening the menu does not pause a running timer: the minute spent behind it is counted\" reads the timer in seconds before and after a minute behind the menu (60–66 s elapsed); mutation-checked with a menu that pauses the timer on open"
     },
     {
       "id": "menu-illustrated",

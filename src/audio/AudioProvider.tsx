@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { getLocation } from "@/content/registry";
 import { useStore } from "@/state/StoreProvider";
 import { AudioEngine } from "./engine";
+import type { SfxId } from "./sfx";
 import { sfxFor } from "./triggers";
 
 interface AudioApi {
@@ -9,10 +10,12 @@ interface AudioApi {
   unlock(): void;
   /** True once the user has made any gesture. The YouTube script and player wait for it (spec §4.8). */
   gestured: boolean;
+  /** Play one interface sound now (muting, the volume and the running-session duck still apply). */
+  play(id: SfxId): void;
 }
 
 // Outside a provider (component tests) there is nothing to wait for.
-const AudioApiContext = createContext<AudioApi>({ unlock: () => undefined, gestured: true });
+const AudioApiContext = createContext<AudioApi>({ unlock: () => undefined, gestured: true, play: () => undefined });
 
 // eslint-disable-next-line react-refresh/only-export-components -- hook colocated with its provider
 export const useAudio = (): AudioApi => useContext(AudioApiContext);
@@ -85,6 +88,7 @@ export function AudioProvider({ children, engine: injected }: { children: ReactN
     };
   }, [engine]);
 
-  const api = useMemo<AudioApi>(() => ({ unlock, gestured }), [unlock, gestured]);
+  const play = useCallback((id: SfxId) => engine.playSfx(id), [engine]);
+  const api = useMemo<AudioApi>(() => ({ unlock, gestured, play }), [unlock, gestured, play]);
   return <AudioApiContext.Provider value={api}>{children}</AudioApiContext.Provider>;
 }
