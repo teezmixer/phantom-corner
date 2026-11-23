@@ -171,6 +171,8 @@ export type Action =
   | { type: "SET_VOLUME"; bus: keyof Volumes; value: number }
   | { type: "SET_LAYER_VOLUME"; id: string; value: number }
   | { type: "DEV_GRANT"; knowledge: number }
+  /** The result of a sync: the merged event log and documents (built in sync/apply.ts). */
+  | { type: "SYNC_APPLY"; patch: SyncPatch }
   | { type: "DEV_UNLOCK_ALL" }
   | { type: "DEV_JUMP_LOCATION"; id: string }
   | { type: "LOAD"; state: AppState }
@@ -223,13 +225,17 @@ export function settle(state: AppState): AppState {
   return { ...state, story: result.progress, events, unreadThreads: unread, ...(startedOnboarding ? { phoneOpen: true, phoneThread: "morgana" } : {}) };
 }
 
+/** The fields a sync may set: the event log and the three synced documents, nothing else. */
+export type SyncPatch = Pick<AppState, "events" | "muted" | "volumes" | "ambienceMix" | "hiddenWidgets" | "hudSize" | "motion" | "analytics" | "todoCollapsed" | "mission" | "missionDone" | "missionDeadline" | "todos" | "nextTodoId">;
+
 /** The reducer proper plus the story and the banners each change deserves (pure rules in domain/story.ts and banners.ts). */
 export function reducer(state: AppState, action: Action): AppState {
   const raw = coreReducer(state, action);
   // A session that has started ends the stretch of idling: the place may speak again next time.
   const core = raw.idleSaid && raw.timer.status !== "idle" ? { ...raw, idleSaid: false } : raw;
   const next = action.type === "DISMISS_BANNER" || action.type === "RESET" ? core : settle(core);
-  if (action.type === "DISMISS_BANNER" || action.type === "RESET" || action.type === "LOAD") return next;
+  // A sync brings in history, not news: no banners for levels and places earned on another device.
+  if (action.type === "DISMISS_BANNER" || action.type === "RESET" || action.type === "LOAD" || action.type === "SYNC_APPLY") return next;
   return withBanners(state, withEventIds(state, next));
 }
 
@@ -357,6 +363,8 @@ function coreReducer(state: AppState, action: Action): AppState {
       return state.banners.length === 0 ? state : { ...state, banners: state.banners.slice(1) };
     case "STORAGE_FAILED":
       return state.storageBlocked ? state : { ...state, storageBlocked: true };
+    case "SYNC_APPLY":
+      return { ...state, ...action.patch };
     case "MARK_ALL_UNREAD":
       return { ...state, unreadThreads: action.ids };
     case "SET_PHONE":
