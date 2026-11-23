@@ -12,6 +12,16 @@ test.describe("demo mode", () => {
     await expect(page.getByRole("button", { name: "Phone, 1 unread" })).toBeVisible();
   });
 
+  test("shows a Demo tag with the fan-project line and a link to how it was built", async ({ page }) => {
+    await page.goto("/?demo=true");
+    const link = page.getByRole("link", { name: "How this was built" });
+    await expect(link).toHaveAttribute("href", "https://github.com/teezmixer/phantom-corner#how-this-was-built");
+    await expect(link).toHaveAttribute("rel", /noopener/);
+    await expect(page.getByText("Demo · Fan project ·")).toBeVisible();
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: "How this was built" })).toHaveCount(0); // only in the demo
+  });
+
   test("&at=summary and &at=menu open those screens", async ({ page }) => {
     await page.goto("/?demo=true&at=summary");
     await expect(page.getByRole("dialog", { name: "Session complete" })).toBeVisible();

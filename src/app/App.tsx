@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { morgana } from "@/content/copy";
+import { demo as demoCopy, HOW_BUILT_URL, morgana } from "@/content/copy";
 import { BASE_TITLE, tabTitle } from "@/domain/title";
 import { useNow } from "@/hooks/useNow";
 import { isTypingTarget, shortcutAction } from "@/hooks/shortcuts";
@@ -89,6 +89,18 @@ function StorageNotice() {
 }
 
 /** Composition root: the room is always underneath once entered; one `layer` decides what sits on top. */
+/**
+ * Demo mode's tag (spec §3.12): says it is a demo and a fan project, and links to how it was built.
+ * DECISION: D-34 — placement and look are placeholders; kept plain at the top centre, clear of the corner groups.
+ */
+function DemoTag() {
+  return (
+    <p className="fixed left-1/2 top-1 z-40 -translate-x-1/2 border border-white bg-black px-2 py-0.5 font-body-primary text-xs text-white">
+      {demoCopy.tag} · {demoCopy.fan} · <a href={HOW_BUILT_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-redbright focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accentteal">{demoCopy.howBuilt}</a>
+    </p>
+  );
+}
+
 /** Dev tools only: renders and throws, to see the crash card for real (DevPanel "Crash a screen / the app"). */
 function DevBoom(): never {
   throw new Error("Forced crash from the developer tools");
@@ -128,6 +140,7 @@ export function App({ dev }: { dev: boolean }) {
       <TabTitle />
       <StorageNotice />
       {state.entered && <Banner />}
+      {state.demo && <DemoTag />}
       {dev && <DevPanel onCrash={setDevCrash} />}
     </>
   );

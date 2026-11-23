@@ -122,6 +122,16 @@ export const splash = {
   unmute: "Sound on",
 } as const;
 
+/** The demo tag (spec §3.12) and the pages behind the Settings → About / Credits / Privacy buttons. All DRAFT (D-10, D-14). */
+export const demo = {
+  tag: "Demo",
+  fan: "Fan project",
+  howBuilt: "How this was built",
+} as const;
+
+/** Where "How this was built" goes: the README's section of that name in the public repository. */
+export const HOW_BUILT_URL = "https://github.com/teezmixer/phantom-corner#how-this-was-built";
+
 /** Session-end choices (FigJam flow). */
 export const sessionEnd = {
   heading: "Time.", // draft (Joker: two or three words)
@@ -187,7 +197,7 @@ export const settings = {
   menuStyleNow: "Hideout (text)",
   menuStyleLater: "Illustrated Student Ren — not yet.",
   analytics: "Anonymous visit statistics",
-  analyticsNote: "Page views and speed only, never your mission or todos. A change applies the next time the page loads.",
+  analyticsNote: "Page views, speed, and which place, how long and how far you went. Never anything you write. A change applies the next time the page loads.",
   account: "Account",
   accountNote: "Accounts: not yet. Everything is saved in this browser.",
   data: "Your data",
