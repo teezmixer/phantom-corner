@@ -34,7 +34,9 @@ const sharedTransition = { duration: 0.6, ease: [0.42, 0, 0.58, 1] as const }
 
 export const SidePanel = forwardRef<HTMLDivElement, PanelContainerProps>(
   ({ panelOpen, handlePanelOpen, className, renderButton, children }, _ref) => {
-    const [measureRef, bounds] = useMeasure()
+    // offsetSize: measure the layout size, not the transformed box. The HUD is drawn under a scale() transform (ADR 0001), so
+    // the transformed height is wrong whenever the scale is not 1, and the panel would be cut short or left too tall.
+    const [measureRef, bounds] = useMeasure({ offsetSize: true })
 
     return (
       <ResizablePanel>

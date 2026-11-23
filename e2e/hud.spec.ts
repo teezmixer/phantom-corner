@@ -185,7 +185,7 @@ test.describe("export and delete", () => {
     expect(download.suggestedFilename()).toMatch(/^phantom-corner-\d{4}-\d{2}-\d{2}\.json$/);
     const path = await download.path();
     const data = JSON.parse((await import("node:fs")).readFileSync(path, "utf8"));
-    expect(data).toMatchObject({ schema: 4, mission: { text: "Export me" } });
+    expect(data).toMatchObject({ schema: 5, mission: { text: "Export me" } });
     expect(data).not.toHaveProperty("banners");
     await expect(settingsDialog(page).getByText("Saved as a file.")).toBeVisible();
   });

@@ -1,3 +1,4 @@
+import type { Step } from "@/domain/story";
 import type { ImageRef, LocationManifest } from "./types";
 
 /** The spec's floor for how much a location says in each situation (§4.6). */
@@ -14,6 +15,7 @@ export type CheckedLocation = LocationManifest & { unlockLevel: number; bonus: b
 export interface CheckedThread {
   id: string;
   trigger?: { on: string; location?: string };
+  steps?: readonly Step[];
 }
 
 export interface ContentOptions {
@@ -79,19 +81,32 @@ export function contentProblems(locations: readonly CheckedLocation[], options: 
     }
   }
 
-  // Thread ids named by manifests are unique, and a thread that names a location names one that exists.
+  // Thread ids named by manifests are unique to their location (a location's unlock and arrival may be one thread).
   const claimed = new Map<string, string>();
   for (const l of locations) {
     for (const id of [l.threads.unlock, l.threads.arrival]) {
       if (!id) continue;
       const owner = claimed.get(id);
-      if (owner !== undefined) problems.push(`thread "${id}" is claimed by both "${owner}" and "${l.id}"`);
+      if (owner !== undefined && owner !== l.id) problems.push(`thread "${id}" is claimed by both "${owner}" and "${l.id}"`);
       claimed.set(id, l.id);
     }
   }
-  for (const thread of options.threads ?? []) {
-    const target = thread.trigger?.location;
-    if (target !== undefined && !seen.has(target)) problems.push(`thread "${thread.id}" refers to the location "${target}", which does not exist`);
+  // Threads: ids are unique, a thread that names a location names one that exists, every thread a manifest names exists,
+  // every line says something, and a wait for an arrival names a real place.
+  const threads = options.threads;
+  if (threads) {
+    const ids = new Set<string>();
+    for (const thread of threads) {
+      if (ids.has(thread.id)) problems.push(`two threads have the id "${thread.id}"`);
+      ids.add(thread.id);
+      const target = thread.trigger?.location;
+      if (target !== undefined && !seen.has(target)) problems.push(`thread "${thread.id}" refers to the location "${target}", which does not exist`);
+      thread.steps?.forEach((step, i) => {
+        if ("say" in step && step.say.trim() === "") problems.push(`thread "${thread.id}" step ${i} says nothing`);
+        if ("waitFor" in step && step.waitFor === "arrived" && (step.location === undefined || !seen.has(step.location))) problems.push(`thread "${thread.id}" step ${i} waits for an arrival at "${step.location ?? "(no location)"}", which is not a location`);
+      });
+    }
+    for (const [id, owner] of claimed) if (!ids.has(id)) problems.push(`"${owner}" names the thread "${id}", which does not exist`);
   }
 
   return problems;

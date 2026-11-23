@@ -40,3 +40,13 @@ Format: what · why · what would unblock it · what was built around it.
 ## B-07 Real interface sounds, ambience and per-location music (assets / decisions)
 - **Why:** no licensed sound files exist and none may come from the game; the spec names no track ids. **Unblock:** Ares supplies or approves royalty-free sounds (licence per file) and chooses tracks per location.
 - **Built around:** synthesised tones and noise (D-25) and a shared provisional playlist (D-26); the player, mixer, volumes and rules are real and tested.
+
+## B-08 Sending feedback (needs a backend)
+- **Why:** the feedback thread captures what the player writes on their own device only. Nothing can be sent anywhere until a backend exists (spec §3.6; M11 builds the sync module with a fake when there are no credentials).
+- **Unblock:** Ares decides where feedback should go (and the privacy wording that goes with it), and a Supabase project exists (P4).
+- **Built around:** the thread keeps every message locally (trimmed to 500 characters), says so in Morgana's voice, and survives reloads; nothing is transmitted.
+
+## B-09 "No progress bar toward the next unlock" versus the level widget's bar (needs Ares's ruling)
+- **Why:** spec §3.4 says [DECIDED] there is never a progress bar toward the next unlock. The level widget (Figma, M5) shows a bar toward the next *level*, and unlocks sit on levels (3, 5, 8, 12, 16, 20, 25), so the bar hints at them. Which side gives way is a design decision. Affects `prog-unlock-im`.
+- **Unblock:** Ares rules: keep the bar, hide it, or show it only between unlock levels.
+- **Built around:** the IM reveal is built and tested; the bar is left as designed.

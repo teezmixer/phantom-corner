@@ -21,7 +21,7 @@ const manifest: LocationManifest = {
     start: ["Alright, sprint time!", "Heads down, no excuses!", "Okay okay okay, focusing!"],
     complete: ["Dude, that was solid!", "Whoa, you actually did the whole thing!", "Ha! Told you we could do it."],
   },
-  threads: { unlock: "ryuji-unlock", arrival: "ryuji-arrival" },
+  threads: { unlock: "ryuji", arrival: "ryuji" },
 };
 
 export default manifest;

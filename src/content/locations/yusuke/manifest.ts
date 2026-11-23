@@ -21,7 +21,7 @@ const manifest: LocationManifest = {
     start: ["Let us both create.", "Then we begin. Silence, please.", "Eyes on the work."],
     complete: ["Exquisite discipline.", "A session worth framing.", "You have my admiration. And my appetite."],
   },
-  threads: { unlock: "yusuke-unlock", arrival: "yusuke-arrival" },
+  threads: { unlock: "yusuke", arrival: "yusuke" },
 };
 
 export default manifest;

@@ -21,7 +21,7 @@ const manifest: LocationManifest = {
     start: ["Let's see what you're capable of.", "Begin. I'll be taking notes.", "Show me this isn't luck."],
     complete: ["Impressive. I'll admit that much.", "Adequate. Better than adequate, perhaps.", "I'll withhold further comment. For now."],
   },
-  threads: { unlock: "akechi-unlock", arrival: "akechi-arrival" },
+  threads: { unlock: "akechi", arrival: "akechi" },
 };
 
 export default manifest;

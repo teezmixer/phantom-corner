@@ -37,6 +37,7 @@ export function DevPanel() {
           </label>
           <button type="button" className={btn} onClick={() => dispatch({ type: "SET_PHONE", open: true })}>Open phone</button>
           <button type="button" className={btn} onClick={() => dispatch({ type: "MARK_ALL_UNREAD", ids: THREADS.map((t) => t.id) })}>All threads unread</button>
+          <button type="button" className={btn} onClick={() => { dispatch({ type: "REPLAY_ONBOARDING" }); }}>Replay onboarding</button>
           <button type="button" className={btn} onClick={() => dispatch({ type: "RESET" })}>Reset all data</button>
         </div>
       )}

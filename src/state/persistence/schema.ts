@@ -1,20 +1,21 @@
 import type { ProgressEvent } from "@/domain/progress";
 import type { HudSize, WidgetId } from "@/hud/slots";
 import type { StampedDay } from "@/domain/calendar";
+import type { ThreadProgress } from "@/domain/story";
 import type { TimerState } from "@/domain/timer";
 
 /** The one storage key (spec §4.7). `v1` is the key's generation, not the schema version inside it. */
 export const STORAGE_KEY = "pc:v1";
-export const CURRENT_SCHEMA = 4;
+export const CURRENT_SCHEMA = 5;
 
 /** Volumes per sound bus, 0–1. Music is the YouTube player's own volume; ambience and interface go through Web Audio. */
 export interface Volumes { music: number; ambience: number; ui: number }
 
 export type MotionSetting = "system" | "reduced";
 
-/** What is written to storage (schema 4; see migrate.ts for how older saves are upgraded). UI state — layer, open phone, hidden HUD — is never persisted. */
+/** What is written to storage (schema 5; see migrate.ts for how older saves are upgraded). UI state — layer, open phone, hidden HUD — is never persisted. */
 export interface Persisted {
-  schema: 4;
+  schema: 5;
   /** Random id generated on first run; used by sync later (M11). */
   clientId: string;
   name: string | null;
@@ -42,6 +43,8 @@ export interface Persisted {
   /** The days studied, each with the calendar stamp design earned at the time (spec §3.4). Events carry no dates, so this is the record of when. */
   studiedDays: StampedDay[];
   unreadThreads: string[];
+  /** How far each thread has got and what was said in it, by thread id (spec §4.6). Onboarding runs once because its progress is saved. */
+  story: Record<string, ThreadProgress>;
   /** Last-changed times per slice, used by sync to pick the newer side (M11). */
   stamps: { settings: string; mission: string; todos: string };
 }
@@ -60,7 +63,7 @@ export const DEFAULT_PREFERENCES = {
 
 export function freshPersisted(clientId: string, nowIso: string, defaults: Pick<Persisted, "timer" | "locationId" | "visited">): Persisted {
   return {
-    schema: 4,
+    schema: 5,
     clientId,
     name: null,
     settings: { muted: false, volumes: { ...DEFAULT_VOLUMES }, ambienceMix: {}, ...DEFAULT_PREFERENCES },
@@ -73,6 +76,7 @@ export function freshPersisted(clientId: string, nowIso: string, defaults: Pick<
     events: [],
     studiedDays: [],
     unreadThreads: [],
+    story: {},
     stamps: { settings: nowIso, mission: nowIso, todos: nowIso },
   };
 }

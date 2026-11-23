@@ -4,13 +4,16 @@
  */
 import { recordSession, type StampedDay } from "@/domain/calendar";
 import { HOME_LOCATION_ID } from "@/content/registry";
-import { THREADS } from "@/content/threads";
+import { ui } from "@/content/copy";
+import { RELEASE_VERSION, THREADS } from "@/content/threads";
 import { clampText, MAX_TODOS } from "@/domain/limits";
+import { answer, pendingAsk, post, skip, stepAll, type Facts, type Progress } from "@/domain/story";
 import { HUD_SIZES, type HudSize, type WidgetId, TOGGLEABLE_WIDGETS } from "@/hud/slots";
 import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MotionSetting, type Volumes } from "./persistence/schema";
 import { initialTimer, remainingMs, transition, type TimerEvent, type TimerState } from "@/domain/timer";
 import type { ProgressEvent } from "@/domain/progress";
 import { bannersFor, type BannerMessage } from "./banners";
+import { derive } from "./derive";
 
 export type Layer =
   | "splash" | "main" | "menu" | "map" | "travel" | "settings" | "profile"
@@ -40,6 +43,12 @@ export interface AppState {
   /** Days studied, each with the stamp design earned at the time (calendar, spec §3.4). */
   studiedDays: readonly StampedDay[];
   unreadThreads: string[];
+  /** How far each thread has got and what has been said in it (domain/story.ts). Persisted. */
+  story: Progress;
+  /** The thread open in the phone, or null for the list. Not persisted. */
+  phoneThread: string | null;
+  /** The place has said its idle line for this stretch of idling. Not persisted; cleared when a session starts. */
+  idleSaid: boolean;
   phoneOpen: boolean;
   hudHidden: boolean;
   muted: boolean;
@@ -85,6 +94,9 @@ export const initialState: AppState = {
   events: [],
   studiedDays: [],
   unreadThreads: [],
+  story: {},
+  phoneThread: null,
+  idleSaid: false,
   phoneOpen: false,
   hudHidden: false,
   muted: false,
@@ -127,6 +139,18 @@ export type Action =
   | { type: "START_TRAVEL"; to: string }
   | { type: "ARRIVE" }
   | { type: "READ_THREAD"; id: string }
+  /** Open a thread in the phone (or go back to the list with null). */
+  | { type: "OPEN_THREAD"; id: string | null }
+  /** The player answers the question a thread is waiting on (their name, in onboarding). */
+  | { type: "ANSWER_THREAD"; id: string; text: string }
+  /** The player writes in a thread that allows it (feedback). */
+  | { type: "POST_MESSAGE"; id: string; text: string }
+  /** Skip onboarding with one key: it ends at once, and the level-2 map is still granted (spec §3.5). */
+  | { type: "SKIP_ONBOARDING" }
+  /** The player has been idle in the room for a while: the place says one line (once per stretch of idling). */
+  | { type: "SAY_IDLE" }
+  /** Dev panel: run onboarding again from the start. */
+  | { type: "REPLAY_ONBOARDING" }
   | { type: "SET_PHONE"; open: boolean }
   | { type: "MARK_ALL_UNREAD"; ids: string[] }
   /** A save did not reach storage: say so instead of letting the user believe progress is kept. */
@@ -153,9 +177,48 @@ function unit(value: number): number {
  */
 export const MAX_BANNERS = 12;
 
-/** The reducer proper plus the banners each change deserves (pure rules in banners.ts). */
+/** Is onboarding under way (begun, not finished or skipped)? While it is, nothing else speaks over Morgana. */
+export const onboardingRunning = (state: AppState): boolean => !!state.story["morgana"] && !state.story["morgana"].done;
+
+/** What the thread interpreter may look at (domain/story.ts `Facts`), taken from the state. */
+export function factsFor(state: AppState): Facts {
+  return {
+    entered: state.entered,
+    firstVisit: state.firstVisit,
+    name: state.name,
+    missionSet: state.mission !== "" || state.events.some((e) => e.kind === "mission_first_set"),
+    sessionsCompleted: state.events.filter((e) => e.kind === "session" && e.outcome === "completed").length,
+    visited: state.visited,
+    unlocked: derive(state).unlocked,
+    release: RELEASE_VERSION,
+    defaultName: ui.defaultName,
+  };
+}
+
+/**
+ * Let every thread react to what just changed: start those whose moment has come, move the running ones on, give the
+ * Knowledge a `grant` step asked for (once), mark threads that said something unread, and open the phone on Morgana when
+ * onboarding begins so the first conversation is in front of the player (spec §3.5).
+ */
+export function settle(state: AppState): AppState {
+  const result = stepAll(THREADS, state.story, factsFor(state));
+  if (result.progress === state.story) return state;
+  const events = [...state.events];
+  for (const effect of result.effects) {
+    if (!events.some((e) => e.kind === "story_grant" && e.key === effect.key)) events.push({ kind: "story_grant", key: effect.key, knowledge: effect.xp });
+  }
+  const startedOnboarding = !state.story["morgana"] && !!result.progress["morgana"];
+  const gainedIds = Object.keys(result.gained).filter((id) => !(startedOnboarding && id === "morgana"));
+  const unread = [...state.unreadThreads, ...gainedIds.filter((id) => !state.unreadThreads.includes(id))];
+  return { ...state, story: result.progress, events, unreadThreads: unread, ...(startedOnboarding ? { phoneOpen: true, phoneThread: "morgana" } : {}) };
+}
+
+/** The reducer proper plus the story and the banners each change deserves (pure rules in domain/story.ts and banners.ts). */
 export function reducer(state: AppState, action: Action): AppState {
-  const next = coreReducer(state, action);
+  const raw = coreReducer(state, action);
+  // A session that has started ends the stretch of idling: the place may speak again next time.
+  const core = raw.idleSaid && raw.timer.status !== "idle" ? { ...raw, idleSaid: false } : raw;
+  const next = action.type === "DISMISS_BANNER" || action.type === "RESET" ? core : settle(core);
   if (action.type === "DISMISS_BANNER" || action.type === "RESET" || action.type === "LOAD") return next;
   const fresh = bannersFor(state, next);
   if (fresh.length === 0) return next;
@@ -263,6 +326,40 @@ function coreReducer(state: AppState, action: Action): AppState {
       return { ...state, unreadThreads: action.ids };
     case "SET_PHONE":
       return { ...state, phoneOpen: action.open };
+    case "SAY_IDLE":
+      // Only in the room, with the timer idle, in a real visit, not while Morgana is still onboarding the player, and once until a session has started and ended.
+      return state.entered && state.layer === "main" && state.timer.status === "idle" && !state.idleSaid && !state.demo && !onboardingRunning(state) ? { ...state, idleSaid: true } : state;
+    case "OPEN_THREAD":
+      return { ...state, phoneThread: action.id, unreadThreads: action.id ? state.unreadThreads.filter((id) => id !== action.id) : state.unreadThreads };
+    case "ANSWER_THREAD": {
+      const thread = THREADS.find((t) => t.id === action.id);
+      const progress = state.story[action.id];
+      if (!thread || !progress) return state;
+      const asked = pendingAsk(thread, progress);
+      const said = clampText(action.text);
+      const nextProgress = answer(thread, progress, said, asked === "name" ? said : state.name || ui.defaultName);
+      if (nextProgress === progress) return state;
+      return { ...state, story: { ...state.story, [action.id]: nextProgress }, name: asked === "name" ? said : state.name };
+    }
+    case "POST_MESSAGE": {
+      const thread = THREADS.find((t) => t.id === action.id);
+      const progress = state.story[action.id];
+      if (!thread || !progress) return state;
+      const nextProgress = post(thread, progress, action.text, state.name || ui.defaultName);
+      return nextProgress === progress ? state : { ...state, story: { ...state.story, [action.id]: nextProgress } };
+    }
+    case "SKIP_ONBOARDING": {
+      const thread = THREADS.find((t) => t.id === "morgana");
+      if (!thread || state.story["morgana"]?.done) return state;
+      // The first-mission Knowledge is what opens the map (level 2); a skipped onboarding still gets it, once.
+      const events: ProgressEvent[] = state.events.some((e) => e.kind === "mission_first_set") ? state.events : [...state.events, { kind: "mission_first_set" }];
+      return { ...state, story: { ...state.story, morgana: skip(thread, state.story["morgana"]) }, events };
+    }
+    case "REPLAY_ONBOARDING": {
+      const { morgana: _removed, ...rest } = state.story;
+      void _removed;
+      return { ...state, story: rest, firstVisit: true, unreadThreads: state.unreadThreads.filter((id) => id !== "morgana") };
+    }
     case "TOGGLE_HUD":
       return { ...state, hudHidden: !state.hudHidden };
     case "SET_VOLUME":

@@ -71,7 +71,7 @@ describe("store reducer", () => {
   });
 
   it("does not change state for a meaningless timer event", () => {
-    const s = run([]);
+    const s = run([{ type: "SET_PHONE", open: false }]); // the first action lets the always-there threads start; after that nothing is pending
     expect(reducer(s, { type: "TIMER", event: { type: "PAUSE", now: T0 }, now: T0 })).toBe(s);
   });
 

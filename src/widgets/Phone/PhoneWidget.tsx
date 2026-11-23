@@ -1,29 +1,41 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowLeft, DeviceMobile } from "@phosphor-icons/react";
 import { SidePanel } from "@/components/ui/side-panel";
-import { widgets } from "@/content/copy";
+import { ui, widgets } from "@/content/copy";
 import { THREADS } from "@/content/threads";
+import { pendingAsk, type Message } from "@/domain/story";
+import { cn } from "@/lib/utils";
 import { useStore } from "@/state/StoreProvider";
 
+const speaker = (from: string) => from.charAt(0).toUpperCase() + from.slice(1);
+
 /**
- * Phone: Cult UI side panel that opens from a phone button with an unread badge. Lists every thread (spec §3.6);
- * message steps and the thread interpreter arrive in M8, so a thread shows a draft placeholder line for now.
+ * Phone: Cult UI side panel that opens from a phone button with an unread badge. The list shows only the threads that have
+ * started (nothing telegraphs what unlocks next, spec §3.4); a thread shows its messages, asks the question it is waiting on
+ * (onboarding asks the player's name) and, for feedback, takes what the player writes (kept on this device for now).
  */
 export function PhoneWidget() {
   const { state, dispatch } = useStore();
-  const [openThread, setOpenThread] = useState<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const thread = THREADS.find((t) => t.id === state.phoneThread);
+  const progress = thread ? state.story[thread.id] : undefined;
+  const started = THREADS.filter((t) => state.story[t.id]);
+
   // Opened from the menu or dev panel: move focus to the phone so keyboard users land on it.
   useEffect(() => {
     if (state.phoneOpen && document.activeElement === document.body) buttonRef.current?.focus();
   }, [state.phoneOpen]);
-  const unread = state.unreadThreads.length;
-  const thread = THREADS.find((t) => t.id === openThread);
 
-  const open = (id: string) => {
-    setOpenThread(id);
-    dispatch({ type: "READ_THREAD", id });
-  };
+  // A thread that is open is a thread being read: new lines in it never leave it marked unread.
+  const openId = state.phoneOpen ? state.phoneThread : null;
+  const openUnread = openId !== null && state.unreadThreads.includes(openId);
+  useEffect(() => {
+    if (openId && openUnread) dispatch({ type: "READ_THREAD", id: openId });
+  }, [openId, openUnread, dispatch]);
+
+  const unread = state.unreadThreads.length;
+  const asking = thread ? pendingAsk(thread, progress) : null;
+  const onboarding = thread?.id === "morgana" && progress && !progress.done;
 
   return (
     <div className="pointer-events-auto font-body-primary text-white" role="region" aria-label="Phone">
@@ -38,27 +50,81 @@ export function PhoneWidget() {
           </button>
         )}
       >
-        <div className="max-h-72 overflow-y-auto px-3 pb-3 text-sm">
-          {thread ? (
-            <div>
-              <button type="button" onClick={() => setOpenThread(null)} className="mb-2 flex items-center gap-1 text-white focus-visible:outline-2 focus-visible:outline-accentteal"><ArrowLeft size={14} />{thread.title}</button>
-              <p className="border border-white p-2">{thread.placeholder}</p>
-            </div>
+        <div className="px-3 pb-3 text-sm">
+          {thread && progress ? (
+            <ThreadView
+              key={thread.id}
+              title={thread.title}
+              messages={progress.messages}
+              asking={asking}
+              compose={!!thread.compose}
+              onboarding={!!onboarding}
+              onBack={() => dispatch({ type: "OPEN_THREAD", id: null })}
+              onSend={(text) => dispatch(asking ? { type: "ANSWER_THREAD", id: thread.id, text } : { type: "POST_MESSAGE", id: thread.id, text })}
+              onSkip={() => dispatch({ type: "SKIP_ONBOARDING" })}
+            />
+          ) : started.length === 0 ? (
+            <p>{widgets.phoneEmpty}</p>
           ) : (
-            <ul>
-              {THREADS.map((t) => (
+            <ul className="max-h-60 overflow-y-auto">
+              {started.map((t) => (
                 <li key={t.id}>
-                  <button type="button" onClick={() => open(t.id)} className="flex w-full items-center justify-between py-1 text-left hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
+                  <button type="button" onClick={() => dispatch({ type: "OPEN_THREAD", id: t.id })} className="flex w-full items-center justify-between gap-3 whitespace-nowrap py-0.5 text-left hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
                     <span>{t.title}</span>
-                    {state.unreadThreads.includes(t.id) && <span className="size-2 bg-redbright" aria-label="unread" />}
+                    {state.unreadThreads.includes(t.id) && <span className="size-2 bg-redbright" role="img" aria-label="unread" />}
                   </button>
                 </li>
               ))}
             </ul>
           )}
-          {THREADS.length === 0 && <p>{widgets.phoneEmpty}</p>}
         </div>
       </SidePanel>
+    </div>
+  );
+}
+
+function ThreadView({ title, messages, asking, compose, onboarding, onBack, onSend, onSkip }: {
+  title: string; messages: Message[]; asking: "name" | "save_progress" | null; compose: boolean; onboarding: boolean;
+  onBack: () => void; onSend: (text: string) => void; onSkip: () => void;
+}) {
+  const [text, setText] = useState("");
+  const log = useRef<HTMLDivElement>(null);
+  const back = useRef<HTMLButtonElement>(null);
+  const [first] = useState(messages.length); // lines already on screen when this view opened: only newer ones animate in
+  useEffect(() => { log.current?.scrollTo?.({ top: log.current.scrollHeight }); }, [messages.length]);
+  const canWrite = asking === "name" || compose;
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!text.trim()) return;
+    onSend(text);
+    setText("");
+    // Answering the name removes the box, so focus would fall to the page: put it on the thread's back button instead.
+    if (asking === "name") back.current?.focus();
+  };
+
+  return (
+    <div className="w-80">
+      <div className="mb-2 flex items-center justify-between">
+        <button type="button" ref={back} onClick={onBack} className="flex items-center gap-1 text-white focus-visible:outline-2 focus-visible:outline-accentteal"><ArrowLeft size={14} aria-hidden="true" />{title}</button>
+        {onboarding && <button type="button" onClick={() => { onSkip(); back.current?.focus(); /* the skip button is about to disappear */ }} className="border border-white px-1 text-xs hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">{ui.thread.skip}</button>}
+      </div>
+      {/* The log is the part that scrolls, so the header and the box to write in are always in view. It has no focusable child, so current browsers make it keyboard-focusable themselves. */}
+      <div ref={log} role="log" aria-label={title} className="flex max-h-44 flex-col gap-1 overflow-y-auto">
+        {messages.map((m, i) => (
+          <p key={i} style={i >= first && m.delayMs ? { animationDelay: `${m.delayMs}ms` } : undefined}
+            className={cn("max-w-[90%] border px-2 py-1", m.side === "me" ? "self-end border-redbright bg-redbright text-white" : "self-start border-white", i >= first && "motion-safe:animate-gate-in")}>
+            <span className="sr-only">{m.side === "me" ? ui.thread.you : speaker(m.from)}: </span>{m.text}
+          </p>
+        ))}
+      </div>
+      {canWrite && (
+        <form onSubmit={submit} className="mt-2 flex gap-1">
+          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={asking === "name" ? 80 : 500} aria-label={asking === "name" ? ui.thread.yourName : ui.thread.writeFeedback}
+            placeholder={asking === "name" ? ui.thread.yourName : ui.thread.writeFeedback} className="min-w-0 flex-1 border border-white bg-black px-2 py-1 focus-visible:outline-2 focus-visible:outline-accentteal" />
+          <button type="submit" className="border border-white px-2 hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">{ui.thread.send}</button>
+        </form>
+      )}
     </div>
   );
 }

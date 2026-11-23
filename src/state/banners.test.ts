@@ -125,3 +125,61 @@ describe("the banner queue the player actually sees", () => {
     expect(s.banners.at(-1)!.id).toContain(`knowledge-${derive(s).knowledge}`);
   });
 });
+
+describe("place lines (spec §3.3)", () => {
+  it("a session starting brings one of the place's start lines, a different one each session", () => {
+    const first = texts(room, run([{ type: "START_SESSION", now: 0 }]));
+    expect(first).toEqual(["Quiet hours. Good."]);
+    const afterOne = run([{ type: "START_SESSION", now: 0 }, { type: "TIMER", event: { type: "TICK", now: 25 * MINUTE }, now: 25 * MINUTE }]);
+    expect(texts(afterOne, run([{ type: "START_SESSION", now: 26 * MINUTE }], afterOne))).toContain("Go on, then. I'll be here."); // the next line
+  });
+
+  it("pausing and resuming is not a new start, and the demo stays quiet", () => {
+    const running = run([{ type: "START_SESSION", now: 0 }]);
+    const paused = run([{ type: "TIMER", event: { type: "PAUSE", now: MINUTE }, now: MINUTE }], running);
+    expect(texts(paused, run([{ type: "TIMER", event: { type: "RESUME", now: 2 * MINUTE }, now: 2 * MINUTE }], paused))).toEqual([]);
+    expect(texts({ ...room, demo: true }, run([{ type: "START_SESSION", now: 0 }], { ...room, demo: true }))).toEqual([]);
+  });
+
+  it("a first arrival at a place with no character thread says that place's arrival line; a character's place leaves it to the phone", () => {
+    const toBonus = run([{ type: "DEV_JUMP_LOCATION", id: "mementos" }]);
+    expect(texts(room, toBonus)).toContain("Stay close. The tunnels go on forever.");
+    const toRyuji = run([{ type: "DEV_JUMP_LOCATION", id: "ryuji" }]);
+    expect(texts(room, toRyuji)).toEqual([]);
+    expect(texts(toBonus, run([{ type: "DEV_JUMP_LOCATION", id: "mementos" }], toBonus))).toEqual([]); // not again
+  });
+});
+
+describe("idle lines (spec §3.3)", () => {
+  const settled = run([{ type: "SET_PHONE", open: false }]); // the room, idle timer
+
+  it("the place says one idle line, then stays quiet for the rest of that stretch of idling", () => {
+    const said = run([{ type: "SAY_IDLE" }], settled);
+    expect(said.idleSaid).toBe(true);
+    expect(texts(settled, said)).toHaveLength(1);
+    expect(["Coffee's not going to drink itself.", "The clock's not going to stop for you.", "You staring at the cup won't fill it."]).toContain(texts(settled, said)[0]);
+    const again = run([{ type: "SAY_IDLE" }], said);
+    expect(again).toBe(said); // nothing new
+  });
+
+  it("only in the room, with the timer idle, in a real visit", () => {
+    expect(run([{ type: "SAY_IDLE" }], { ...settled, layer: "menu" }).idleSaid).toBe(false);
+    expect(run([{ type: "SAY_IDLE" }], { ...settled, entered: false }).idleSaid).toBe(false);
+    expect(run([{ type: "SAY_IDLE" }], { ...settled, demo: true }).idleSaid).toBe(false);
+    const running = run([{ type: "START_SESSION", now: 0 }], settled);
+    expect(run([{ type: "SAY_IDLE" }], running).idleSaid).toBe(false);
+  });
+
+  it("not while Morgana is still onboarding the player: the place does not talk over her", () => {
+    const onboarding = run([{ type: "ENTER" }], { ...initialState, layer: "splash", entered: false, firstVisit: true });
+    expect(run([{ type: "SAY_IDLE" }], onboarding).idleSaid).toBe(false);
+    const skipped = run([{ type: "SKIP_ONBOARDING" }, { type: "SAY_IDLE" }], onboarding);
+    expect(skipped.idleSaid).toBe(true); // once onboarding is over, it may
+  });
+
+  it("starting a session ends the stretch, so the place can speak again the next time the player idles", () => {
+    const said = run([{ type: "SAY_IDLE" }], settled);
+    const running = run([{ type: "START_SESSION", now: 0 }], said);
+    expect(running.idleSaid).toBe(false);
+  });
+});

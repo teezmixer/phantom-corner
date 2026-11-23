@@ -21,7 +21,7 @@ const manifest: LocationManifest = {
     start: ["entering flow state. do not disturb.", "ok. focus. i'll pretend i'm not watching.", "starting timer. no peeking at my screen."],
     complete: ["nice run. don't tell anyone i was impressed.", "gg. that was actually kind of cool.", "achievement unlocked: not giving up. don't let it go to your head."],
   },
-  threads: { unlock: "futaba-unlock", arrival: "futaba-arrival" },
+  threads: { unlock: "futaba", arrival: "futaba" },
 };
 
 export default manifest;

@@ -5,6 +5,8 @@ import { MAX_BACKUPS, localStorageAdapter, memoryAdapter } from "./adapter";
 import { isPersisted } from "./guard";
 import { loadPersisted } from "./load";
 import { repairTodos, stateFromPersisted, toPersisted } from "./mapping";
+import { THREADS } from "@/content/threads";
+import { repairStory } from "./repair";
 import { migrate, type Migration } from "./migrate";
 import { freshPersisted, STORAGE_KEY } from "./schema";
 import { createSaver } from "./saver";
@@ -64,7 +66,7 @@ describe("load path", () => {
   });
 });
 
-describe("the real migrations 1 → 2 → 3 → 4 (existing users keep their progress)", () => {
+describe("the real migrations 1 → 2 → 3 → 4 → 5 (existing users keep their progress)", () => {
   // Exactly what M3 wrote to localStorage.
   const v1 = {
     schema: 1, clientId: "old-client", name: "Ren", settings: { muted: true },
@@ -77,32 +79,33 @@ describe("the real migrations 1 → 2 → 3 → 4 (existing users keep their pro
 
   const PREFS = { hidden: [], hudSize: 1, motion: "system", analytics: true, todoCollapsed: false };
 
-  it("loads a schema-2 save (exactly what M4 wrote) as schema 4, keeping volumes and everything else", () => {
+  it("loads a schema-2 save (exactly what M4 wrote) as schema 5, keeping volumes and everything else", () => {
     const v2 = { ...v1, schema: 2, settings: { muted: true, volumes: { music: 0.2, ambience: 0.9, ui: 0.1 }, ambienceMix: { "leblanc-rain": 0.4 } } };
     const r = load(JSON.stringify(v2));
     expect(r.recovered).toBe(false);
     expect(r.adapter.dump().backups).toEqual([]);
-    expect(r.persisted.schema).toBe(4);
+    expect(r.persisted.schema).toBe(5);
+    expect(r.persisted.story).toEqual({});
     expect(r.persisted.studiedDays).toEqual([]);
     expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.2, ambience: 0.9, ui: 0.1 }, ambienceMix: { "leblanc-rain": 0.4 }, ...PREFS });
     expect(r.persisted).toMatchObject({ name: "Ren", locationId: "ryuji", unreadThreads: ["ann"] });
   });
 
-  it("loads a schema-1 save as schema 4 without treating it as unreadable, keeping everything", () => {
+  it("loads a schema-1 save as schema 5 without treating it as unreadable, keeping everything", () => {
     const r = load(JSON.stringify(v1));
     expect(r.recovered).toBe(false);
     expect(r.adapter.dump().backups).toEqual([]);
-    expect(r.persisted).toMatchObject({ schema: 4, studiedDays: [], clientId: "old-client", name: "Ren", locationId: "ryuji", visited: ["leblanc", "ryuji"], unreadThreads: ["ann"] });
+    expect(r.persisted).toMatchObject({ schema: 5, studiedDays: [], story: {}, clientId: "old-client", name: "Ren", locationId: "ryuji", visited: ["leblanc", "ryuji"], unreadThreads: ["ann"] });
     expect(r.persisted.events).toHaveLength(2);
     expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {}, ...PREFS });
   });
 
-  it("loads a schema-3 save (what M5 and M6 wrote) as schema 4: nothing lost, the calendar starts empty", () => {
+  it("loads a schema-3 save (what M5 and M6 wrote) as schema 5: nothing lost, the calendar and the story start empty", () => {
     const v3 = { ...v1, schema: 3, settings: { muted: false, volumes: { music: 0.3, ambience: 0.3, ui: 0.3 }, ambienceMix: {}, ...PREFS, hudSize: 1.3 } };
     const r = load(JSON.stringify(v3));
     expect(r.recovered).toBe(false);
     expect(r.adapter.dump().backups).toEqual([]);
-    expect(r.persisted).toMatchObject({ schema: 4, studiedDays: [], name: "Ren", locationId: "ryuji" });
+    expect(r.persisted).toMatchObject({ schema: 5, studiedDays: [], story: {}, name: "Ren", locationId: "ryuji" });
     expect(r.persisted.settings.hudSize).toBe(1.3);
     expect(r.persisted.events).toHaveLength(2); // the sessions are kept; they just have no date
   });
@@ -528,5 +531,107 @@ describe("a session that ended while the tab was closed is announced when the pl
     expect(entered.banners.map((b) => b.text)[0]).toBe("Ah, you're back.");
     expect(entered.banners.map((b) => b.text)).toContain("+30 Knowledge");
     expect(entered.banners.length).toBeGreaterThan(1);
+  });
+});
+
+describe("the story survives storage", () => {
+  const msg = (text: string, side: "them" | "me" = "them") => ({ side, from: "morgana", text });
+  const reopen = (patch: object) => {
+    const r = load(JSON.stringify({ ...fresh(), ...patch }));
+    return { r, state: stateFromPersisted(r.persisted, NOW, { recovered: r.recovered, storageBlocked: false, firstVisit: false }) };
+  };
+
+  it("round-trips thread progress through the app state", () => {
+    const story = { morgana: { cursor: 3, messages: [msg("Oi."), msg("Name?"), msg("Ren", "me")], done: false } };
+    const back = stateFromPersisted(toPersisted({ ...initialState, story }, fresh(), ISO), NOW, { recovered: false, storageBlocked: false });
+    expect(back.story).toEqual(story);
+  });
+
+  it("onboarding runs once: after a reload the saved progress is there, and it does not start again", () => {
+    const entered = [{ type: "ENTER" as const }].reduce(reducer, { ...initialState, layer: "splash" as const, firstVisit: true });
+    const saved = toPersisted(entered, fresh(), ISO);
+    const { state } = reopen(saved); // the next visit
+    expect(state.story["morgana"]!.messages).toHaveLength(3);
+    const again = reducer({ ...state, entered: false, layer: "splash" }, { type: "ENTER" });
+    expect(again.story["morgana"]!.messages).toHaveLength(3); // not three more
+    expect(again.phoneOpen).toBe(false); // and the phone does not pop open on a return
+  });
+
+  it("an existing player (a schema-4 save) is not onboarded, and each character they have unlocked sends their first message", () => {
+    const v4 = { ...fresh(), schema: 4, story: undefined, events: [{ kind: "mission_first_set" }, { kind: "dev_grant", knowledge: 40 }], visited: ["leblanc", "ryuji"], studiedDays: [] };
+    const { state } = reopen(v4);
+    expect(state.story).toEqual({});
+    const entered = reducer({ ...state, entered: false, layer: "splash" }, { type: "ENTER" });
+    expect(entered.story["morgana"]).toBeUndefined();
+    expect(entered.story["ryuji"]!.done).toBe(true); // they have already been to the roof: invitation and arrival play out
+    expect(entered.unreadThreads).toContain("ryuji");
+  });
+
+  it("a save with a missing or broken story loads with an empty one; the rest is kept", () => {
+    for (const story of [undefined, null, "x", 5, [], 7]) {
+      const { r, state } = reopen({ name: "Ren", story });
+      expect(r.recovered, JSON.stringify(story)).toBe(false);
+      expect(state.story).toEqual({});
+      expect(state.name).toBe("Ren");
+    }
+  });
+});
+
+describe("repairStory", () => {
+  const good = { cursor: 2, messages: [{ side: "them", from: "morgana", text: "Oi." }], done: false };
+
+  it("keeps a well-formed thread, and at the last step it is finished", () => {
+    expect(repairStory({ morgana: good }).morgana).toEqual({ cursor: 2, messages: good.messages, done: false });
+    const steps = THREADS.find((t) => t.id === "ryuji")!.steps.length;
+    expect(repairStory({ ryuji: { ...good, cursor: steps, done: false } }).ryuji!.done).toBe(true); // at the last step: finished, whatever the file says
+    expect(repairStory({ ryuji: { ...good, cursor: steps - 1, done: false } }).ryuji!.done).toBe(false); // one step short: still going
+  });
+
+  it("a thread the player finished stays finished when its content changes in a later build", () => {
+    const steps = THREADS.find((t) => t.id === "ryuji")!.steps.length;
+    // Saved when the thread was shorter (done, cursor at the old end): now it has more steps. It must not reopen or replay.
+    const grown = repairStory({ ryuji: { cursor: steps - 2, messages: good.messages, done: true } }).ryuji!;
+    expect(grown.done).toBe(true);
+    expect(grown.cursor).toBe(steps);
+    // Saved when the thread was longer: a position past the end is the end, not a corrupt save.
+    const shrunk = repairStory({ ryuji: { ...good, cursor: steps + 5, done: false } }).ryuji!;
+    expect(shrunk.done).toBe(true);
+    expect(shrunk.cursor).toBe(steps);
+  });
+
+  it("a finished thread does not say its new lines to a player who has already finished it", () => {
+    const steps = THREADS.find((t) => t.id === "ryuji")!.steps.length;
+    const r = load(JSON.stringify({ ...fresh(), story: { ryuji: { cursor: steps - 2, messages: [{ side: "them", from: "ryuji", text: "Yo!" }], done: true } }, events: [{ kind: "dev_grant", knowledge: 40 }], visited: ["leblanc", "ryuji"] }));
+    const state = stateFromPersisted(r.persisted, NOW, { recovered: false, storageBlocked: false, firstVisit: false });
+    const entered = reducer({ ...state, entered: false, layer: "splash" }, { type: "ENTER" });
+    expect(entered.story["ryuji"]!.messages).toHaveLength(1); // nothing replayed
+    expect(entered.unreadThreads).not.toContain("ryuji");
+  });
+
+  it("drops threads that are not real, and ones whose position is impossible", () => {
+    const out = repairStory({ nonsense: good, morgana: { ...good, cursor: -1 }, ann: { ...good, cursor: 1.5 }, haru: "x", futaba: null });
+    expect(out).toEqual({});
+  });
+
+  it("drops bad messages and cuts long ones, keeping the rest", () => {
+    const out = repairStory({ morgana: { cursor: 2, done: false, messages: [
+      good.messages[0], { side: "them", text: "" }, { side: "elsewhere", text: "x" }, null, "x", { side: "me", text: "y".repeat(900) }, { side: "them", from: 7, text: "no sender" },
+      { side: "them", text: "paced", delayMs: 99999 },
+    ] } });
+    const texts = out.morgana!.messages.map((m) => m.text.length);
+    expect(texts).toEqual([3, 500, 9, 5]);
+    expect(out.morgana!.messages[2]!.from).toBe("morgana"); // a missing sender falls back to the thread's
+    expect(out.morgana!.messages[3]!.delayMs).toBe(5000); // capped
+  });
+
+  it("a feedback thread is never done, however far it has got", () => {
+    expect(repairStory({ feedback: { ...good, cursor: 2 } }).feedback!.done).toBe(false);
+  });
+
+  it("never keeps more than the cap", () => {
+    const many = Array.from({ length: 400 }, (_, i) => ({ side: "them", from: "morgana", text: `m${i}` }));
+    const out = repairStory({ morgana: { cursor: 2, messages: many, done: false } });
+    expect(out.morgana!.messages).toHaveLength(200);
+    expect(out.morgana!.messages.at(-1)!.text).toBe("m399"); // the newest are kept
   });
 });

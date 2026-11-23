@@ -9,7 +9,7 @@ export function isTypingTarget(target: EventTarget | null): boolean {
 const DISMISSABLE = ["menu", "map", "settings", "profile", "about", "credits", "privacy"];
 
 /**
- * Keyboard shortcuts (spec §3.6): Space start/pause, M menu, N map, H hide UI, Esc closes any layer.
+ * Keyboard shortcuts (spec §3.6): Space start/pause, M menu, N map, H hide UI, S skip onboarding (while it runs), Esc closes any layer.
  * Pure: maps a key and the state to an action (or null). Off while typing in a field; modifier combos are ignored.
  */
 export function shortcutAction(
@@ -37,6 +37,8 @@ export function shortcutAction(
     return inRoom && derived.mapOpen ? { type: "SET_LAYER", layer: "map" } : null;
   }
   if (k === "h") return inRoom ? { type: "TOGGLE_HUD" } : null;
+  // S skips onboarding, at any point, while it is running (spec §3.5: one key).
+  if (k === "s" && inRoom && state.story["morgana"] && !state.story["morgana"].done) return { type: "SKIP_ONBOARDING" };
   if (key === " " && inRoom && !mods.onButton) {
     const t = state.timer;
     if (t.status === "idle") return { type: "TIMER", event: { type: "START", now }, now };

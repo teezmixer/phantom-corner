@@ -1,7 +1,7 @@
 import { recordSession, repairStampedDays } from "@/domain/calendar";
 import { clampText, MAX_TODOS } from "@/domain/limits";
 import { isEvent } from "./guard";
-import { repairDeadline, repairSettings } from "./repair";
+import { repairDeadline, repairSettings, repairStory } from "./repair";
 import { bannersFor } from "../banners";
 import { MAX_BANNERS, initialState, type AppState, type Todo } from "../store";
 import type { Persisted } from "./schema";
@@ -72,6 +72,7 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     studiedDays,
     banners: offlineBanners.slice(-MAX_BANNERS),
     unreadThreads: p.unreadThreads,
+    story: repairStory(p.story),
     firstVisit: flags.firstVisit ?? false,
     recovered: flags.recovered,
     storageBlocked: flags.storageBlocked,
@@ -97,7 +98,7 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
   };
   const settingsChanged = JSON.stringify(prev.settings) !== JSON.stringify(settings);
   return {
-    schema: 4,
+    schema: 5,
     clientId: prev.clientId,
     name: state.name === "" ? null : state.name,
     settings,
@@ -110,6 +111,7 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
     events: state.events,
     studiedDays: [...state.studiedDays],
     unreadThreads: state.unreadThreads,
+    story: { ...state.story },
     stamps: {
       settings: settingsChanged ? nowIso : prev.stamps.settings,
       mission: missionChanged ? nowIso : prev.stamps.mission,

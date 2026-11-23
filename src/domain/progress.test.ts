@@ -136,3 +136,12 @@ describe("unlocks follow the data (fold over Knowledge → level → locations)"
     expect(new Set([...state.unlocked, ...state.held]).size).toBe(state.unlocked.length + state.held.length);
   });
 });
+
+describe("story_grant", () => {
+  it("adds the Knowledge a thread gave, once per key", () => {
+    const grant = (key: string, knowledge: number): ProgressEvent => ({ kind: "story_grant", key, knowledge });
+    expect(knowledgeFor([grant("a:1", 7)])).toBe(7);
+    expect(knowledgeFor([grant("a:1", 7), grant("a:1", 7)])).toBe(7); // the same step is never counted twice
+    expect(knowledgeFor([grant("a:1", 7), grant("b:2", 3)])).toBe(10);
+  });
+});

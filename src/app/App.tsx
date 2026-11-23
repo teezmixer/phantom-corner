@@ -4,7 +4,7 @@ import { BASE_TITLE, tabTitle } from "@/domain/title";
 import { useNow } from "@/hooks/useNow";
 import { isTypingTarget, shortcutAction } from "@/hooks/shortcuts";
 import { useStore } from "@/state/StoreProvider";
-import type { Layer } from "@/state/store";
+import { onboardingRunning, type Layer } from "@/state/store";
 import { BreakScreen } from "@/screens/Break/BreakScreen";
 import { MapScreen } from "@/screens/Map/MapScreen";
 import { Menu } from "@/screens/Menu/Menu";
@@ -45,6 +45,24 @@ function SessionClock() {
   useEffect(() => {
     if (timer.status === "running" && now >= timer.endsAt) dispatch({ type: "TIMER", event: { type: "TICK", now }, now });
   }, [timer, now, dispatch]);
+  return null;
+}
+
+/** How long the player idles in the room before the place says an idle line. PROVISIONAL (D-32). */
+export const IDLE_AFTER_MS = 90_000;
+
+/**
+ * After a while of idling in the room (timer not running, nothing open, in a real visit) the place says one line, once per
+ * stretch of idling. Any activity that leaves the room or starts the timer cancels the wait.
+ */
+function IdleVoice() {
+  const { state, dispatch } = useStore();
+  const armed = state.entered && state.layer === "main" && state.timer.status === "idle" && !state.idleSaid && !state.demo && !onboardingRunning(state);
+  useEffect(() => {
+    if (!armed) return;
+    const id = setTimeout(() => dispatch({ type: "SAY_IDLE" }), IDLE_AFTER_MS);
+    return () => clearTimeout(id);
+  }, [armed, dispatch]);
   return null;
 }
 
@@ -94,6 +112,7 @@ export function App({ dev }: { dev: boolean }) {
       {state.entered && <MainScreen locked={state.layer !== "main"} />}
       {LAYERS[state.layer]?.()}
       <SessionClock />
+      <IdleVoice />
       <TabTitle />
       <StorageNotice />
       {state.entered && <Banner />}
