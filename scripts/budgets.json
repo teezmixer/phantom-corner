@@ -1,0 +1,7 @@
+{
+  "_comment": "Performance budgets (spec §4.15). Sizes in kB of 1000 bytes. JS and CSS are measured gzipped, as a CDN serves them; images and fonts as they are. Any change here is a decision for Ares.",
+  "initialJsGzipKB": 120,
+  "firstLoadKB": 800,
+  "imageKB": 250,
+  "exemptImagePrefixes": ["screenshot-"]
+}

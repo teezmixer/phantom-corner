@@ -24,6 +24,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "budgets": "node scripts/check-budgets.mjs",
     "e2e": "playwright test",
     "screens": "playwright test e2e/screens.spec.ts"
   },

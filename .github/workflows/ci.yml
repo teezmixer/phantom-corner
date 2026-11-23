@@ -28,6 +28,8 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      - name: Performance budgets
+        run: npm run budgets
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
       - name: End-to-end smoke
