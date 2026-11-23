@@ -252,8 +252,8 @@
       "spec": "§3.12",
       "description": "Demo shows a 'demo' tag linking to how-this-was-built and the fan-project line.",
       "steps": "Playwright: tag link present in demo.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/modes.spec.ts \"shows a Demo tag ...\": the link goes to the README section, opens with rel=noopener, and is absent outside the demo."
     },
     {
       "id": "hud-slot-map",
@@ -263,8 +263,8 @@
       "spec": "§4.4, Figma 4:2521",
       "description": "Widget positions come from one slot-map data file transcribed from the Figma frame (corner, x, y, w, h).",
       "steps": "Unit: slot map has every WidgetId; screenshot at 1440x900 matches Figma slot positions.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/hud/slots.ts is the one slot-map data file (corner, x, y, w, h) transcribed from Figma frame 4:2521 (docs/build/figma-main-screen.md); src/hud/slots.test.ts: a slot for every widget id, all inside the 1440x900 frame, anchored by corner; the differences from Figma (BUILT offsets, grown sizes) are logged as D-20 and D-23; screenshots in docs/build/screens/M2 and M5."
     },
     {
       "id": "hud-corner-scaling",
@@ -527,8 +527,8 @@
       "spec": "§3.6, §4.8",
       "description": "Blocked and unavailable states show copy; unavailable tracks are skipped and logged.",
       "steps": "Unit with fake player emitting error 150 → next track + analytics event.",
-      "status": "todo",
-      "evidence": "PARTIAL (stays todo): copy + silent skip + blocked + all-failed + offline are tested (e2e/audio.spec.ts, src/app/Tv.test.tsx, controller.test.ts); the \"logged\" part — the track_unavailable analytics event and the weekly oEmbed check — arrives in M10."
+      "status": "pass",
+      "evidence": "Copy, silent skip, blocked, all-failed and offline: e2e/audio.spec.ts, src/app/Tv.test.tsx, src/audio/music/controller.test.ts. Logged: src/app/Tv.test.tsx sends track_unavailable with the place each time a track fails (mutation-checked). NOT built: the weekly check that each track still exists (needs a scheduled job; asked in D-34)."
     },
     {
       "id": "ambience-layers",
@@ -681,8 +681,8 @@
       "spec": "§5",
       "description": "The summary can produce a shareable session card (image or page) without personal text.",
       "steps": "Playwright: share card renders; no mission text included.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/share.spec.ts: a session is run, \"Save a card\" downloads phantom-corner-session.png, a real 1200x630 PNG; every string drawn on the canvas is recorded and none contains the mission shown on the summary. src/domain/shareCard.test.ts: the lines function has no field for a name or mission."
     },
     {
       "id": "session-event-log",
@@ -1121,8 +1121,8 @@
       "spec": "§3.6",
       "description": "The map opens from the map button, N key or menu, and closes with Esc.",
       "steps": "Playwright.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/behaviour.spec.ts \"keyboard shortcuts\" (N opens and N closes the map), e2e/loop.spec.ts (the Map button after level 2), e2e/menu.spec.ts (MAP from the hideout menu), e2e/modes.spec.ts \"every screen is reachable ... closes with Escape\"."
     },
     {
       "id": "travel-sequence",
@@ -1352,8 +1352,8 @@
       "spec": "§3.2, §4.17",
       "description": "About (with fan disclaimer), credits (incl. Cult UI MIT) and privacy pages exist and are reachable.",
       "steps": "Playwright: each page.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/screens/Pages/Pages.test.tsx: About has the fan line and \"not meant for children\"; Credits names Cult UI with MIT and says the music is YouTube's; Privacy says what is saved, what the events send and never send, and that YouTube's policy applies. e2e/modes.spec.ts \"every screen is reachable\" opens each from Settings and closes with Escape. Wording is a draft (D-34)."
     },
     {
       "id": "screens-reachable",
@@ -1507,7 +1507,7 @@
       "description": "Every §3.11 state exists: first paint, travel loading, unreadable data, storage blocked, music blocked/unavailable, offline, sync down, app error, second tab.",
       "steps": "Playwright per state (forced via dev tools).",
       "status": "todo",
-      "evidence": ""
+      "evidence": "PARTIAL (stays todo until M11): first paint (black, no skeleton), travel loading, unreadable data, storage blocked, second tab, music blocked/unavailable (earlier milestones, each with a test), offline (e2e/states.spec.ts: mission, timer and todos work, the TV says the tape is gone) and app error (e2e/states.spec.ts) are done. Missing: \"sync down\" (the V1b dot) needs accounts and sync (M11)."
     },
     {
       "id": "q-storage-adapter",
@@ -1528,8 +1528,8 @@
       "spec": "§3.11",
       "description": "An error boundary shows Sojiro, one reload button, and the session restores.",
       "steps": "Component: throw in child → fallback.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/app/ErrorBoundary.test.tsx (throwing child -> Sojiro line, one Reload button focused, reported once, siblings alive); e2e/states.spec.ts: a crashed screen and a crashed app show the card and Reload reloads the page (mutation-checked: without the layer boundary the screen test fails). Saved progress is written on every change (ADR 0005), so a reload restores the seat; not tested end to end because the crash tools run in dev mode, which saves nothing."
     },
     {
       "id": "q-a11y",
@@ -1539,8 +1539,8 @@
       "spec": "§4.12",
       "description": "Keyboard-only session, focus ring, role=timer with polite announcements, targets ≥24px, landmarks; axe has no serious violations.",
       "steps": "Playwright + @axe-core/playwright.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "e2e/a11y.spec.ts: @axe-core/playwright finds no serious or critical violation on the splash, the room, the phone and mixer open, and ten screens (a control test proves the scan catches an image with no alt); a keyboard-only session (Tab, type, Enter, start) with a visible focus ring; role=timer plus a polite status in five-minute steps (src/domain/timer.test.ts); every control at least 24x24 px at 1280x720 and 1024x640; landmarks. Found and fixed: six HUD controls under 24 px."
     },
     {
       "id": "q-perf",
@@ -1550,8 +1550,8 @@
       "spec": "§4.13",
       "description": "Budgets checked in CI: first load ≤800 KB, initial JS ≤120 KB gz, largest first-load image ≤250 KB.",
       "steps": "CI size script output.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "npm run budgets (scripts/check-budgets.mjs, in CI after the build): initial JS 118.4 kB gzipped of 120; e2e/budgets.spec.ts: real first load about 266 kB of 800, the splash loads no image, every image the room loads is under 250 kB except the screenshot exempt by name (B-05); the room and five screens are idle-prefetched chunks. The check fails when a budget is tightened (mutation-checked)."
     },
     {
       "id": "q-analytics",
@@ -1561,8 +1561,8 @@
       "spec": "§4.16",
       "description": "The §4.16 events fire via @vercel/analytics only when the settings switch is on; never mission/todo text.",
       "steps": "Unit: track wrapper respects switch.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/app/analytics.test.ts, useAnalyticsEvents.test.tsx, Tv.test.tsx and e2e/analytics.spec.ts: twelve named events, only place/duration/level, nothing sent with the Settings switch off, in the demo or in dev mode; mutation-checked. save_prompt_shown/accepted/dismissed are declared and fire when accounts arrive (M11)."
     },
     {
       "id": "q-security-headers",
@@ -1572,8 +1572,8 @@
       "spec": "§4.17",
       "description": "vercel.json sets CSP, Referrer-Policy, X-Content-Type-Options, Permissions-Policy.",
       "steps": "curl -I on preview shows headers.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "vercel.json sets CSP, Referrer-Policy, X-Content-Type-Options and Permissions-Policy; src/security/headers.test.ts and e2e/security.spec.ts prove them and that inline script, eval and a foreign script are refused; `vercel curl / --deployment <preview of 08b6422d> -- -sI` showed all four headers on the deployed preview (plus HSTS from Vercel)."
     },
     {
       "id": "q-meta-tags",
@@ -1583,8 +1583,8 @@
       "spec": "§4.18",
       "description": "Correct title, meta and share tags.",
       "steps": "Build output inspection.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/meta.test.ts inspects index.html and public/manifest.json: title, description with the fan-project line, share tags, no inline script. No og:image/og:url/canonical until art and an address exist (D-34)."
     },
     {
       "id": "q-readme-adr",
@@ -1594,8 +1594,8 @@
       "spec": "§4.18",
       "description": "README rewritten; ADRs incl. corner HUD, timestamp timer, visible TV, Vite.",
       "steps": "Files present.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "README.md rewritten (run, how this was built, structure, privacy, borrowed licences); ADRs 0001 corner HUD, 0002 Vite, 0007 audio and the visible TV, 0011 timestamp timer, 0012 crash card, chunks and budgets, 0013 headers and analytics."
     },
     {
       "id": "q-ci",

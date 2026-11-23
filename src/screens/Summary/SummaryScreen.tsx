@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { Calendar } from "@phosphor-icons/react";
+import { Calendar, DownloadSimple } from "@phosphor-icons/react";
 import { StampCalendar } from "@/components/StampCalendar";
 import { dayKey } from "@/domain/calendar";
 import { RollingNumber } from "@/components/ui/rolling-number";
 import { sessionEnd, ui } from "@/content/copy";
 import { getLocation } from "@/content/registry";
 import { knowledgeFor } from "@/domain/progress";
+import { shareCardLines } from "@/domain/shareCard";
 import { useStore } from "@/state/StoreProvider";
 import { Overlay, buttonClass } from "../Overlay";
+import { saveShareCard } from "./shareCardImage";
 
 /**
  * Session summary: minutes focused, Knowledge gained (counts up), mission echo, one character line, calendar stamp,
- * continue or finish (spec §3.6). Share card arrives in M10.
+ * continue or finish (spec §3.6), and a shareable card with no personal text (spec §5).
  */
 export function SummaryScreen() {
   const { state, dispatch } = useStore();
@@ -22,6 +24,7 @@ export function SummaryScreen() {
   const gained = lastIndex >= 0 ? knowledgeFor(state.events.slice(0, lastIndex + 1)) - knowledgeFor(state.events.slice(0, lastIndex)) : 0;
   const [now] = useState(() => Date.now()); // read once when the summary opens, so the screen cannot change under the player
   const lines = getLocation(state.locationId).lines.complete;
+  const [cardFailed, setCardFailed] = useState(false);
   const line = lines[(lastIndex >= 0 ? lastIndex : 0) % lines.length];
 
   return (
@@ -38,7 +41,11 @@ export function SummaryScreen() {
         <button type="button" onClick={() => dispatch({ type: "START_SESSION", now: Date.now() })} className={buttonClass}>{sessionEnd.summaryContinue}</button>
         <button type="button" onClick={() => dispatch({ type: "FINISH" })} className={buttonClass}>{sessionEnd.summaryFinish}</button>
       </div>
-      {/* After the two buttons, so the choices never sit below the fold on a small window. */}
+      <button type="button" onClick={() => saveShareCard(shareCardLines({ minutes, knowledge: gained, location: getLocation(state.locationId).name })).then(() => setCardFailed(false), () => setCardFailed(true))} className={`${buttonClass} flex items-center justify-center gap-2 text-sm`}>
+        <DownloadSimple size={18} aria-hidden="true" />{sessionEnd.shareCard}
+      </button>
+      {cardFailed && <p role="status" className="text-sm text-greylight">{sessionEnd.shareCardFailed}</p>}
+      {/* After the buttons, so the choices never sit below the fold on a small window. */}
       <StampCalendar days={state.studiedDays} now={now} />
     </Overlay>
   );

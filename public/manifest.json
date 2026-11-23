@@ -11,5 +11,7 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "background_color": "#000000",
+  "description": "A calm study room with a Persona 5 mood. A fan project.",
+  "lang": "en"
 }

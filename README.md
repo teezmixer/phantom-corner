@@ -1,46 +1,45 @@
-# Getting Started with Create React App
+# Phantom Corner
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A calm study room with a *Persona 5* mood: set a mission, start a timer, earn Knowledge, and unlock places to work from.
 
-## Available Scripts
+**This is a fan project.** It is non-commercial and not affiliated with or endorsed by ATLUS or SEGA. The code and interface use no official assets. The one exception is a placeholder background screenshot kept from an early build, which is to be replaced by an original scene (`docs/build/blocked.md`, B-05). The music plays through YouTube's player.
 
-In the project directory, you can run:
+## Run it
 
-### `npm start`
+```bash
+npm ci
+npm run dev        # http://localhost:5173
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Add `?demo=true` for a demo that lands mid-session and saves nothing, or `?dev=true` for developer tools (never saved).
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+| Task | Command |
+| --- | --- |
+| Production build | `npm run build` |
+| Typecheck, lint | `npm run typecheck` · `npm run lint` |
+| Unit and component tests (Vitest) | `npm test` |
+| End to end (Playwright, builds first) | `npm run e2e` |
+| Performance budgets (after a build) | `npm run budgets` |
 
-### `npm test`
+## How this was built
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+A product owner and creative director wrote the brief and made every visual and product decision; [Claude Code](https://claude.com/claude-code) wrote the code, in milestones, each on its own branch and pull request.
 
-### `npm run build`
+- **A harness, not memory.** `docs/build/` holds a checkpoint (`RESUME.md`), every feature with its status and the check that proved it (`features.json`), an append-only log (`progress.md`), blocked items and what unblocks them (`blocked.md`), and the questions that are the owner's to answer (`decisions.md`).
+- **Decisions in tiers.** Reversible engineering choices are recorded as ADRs in `docs/adr/`. Anything visual or about product rules is built as the most neutral placeholder and logged for the owner, never decided by the builder.
+- **Checks that can fail.** Key tests were mutation-checked: break the code on purpose and see the test fail. A fresh reviewer read each milestone's diff and screenshots and scored it (`docs/build/taste-review.md`); what they found is fixed in the same pull request.
+- **Tokens only.** Colour and type come from `src/styles/tokens.css`. A test fails if a new animation uses a raw duration.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Shape of the code
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+`src/domain` pure logic with no React (timer, progress, calendar, story, travel) · `src/state` one reducer and local-first persistence · `src/widgets` the HUD · `src/screens` full-screen layers · `src/content` places, threads and copy as data · `src/hud` corner-anchored scaling · `src/audio` Web Audio sounds and the YouTube player · `e2e` Playwright.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Local first: progress is saved in this browser; there are no accounts yet. See `docs/adr/` for why (corner HUD, a timer that counts to a timestamp, local persistence, a visible TV, Vite).
 
-### `npm run eject`
+## Privacy
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+Saved in your browser only. Optional, switchable analytics send which place, how long and what level, never anything you write. See the Privacy page in the app.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Licence of what is borrowed
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+Components adapted from [Cult UI](https://www.cult-ui.com) (MIT, Nolly Studio), icons from [Phosphor](https://phosphoricons.com) (MIT), animation by [Motion](https://motion.dev) (MIT).

@@ -88,3 +88,20 @@ export function formatClock(ms: number): string {
   const s = totalSeconds % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
+
+/**
+ * What a screen reader is told about the timer, politely (spec §4.12: role=timer, polite announcements). The visible
+ * clock changes every second and must not be read out each time, so the sentence only changes at the start, every
+ * five minutes, in the last minute, and on pause: the string is the same between those moments, and a live region
+ * only speaks when its text changes.
+ */
+export function timerAnnouncement(timer: TimerState, now: number): string {
+  if (timer.status === "paused") return "Paused";
+  if (timer.status !== "running") return "";
+  const left = remainingMs(timer, now);
+  if (left <= 0) return "";
+  if (left < MINUTE) return "Less than a minute left";
+  const minutes = Math.ceil(left / MINUTE);
+  // Never more than the session is long: a 23-minute session starts at "23 minutes left", not "25".
+  return `${Math.min(Math.ceil(minutes / 5) * 5, Math.ceil(timer.durationMs / MINUTE))} minutes left`;
+}

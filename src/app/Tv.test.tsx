@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BLOCKED_AFTER_MS } from "@/audio/music/useMusic";
 import type { BackendFactory, Handlers, MusicBackend } from "@/audio/music/youtube";
 import { PLACEHOLDER_PLAYLIST } from "@/content/tracks";
+import { EVENT_NAMES, setSender, type EventName, type EventProps } from "./analytics";
+import { setAnalyticsAllowed } from "./telemetry";
 import { initialState, type Action } from "@/state/store";
 import { StoreProvider, useStore } from "@/state/StoreProvider";
 import { Tv } from "./Tv";
@@ -232,3 +234,43 @@ describe("TV", () => {
   });
 });
 
+describe("TV analytics (spec §4.16)", () => {
+  const sent: { name: EventName; props: EventProps }[] = [];
+  beforeEach(() => { vi.useFakeTimers({ shouldAdvanceTime: true }); sent.length = 0; setAnalyticsAllowed(true); setSender((name, props) => { sent.push({ name, props }); }); });
+  afterEach(() => { vi.useRealTimers(); setAnalyticsAllowed(true); });
+  const music = () => sent.filter((e) => e.name === "music_played" || e.name === "track_unavailable");
+
+  it("music_played when the music starts playing, once, with the place", async () => {
+    const { latest } = await setup();
+    emit(() => latest().handlers.onState("playing"));
+    expect(music()).toEqual([{ name: "music_played", props: { location: "leblanc" } }]);
+    emit(() => latest().handlers.onState("playing")); // still playing: not again
+    expect(music()).toHaveLength(1);
+    emit(() => latest().handlers.onState("paused"));
+    emit(() => latest().handlers.onState("playing")); // pressed play again: a new play
+    expect(music()).toHaveLength(2);
+  });
+
+  it("track_unavailable each time a track fails, with the place", async () => {
+    const { latest } = await setup();
+    emit(() => latest().handlers.onError(150));
+    expect(music()).toEqual([{ name: "track_unavailable", props: { location: "leblanc" } }]);
+    emit(() => latest().handlers.onError(101));
+    expect(music().map((e) => e.name)).toEqual(["track_unavailable", "track_unavailable"]);
+  });
+
+  it("nothing while the switch is off", async () => {
+    setAnalyticsAllowed(false);
+    const { latest } = await setup();
+    emit(() => latest().handlers.onState("playing"));
+    emit(() => latest().handlers.onError(150));
+    expect(music()).toEqual([]);
+  });
+
+  it("only events from the list, and never anything but where", async () => {
+    const { latest } = await setup();
+    emit(() => latest().handlers.onState("playing"));
+    emit(() => latest().handlers.onError(150));
+    for (const e of sent) { expect(EVENT_NAMES).toContain(e.name); expect(Object.keys(e.props)).toEqual(["location"]); }
+  });
+});

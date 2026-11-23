@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_DURATION_MS, MINUTE, clampCustomMinutes, formatClock, initialTimer, remainingMs, transition, type TimerState } from "./timer";
+import { DEFAULT_DURATION_MS, MINUTE, clampCustomMinutes, formatClock, initialTimer, remainingMs, timerAnnouncement, transition, type TimerState } from "./timer";
 
 const T0 = 1_000_000;
 
@@ -89,4 +89,38 @@ describe("clampCustomMinutes", () => {
   it.each([
     [25, 25], [5, 5], [120, 120], [4, 5], [0, 5], [-10, 5], [121, 120], [9999, 120], [17.6, 18], [Number.NaN, 25], [Infinity, 25],
   ])("%s → %s", (input, out) => expect(clampCustomMinutes(input)).toBe(out));
+});
+
+describe("timerAnnouncement", () => {
+  const running = (endsAt: number): TimerState => ({ status: "running", durationMs: 25 * MINUTE, endsAt });
+  const at = (leftMs: number) => timerAnnouncement(running(10_000_000 + leftMs), 10_000_000);
+
+  it("says nothing when idle or complete, and 'Paused' when paused", () => {
+    expect(timerAnnouncement({ status: "idle", durationMs: 25 * MINUTE }, 0)).toBe("");
+    expect(timerAnnouncement({ status: "complete", durationMs: 25 * MINUTE }, 0)).toBe("");
+    expect(timerAnnouncement({ status: "paused", durationMs: 25 * MINUTE, remainingMs: 5 * MINUTE }, 0)).toBe("Paused");
+  });
+
+  it("keeps the same sentence for every second inside a five-minute step, so it is not read each second", () => {
+    expect(at(25 * MINUTE)).toBe("25 minutes left");
+    expect(at(24 * MINUTE + 1000)).toBe("25 minutes left");
+    expect(at(20 * MINUTE)).toBe("20 minutes left");
+    expect(at(20 * MINUTE - 1000)).toBe("20 minutes left");
+    expect(at(19 * MINUTE + 1000)).toBe("20 minutes left");
+    expect(at(15 * MINUTE)).toBe("15 minutes left");
+    expect(at(5 * MINUTE)).toBe("5 minutes left");
+    expect(at(MINUTE)).toBe("5 minutes left");
+  });
+
+  it("never says more than the session is long, so a 23-minute session starts at 23", () => {
+    const short: TimerState = { status: "running", durationMs: 23 * MINUTE, endsAt: 10_000_000 + 23 * MINUTE };
+    expect(timerAnnouncement(short, 10_000_000)).toBe("23 minutes left");
+    expect(timerAnnouncement(short, 10_000_000 + 3 * MINUTE)).toBe("20 minutes left");
+  });
+
+  it("switches to one sentence for the last minute, and to nothing at zero", () => {
+    expect(at(MINUTE - 1)).toBe("Less than a minute left");
+    expect(at(1000)).toBe("Less than a minute left");
+    expect(at(0)).toBe("");
+  });
 });

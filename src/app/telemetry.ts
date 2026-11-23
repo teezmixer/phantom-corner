@@ -11,6 +11,11 @@ export function setAnalyticsAllowed(on: boolean): void {
   allowed = on;
 }
 
+/** Is analytics on right now? Read at send time by `analyticsGate` and by `track`. */
+export function isAnalyticsAllowed(): boolean {
+  return allowed;
+}
+
 /** `beforeSend` for Vercel Analytics and Speed Insights: pass the event on only while analytics is on. */
 export function analyticsGate<T>(event: T): T | null {
   return allowed ? event : null;

@@ -24,11 +24,13 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "budgets": "node scripts/check-budgets.mjs",
     "e2e": "playwright test",
     "screens": "playwright test e2e/screens.spec.ts"
   },
   "type": "module",
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3.5",

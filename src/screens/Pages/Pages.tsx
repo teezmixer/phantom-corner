@@ -1,4 +1,4 @@
-import { splash } from "@/content/copy";
+import { settings, splash } from "@/content/copy";
 import { Overlay } from "../Overlay";
 
 /** About, credits and privacy. Text is DRAFT (decision D-10, D-14): the privacy policy is Ares's call. */
@@ -14,6 +14,7 @@ export function AboutScreen() {
     <Overlay title="About">
       <p>Phantom Corner is a study room: set a mission, start a session, and earn your way to new places.</p>
       <p className="text-sm text-greylight">{splash.disclaimer}</p>
+      <p className="text-sm text-greylight">Made for people who study, so it is not meant for children.</p>
     </Overlay>
   );
 }
@@ -26,7 +27,7 @@ export function CreditsScreen() {
           <li key={c.name} className="border border-white p-2"><strong>{c.name}</strong> — {c.what} <span className="text-greylight">({c.licence})</span></li>
         ))}
       </ul>
-      <p className="text-sm text-greylight">Fan project. Persona 5 belongs to ATLUS and SEGA; no official assets are used.</p>
+      <p className="text-sm text-greylight">The background is a placeholder screenshot from an early build, to be replaced. Music plays through YouTube's own player; the tracks belong to their owners. {splash.disclaimer}</p>
     </Overlay>
   );
 }
@@ -34,8 +35,10 @@ export function CreditsScreen() {
 export function PrivacyScreen() {
   return (
     <Overlay title="Privacy">
-      <p>Everything you do here stays in this browser for now. Nothing is sent anywhere, and there are no accounts yet.</p>
-      <p className="text-sm text-greylight">Draft: the final privacy text, analytics wording and contact address are still to be decided.</p>
+      <p>What you do here is saved in this browser on this device: your name, mission, todos, sessions and settings. There are no accounts yet, and nothing you write is sent anywhere. Settings → {settings.erase} removes it.</p>
+      <p>Optionally, the page counts visits and speed, and a few events: which place you are in, how long a session was, and what level you are. Never your name, mission or todos. Turn it off any time in Settings. The events are not sent in the demo.</p>
+      <p>The TV plays music through YouTube's player, which loads once you press enter. It is the privacy-enhanced version, but it is YouTube's, and its own policy applies to what it collects.</p>
+      <p className="text-sm text-greylight">Draft: the final wording and a contact address are still to be decided by the project owner.</p>
     </Overlay>
   );
 }

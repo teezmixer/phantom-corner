@@ -30,7 +30,8 @@ async function probeAudio(page: Page) {
   });
 }
 const audio = (page: Page) => page.evaluate(() => { const a = (window as unknown as { __audio: { contexts: number; freqs: number[]; sources: number; stops: number; list: AudioContext[] } }).__audio; return { contexts: a.contexts, freqs: a.freqs, sources: a.sources, stops: a.stops, states: a.list.map((c) => c.state) }; });
-const enter = (page: Page) => page.getByRole("button", { name: "Press to enter" }).click();
+// The room is its own chunk, so it appears a moment after the click: wait for the TV before a test touches it.
+const enter = async (page: Page) => { await page.getByRole("button", { name: "Press to enter" }).click(); await page.getByRole("region", { name: "TV" }).waitFor(); };
 const caption = (page: Page) => page.getByRole("region", { name: "TV" }).getByRole("status");
 
 test.describe("TV", () => {
@@ -292,6 +293,7 @@ test.describe("TV rules (review of M4)", () => {
     await page.setViewportSize({ width: 1024, height: 600 });
     await page.goto("/?demo=true&at=menu");
     await page.mouse.click(5, 5); // a gesture, so the TV exists
+    await page.getByRole("region", { name: "TV" }).waitFor(); // the room is its own chunk
     const rects = await page.evaluate(() => {
       const panel = document.querySelector('[role="dialog"] > div')!.getBoundingClientRect();
       const tv = document.querySelector('section[aria-label="TV"]')!.getBoundingClientRect();
