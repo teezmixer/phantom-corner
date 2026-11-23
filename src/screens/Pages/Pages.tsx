@@ -27,7 +27,7 @@ export function CreditsScreen() {
           <li key={c.name} className="border border-white p-2"><strong>{c.name}</strong> — {c.what} <span className="text-greylight">({c.licence})</span></li>
         ))}
       </ul>
-      <p className="text-sm text-greylight">Music plays through YouTube's own player; the tracks belong to their owners. {splash.disclaimer}</p>
+      <p className="text-sm text-greylight">The background is a placeholder screenshot from an early build, to be replaced. Music plays through YouTube's own player; the tracks belong to their owners. {splash.disclaimer}</p>
     </Overlay>
   );
 }
