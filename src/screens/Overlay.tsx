@@ -3,6 +3,7 @@ import { X } from "@phosphor-icons/react";
 import { ui } from "@/content/copy";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/state/StoreProvider";
+import { carriedOpener, carryOpener } from "./openerFocus";
 
 /**
  * Shared full-screen layer for wireframe screens. Token-styled with a small "placeholder" marker.
@@ -11,15 +12,6 @@ import { useStore } from "@/state/StoreProvider";
  */
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-/**
- * One screen can hand over to another (menu → Settings). While the second is open the room behind is still inert, so the
- * first screen's attempt to give focus back to the button that opened the menu is ignored, and the second screen would
- * then remember "nothing" as its opener. The opener is therefore carried across the swap here, and cleared once no
- * screen is open any more (the next turn of the event loop, after any follow-up screen has mounted).
- */
-let open = 0;
-let carried: HTMLElement | null = null;
-
 export function Overlay({ title, children, closable = true, className }: { title: string; children: ReactNode; closable?: boolean; className?: string }) {
   const { state, dispatch } = useStore();
   const ref = useRef<HTMLDivElement>(null);
@@ -27,14 +19,11 @@ export function Overlay({ title, children, closable = true, className }: { title
   // Focus moves into the layer on open and returns to where it was on close.
   useEffect(() => {
     const active = document.activeElement as HTMLElement | null;
-    const before = active && active !== document.body ? active : carried;
-    open++;
+    const before = active && active !== document.body ? active : carriedOpener();
     ref.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
     return () => {
-      open--;
-      carried = before;
+      carryOpener(before);
       before?.focus?.();
-      setTimeout(() => { if (open === 0) carried = null; }, 0);
     };
   }, []);
 
