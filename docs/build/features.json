@@ -1616,8 +1616,8 @@
       "spec": "§4.6",
       "description": "Content tests in CI (id collisions, canon gaps, unlock order, alt text, ≥3 lines, track id length, thread targets).",
       "steps": "CI run.",
-      "status": "todo",
-      "evidence": "src/content/validate.ts + src/content/content.test.ts, run by `npm test` in CI: ids, canon indices, unlock order, image alt text and existence, all five line groups present with at least three lines each, eleven-character track ids, thread triggers naming existing locations (the phone threads carry triggers), manifest thread ids unique; each rule has a test that breaks it. Not covered and why: scene poster and sign are not required (the art is paused, D-21), so the image rule only runs on manifests that have images; manifest thread ids (e.g. ryuji-unlock) are checked for uniqueness only until M8 defines them. Stays todo until CI has run it on a PR"
+      "status": "pass",
+      "evidence": "src/content/validate.ts + src/content/content.test.ts, run by `npm test` in CI: ids, canon indices, unlock order, image alt text and existence, all five line groups present with at least three lines each, eleven-character track ids, thread triggers naming existing locations (the phone threads carry triggers), manifest thread ids unique; each rule has a test that breaks it. Not covered and why: scene poster and sign are not required (the art is paused, D-21), so the image rule only runs on manifests that have images; manifest thread ids (e.g. ryuji-unlock) are checked for uniqueness only until M8 defines them. CI ran it: GitHub Actions run 45106934087 on PR #8 (head c69c44f3), job `check` success, which includes `npm test`"
     },
     {
       "id": "found-vite",
