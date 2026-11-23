@@ -15,7 +15,7 @@ const ev = (id: string, knowledge = 1): ProgressEvent => ({ kind: "story_grant",
 const T1 = "2026-11-20T10:00:00.000Z";
 const T2 = "2026-11-21T10:00:00.000Z";
 const T3 = "2026-11-22T10:00:00.000Z";
-const settings = (muted: boolean) => ({ muted, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {}, hidden: [], hudSize: 1 as const, motion: "system" as const, analytics: true, todoCollapsed: false });
+const settings = (muted: boolean) => ({ muted, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {}, hidden: [], hudSize: 1 as const, motion: "system" as const, analytics: true, todoCollapsed: false, menuStyle: "text" as const });
 const snap = (events: ProgressEvent[], at = T1, over: Partial<Snapshot["docs"]> = {}): Snapshot => ({
   events,
   docs: { settings: { data: settings(false), updatedAt: at }, mission: { data: null, updatedAt: at }, todos: { data: { todos: [], nextTodoId: 1 }, updatedAt: at }, ...over },

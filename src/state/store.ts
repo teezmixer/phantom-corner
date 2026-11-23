@@ -9,7 +9,7 @@ import { RELEASE_VERSION, THREADS } from "@/content/threads";
 import { clampText, MAX_TODOS } from "@/domain/limits";
 import { answer, pendingAsk, post, skip, stepAll, type Facts, type Progress } from "@/domain/story";
 import { HUD_SIZES, type HudSize, type WidgetId, TOGGLEABLE_WIDGETS } from "@/hud/slots";
-import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MotionSetting, type Volumes } from "./persistence/schema";
+import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MenuStyle, type MotionSetting, type Volumes } from "./persistence/schema";
 import { initialTimer, remainingMs, transition, type TimerEvent, type TimerState } from "@/domain/timer";
 import { stampEventIds, type ProgressEvent } from "@/domain/progress";
 import { mergeEvents } from "@/sync/merge";
@@ -81,6 +81,7 @@ export interface AppState {
   /** Anonymous analytics switch (provisional default on, D-14). */
   analytics: boolean;
   todoCollapsed: boolean;
+  menuStyle: MenuStyle;
   /** Dev panel: treat every location as unlocked. */
   devUnlockAll: boolean;
   /** Demo mode never touches saved progress. */
@@ -136,6 +137,7 @@ export const initialState: AppState = {
   motion: DEFAULT_PREFERENCES.motion,
   analytics: DEFAULT_PREFERENCES.analytics,
   todoCollapsed: DEFAULT_PREFERENCES.todoCollapsed,
+  menuStyle: DEFAULT_PREFERENCES.menuStyle,
   devUnlockAll: false,
   demo: false,
   banners: [],
@@ -153,6 +155,7 @@ export type Action =
   | { type: "TOGGLE_WIDGET"; id: WidgetId }
   | { type: "SET_HUD_SIZE"; size: number }
   | { type: "SET_MOTION"; motion: MotionSetting }
+  | { type: "SET_MENU_STYLE"; style: MenuStyle }
   | { type: "SET_ANALYTICS"; on: boolean }
   | { type: "SET_TODO_COLLAPSED"; collapsed: boolean }
   | { type: "ADD_TODO"; text: string }
@@ -255,7 +258,7 @@ export function settle(state: AppState): AppState {
 }
 
 /** The state fields behind each synced document. The analytics choice is deliberately not among them: consent stays on the device. */
-type SettingsFields = Pick<AppState, "muted" | "volumes" | "ambienceMix" | "hiddenWidgets" | "hudSize" | "motion" | "todoCollapsed">;
+type SettingsFields = Pick<AppState, "muted" | "volumes" | "ambienceMix" | "hiddenWidgets" | "hudSize" | "motion" | "todoCollapsed" | "menuStyle">;
 type MissionFields = Pick<AppState, "mission" | "missionDone" | "missionDeadline">;
 type TodosFields = Pick<AppState, "todos" | "nextTodoId">;
 
@@ -272,7 +275,7 @@ export interface SyncPatch {
 /** The synced documents of a state, each as a comparable string. Equal strings mean the document has not changed. */
 export function syncGroups(s: AppState): { settings: string; mission: string; todos: string } {
   return {
-    settings: JSON.stringify([s.muted, s.volumes, s.ambienceMix, s.hiddenWidgets, s.hudSize, s.motion, s.todoCollapsed]),
+    settings: JSON.stringify([s.muted, s.volumes, s.ambienceMix, s.hiddenWidgets, s.hudSize, s.motion, s.todoCollapsed, s.menuStyle]),
     mission: JSON.stringify([s.mission, s.missionDone, s.missionDeadline]),
     todos: JSON.stringify([s.todos, s.nextTodoId]),
   };
@@ -362,6 +365,8 @@ function coreReducer(state: AppState, action: Action): AppState {
       return { ...state, motion: action.motion };
     case "SET_ANALYTICS":
       return { ...state, analytics: action.on };
+    case "SET_MENU_STYLE":
+      return action.style === "text" || action.style === "illustrated" ? { ...state, menuStyle: action.style } : state;
     case "SET_TODO_COLLAPSED":
       return { ...state, todoCollapsed: action.collapsed };
     case "TOGGLE_MISSION_DONE":

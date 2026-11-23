@@ -1,7 +1,7 @@
 import { THREADS } from "@/content/threads";
 import { MAX_MESSAGES, type Message, type ThreadProgress } from "@/domain/story";
 import { HUD_SIZES, TOGGLEABLE_WIDGETS, type HudSize, type WidgetId } from "@/hud/slots";
-import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MotionSetting, type Persisted, type Volumes } from "./schema";
+import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MenuStyle, type MotionSetting, type Persisted, type Volumes } from "./schema";
 
 const isRec = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const unit = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : null);
@@ -38,6 +38,7 @@ export function repairSettings(raw: unknown): Persisted["settings"] {
     motion: s.motion === "system" || s.motion === "reduced" ? (s.motion as MotionSetting) : DEFAULT_PREFERENCES.motion,
     analytics: typeof s.analytics === "boolean" ? s.analytics : DEFAULT_PREFERENCES.analytics,
     todoCollapsed: typeof s.todoCollapsed === "boolean" ? s.todoCollapsed : DEFAULT_PREFERENCES.todoCollapsed,
+    menuStyle: s.menuStyle === "text" || s.menuStyle === "illustrated" ? (s.menuStyle as MenuStyle) : DEFAULT_PREFERENCES.menuStyle,
   };
 }
 

@@ -66,6 +66,7 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     motion: settings.motion,
     analytics: settings.analytics,
     todoCollapsed: settings.todoCollapsed,
+    menuStyle: settings.menuStyle,
     ...repairTodos(p.todos, p.nextTodoId),
     timer,
     locationId: p.locationId,
@@ -105,6 +106,7 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
     motion: state.motion,
     analytics: state.analytics,
     todoCollapsed: state.todoCollapsed,
+    menuStyle: state.menuStyle,
   };
   const settingsChanged = JSON.stringify(prev.settings) !== JSON.stringify(settings);
   return {

@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
-import { ui, widgets } from "@/content/copy";
+import { Cat } from "@phosphor-icons/react";
+import { Student } from "@phosphor-icons/react";
+import { settings as settingsCopy, ui, widgets } from "@/content/copy";
 import { useAudio } from "@/audio/AudioProvider";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/state/StoreProvider";
@@ -23,6 +25,7 @@ export function Menu() {
   const { state, derived, dispatch } = useStore();
   const audio = useAudio();
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+  const illustrated = state.menuStyle === "illustrated";
   const go = (layer: "main" | "map" | "profile" | "settings") => dispatch({ type: "SET_LAYER", layer });
   const items: { label: string; run: () => void; available?: boolean }[] = [
     { label: ui.menu.study, run: () => { if (state.timer.status !== "running" && state.timer.status !== "paused") dispatch({ type: "START_SESSION", now: Date.now() }); else go("main"); } },
@@ -58,6 +61,15 @@ export function Menu() {
 
   return (
     <Overlay title={ui.menu.title} closable={false} className="motion-safe:animate-menu-wipe motion-reduce:animate-menu-cut">
+      <div className={cn(illustrated && "grid gap-4 sm:grid-cols-[11rem_1fr]")}>
+      {illustrated && (
+        // The illustrated style (spec §3.7): a slot for the drawn Student Ren, and Morgana's placeholder rising from the bag as
+        // the menu opens. Both are placeholders until Ares draws them (D-36); only transform moves.
+        <div className="relative hidden h-56 overflow-hidden border-2 border-dashed border-greymid sm:block" data-testid="menu-art">
+          <div className="grid h-full place-items-center text-greymid" role="img" aria-label={settingsCopy.menuArtSlot}><Student size={72} /></div>
+          <div role="img" aria-label={settingsCopy.menuMorgana} data-testid="morgana-peek" className="absolute bottom-0 right-2 grid size-16 place-items-center border-2 border-white border-b-0 bg-black text-white motion-safe:animate-morgana-peek motion-reduce:animate-menu-cut"><Cat size={40} /></div>
+        </div>
+      )}
       <ul className="flex flex-col gap-4">
         {items.map((item, i) => {
           const notYet = item.available === false;
@@ -81,6 +93,7 @@ export function Menu() {
           );
         })}
       </ul>
+      </div>
     </Overlay>
   );
 }

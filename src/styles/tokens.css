@@ -74,6 +74,7 @@
   --motion-snap: 120ms;
   --motion-wipe: 200ms;
   --motion-enter: 420ms;
+  --motion-morgana-peek: 600ms;
   --motion-enter-easing: cubic-bezier(.2,.9,.3,1);
   --motion-stagger: 60ms;
   --motion-hold: 900ms;

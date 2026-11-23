@@ -97,11 +97,12 @@ export function SettingsScreen() {
 
       <fieldset className={group}>
         <legend className={legend}>{copy.menuStyle}</legend>
-        <label className={row}>
-          <input type="radio" name="menu-style" className="size-4 accent-primary" checked readOnly />
-          {copy.menuStyleNow}
-        </label>
-        <p className="text-xs text-greylight">{copy.menuStyleLater}</p>
+        {([["text", copy.menuStyleNow], ["illustrated", copy.menuStyleIllustrated]] as const).map(([style, label]) => (
+          <label key={style} className={row}>
+            <input type="radio" name="menu-style" className="size-4 accent-primary" checked={state.menuStyle === style} onChange={() => dispatch({ type: "SET_MENU_STYLE", style })} />
+            {label}
+          </label>
+        ))}
       </fieldset>
 
       <fieldset className={group}>
