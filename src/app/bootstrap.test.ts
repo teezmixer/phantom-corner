@@ -31,6 +31,12 @@ describe("bootstrap", () => {
     expect(b.initial).toMatchObject({ recovered: true, storageBlocked: true });
   });
 
+  it("an analytics opt-out holds from the very first load, and in demo mode", () => {
+    expect(bootstrap(parseMode(""), NOW, memoryAdapter(), id).initial.analytics).toBe(true); // provisional default (D-14)
+    expect(bootstrap(parseMode(""), NOW, memoryAdapter(), id, true).initial.analytics).toBe(false);
+    expect(bootstrap(parseMode("?demo=true"), NOW, memoryAdapter(), id, true).initial.analytics).toBe(false);
+  });
+
   it("a genuine first visit rings the doorbell, but blocked storage does not make EVERY visit a first one", () => {
     expect(bootstrap(parseMode(""), NOW, memoryAdapter(), id).initial.firstVisit).toBe(true);
     const blocked = { ...memoryAdapter(), blocked: true } as ReturnType<typeof memoryAdapter>;

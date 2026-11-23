@@ -1,5 +1,6 @@
 import { clampText, MAX_TODOS } from "@/domain/limits";
 import { isEvent } from "./guard";
+import { repairDeadline, repairSettings } from "./repair";
 import { initialState, type AppState, type Todo } from "../store";
 import type { Persisted } from "./schema";
 
@@ -39,14 +40,21 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     events = [...events, { kind: "session", plannedMs: timer.durationMs, focusedMs: timer.durationMs, outcome: "completed" }];
     timer = { status: "complete", durationMs: timer.durationMs };
   }
+  const settings = repairSettings(p.settings);
   return {
     ...initialState,
     name: p.name ?? "",
-    muted: p.settings.muted,
-    volumes: p.settings.volumes,
-    ambienceMix: p.settings.ambienceMix,
+    muted: settings.muted,
+    volumes: settings.volumes,
+    ambienceMix: settings.ambienceMix,
     mission: clampText(p.mission?.text ?? ""),
     missionDone: p.mission?.done ?? false,
+    missionDeadline: repairDeadline(p.mission?.deadline),
+    hiddenWidgets: settings.hidden,
+    hudSize: settings.hudSize,
+    motion: settings.motion,
+    analytics: settings.analytics,
+    todoCollapsed: settings.todoCollapsed,
     ...repairTodos(p.todos, p.nextTodoId),
     timer,
     locationId: p.locationId,
@@ -64,16 +72,25 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
  * slice actually changed, which is what sync compares later (M11). UI state is never stored.
  */
 export function toPersisted(state: AppState, prev: Persisted, nowIso: string): Persisted {
-  const missionChanged = (prev.mission?.text ?? "") !== state.mission || (prev.mission?.done ?? false) !== state.missionDone;
+  const missionChanged = (prev.mission?.text ?? "") !== state.mission || (prev.mission?.done ?? false) !== state.missionDone || (prev.mission?.deadline ?? null) !== state.missionDeadline;
   const todosChanged = JSON.stringify(prev.todos) !== JSON.stringify(state.todos);
-  const settings = { muted: state.muted, volumes: state.volumes, ambienceMix: state.ambienceMix };
+  const settings = {
+    muted: state.muted,
+    volumes: state.volumes,
+    ambienceMix: state.ambienceMix,
+    hidden: state.hiddenWidgets,
+    hudSize: state.hudSize,
+    motion: state.motion,
+    analytics: state.analytics,
+    todoCollapsed: state.todoCollapsed,
+  };
   const settingsChanged = JSON.stringify(prev.settings) !== JSON.stringify(settings);
   return {
-    schema: 2,
+    schema: 3,
     clientId: prev.clientId,
     name: state.name === "" ? null : state.name,
     settings,
-    mission: state.mission === "" ? null : { text: state.mission, setAt: missionChanged && (prev.mission?.text ?? "") !== state.mission ? nowIso : (prev.mission?.setAt ?? nowIso), done: state.missionDone },
+    mission: state.mission === "" ? null : { text: state.mission, setAt: missionChanged && (prev.mission?.text ?? "") !== state.mission ? nowIso : (prev.mission?.setAt ?? nowIso), done: state.missionDone, ...(state.missionDeadline ? { deadline: state.missionDeadline } : {}) },
     todos: state.todos,
     nextTodoId: state.nextTodoId,
     timer: state.timer,

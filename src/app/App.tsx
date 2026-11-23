@@ -15,6 +15,7 @@ import { SettingsScreen } from "@/screens/Settings/SettingsScreen";
 import { Splash } from "@/screens/Splash/Splash";
 import { SummaryScreen } from "@/screens/Summary/SummaryScreen";
 import { TravelScreen } from "@/screens/Travel/TravelScreen";
+import { Banner } from "./Banner";
 import { DevPanel } from "./DevPanel";
 import MainScreen from "./MainScreen";
 
@@ -32,6 +33,20 @@ const LAYERS: Partial<Record<Layer, () => ReactNode>> = {
   credits: () => <CreditsScreen />,
   privacy: () => <PrivacyScreen />,
 };
+
+/**
+ * Ends a session when its time is up. Lives here, not in the timer widget, so a session still completes when the timer
+ * widget is hidden in Settings or the whole HUD is hidden (a session started with Space must not run forever unseen).
+ */
+function SessionClock() {
+  const { state, dispatch } = useStore();
+  const now = useNow(250);
+  const timer = state.timer;
+  useEffect(() => {
+    if (timer.status === "running" && now >= timer.endsAt) dispatch({ type: "TIMER", event: { type: "TICK", now }, now });
+  }, [timer, now, dispatch]);
+  return null;
+}
 
 /** Keeps the tab title in step with the timer so the countdown shows from other tabs (spec §3.6). */
 function TabTitle() {
@@ -78,8 +93,10 @@ export function App({ dev }: { dev: boolean }) {
     <>
       {state.entered && <MainScreen locked={state.layer !== "main"} />}
       {LAYERS[state.layer]?.()}
+      <SessionClock />
       <TabTitle />
       <StorageNotice />
+      {state.entered && <Banner />}
       {dev && <DevPanel />}
     </>
   );

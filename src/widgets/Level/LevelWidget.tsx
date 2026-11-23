@@ -12,7 +12,7 @@ export function LevelWidget() {
   return (
     <Slab className="flex h-full w-full flex-col justify-between p-2" label="Level and Knowledge">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1 font-body-primary uppercase tracking-wide text-redbright"><GraduationCap size={20} aria-hidden="true" />Lv</span>
+        <span className="flex items-center gap-1 font-body-primary uppercase tracking-wide text-white"><GraduationCap size={20} className="text-redbright" aria-hidden="true" />Lv</span>
         <span className="font-display-hero text-4xl leading-none"><RollingNumber value={derived.level} /></span>
       </div>
       <div className="flex items-baseline justify-between text-sm">

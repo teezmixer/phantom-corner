@@ -64,7 +64,7 @@ describe("load path", () => {
   });
 });
 
-describe("the real 1 → 2 migration (existing users keep their progress)", () => {
+describe("the real migrations 1 → 2 → 3 (existing users keep their progress)", () => {
   // Exactly what M3 wrote to localStorage.
   const v1 = {
     schema: 1, clientId: "old-client", name: "Ren", settings: { muted: true },
@@ -75,13 +75,25 @@ describe("the real 1 → 2 migration (existing users keep their progress)", () =
     unreadThreads: ["ann"], stamps: { settings: ISO, mission: ISO, todos: ISO },
   };
 
-  it("loads a schema-1 save as schema 2 without treating it as unreadable, keeping everything", () => {
+  const PREFS = { hidden: [], hudSize: 1, motion: "system", analytics: true, todoCollapsed: false };
+
+  it("loads a schema-2 save (exactly what M4 wrote) as schema 3, keeping volumes and everything else", () => {
+    const v2 = { ...v1, schema: 2, settings: { muted: true, volumes: { music: 0.2, ambience: 0.9, ui: 0.1 }, ambienceMix: { "leblanc-rain": 0.4 } } };
+    const r = load(JSON.stringify(v2));
+    expect(r.recovered).toBe(false);
+    expect(r.adapter.dump().backups).toEqual([]);
+    expect(r.persisted.schema).toBe(3);
+    expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.2, ambience: 0.9, ui: 0.1 }, ambienceMix: { "leblanc-rain": 0.4 }, ...PREFS });
+    expect(r.persisted).toMatchObject({ name: "Ren", locationId: "ryuji", unreadThreads: ["ann"] });
+  });
+
+  it("loads a schema-1 save as schema 3 without treating it as unreadable, keeping everything", () => {
     const r = load(JSON.stringify(v1));
     expect(r.recovered).toBe(false);
     expect(r.adapter.dump().backups).toEqual([]);
-    expect(r.persisted).toMatchObject({ schema: 2, clientId: "old-client", name: "Ren", locationId: "ryuji", visited: ["leblanc", "ryuji"], unreadThreads: ["ann"] });
+    expect(r.persisted).toMatchObject({ schema: 3, clientId: "old-client", name: "Ren", locationId: "ryuji", visited: ["leblanc", "ryuji"], unreadThreads: ["ann"] });
     expect(r.persisted.events).toHaveLength(2);
-    expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {} });
+    expect(r.persisted.settings).toEqual({ muted: true, volumes: { music: 0.5, ambience: 0.35, ui: 0.7 }, ambienceMix: {}, ...PREFS });
   });
 
   it("upgrades a schema-1 save whose settings are missing or damaged instead of throwing it away", () => {
@@ -100,12 +112,12 @@ describe("the real 1 → 2 migration (existing users keep their progress)", () =
     expect(twice).toEqual(once);
   });
 
-  it("rejects out-of-range volumes and mix levels", () => {
-    const ok = fresh();
-    expect(isPersisted({ ...ok, settings: { ...ok.settings, volumes: { music: 1.5, ambience: 0.3, ui: 0.7 } } })).toBe(false);
-    expect(isPersisted({ ...ok, settings: { ...ok.settings, volumes: { music: -1, ambience: 0.3, ui: 0.7 } } })).toBe(false);
-    expect(isPersisted({ ...ok, settings: { ...ok.settings, ambienceMix: { rain: 2 } } })).toBe(false);
-    expect(isPersisted({ ...ok, settings: { ...ok.settings, ambienceMix: { rain: 0.4 } } })).toBe(true);
+  it("round-trips the preferences and the mission deadline through the app state", () => {
+    const state: AppState = { ...initialState, mission: "x", missionDeadline: ISO, hiddenWidgets: ["timer", "level"], hudSize: 1.3, motion: "reduced", analytics: false, todoCollapsed: true };
+    const stored = toPersisted(state, fresh(), ISO);
+    expect(stored.mission).toEqual({ text: "x", setAt: ISO, done: false, deadline: ISO });
+    const back = stateFromPersisted(stored, NOW, { recovered: false, storageBlocked: false });
+    expect(back).toMatchObject({ missionDeadline: ISO, hiddenWidgets: ["timer", "level"], hudSize: 1.3, motion: "reduced", analytics: false, todoCollapsed: true });
   });
 
   it("round-trips volumes and the ambience mix through the app state", () => {
@@ -181,6 +193,15 @@ describe("localStorageAdapter", () => {
     expect(a.read()).toBe("hello");
     a.backup("old");
     expect(window.localStorage.getItem(`${STORAGE_KEY}:backup:${ISO}`)).toBe("old");
+  });
+
+  it("does not add another backup of data that is already the newest backup", () => {
+    let t = NOW;
+    const a = localStorageAdapter(STORAGE_KEY, () => (t += 1000));
+    for (let i = 0; i < MAX_BACKUPS + 3; i++) expect(a.backup("same unreadable text")).toBe(true); // reloading at the splash again and again
+    expect(Object.keys(window.localStorage).filter((k) => k.startsWith(`${STORAGE_KEY}:backup:`))).toHaveLength(1);
+    expect(a.backup("something different")).toBe(true);
+    expect(Object.keys(window.localStorage).filter((k) => k.startsWith(`${STORAGE_KEY}:backup:`))).toHaveLength(2);
   });
 
   it("keeps only the newest backups so repeated recoveries cannot fill the quota", () => {
@@ -293,6 +314,60 @@ describe("values the guard must refuse", () => {
   });
   it("still accepts a normal log", () => {
     expect(isPersisted({ ...ok, events: [{ kind: "mission_first_set" }, { kind: "session", plannedMs: 1_500_000, focusedMs: 1_500_000, outcome: "completed" }] })).toBe(true);
+  });
+});
+
+describe("one bad preference does not cost the user their save", () => {
+  const stored = (patch: object, mission?: object) => ({ ...fresh(), name: "Ren", events: [{ kind: "mission_first_set" }], settings: { ...fresh().settings, ...patch }, ...(mission ? { mission } : {}) });
+  const loadState = (data: unknown) => {
+    const r = load(JSON.stringify(data));
+    return { r, state: stateFromPersisted(r.persisted, NOW, { recovered: r.recovered, storageBlocked: false }) };
+  };
+
+  it.each([
+    ["an impossible HUD size", { hudSize: 2 }, "hudSize", 1],
+    ["a negative HUD size", { hudSize: -1 }, "hudSize", 1],
+    ["an unknown motion value", { motion: "loud" }, "motion", "system"],
+    ["a non-boolean analytics switch", { analytics: "yes" }, "analytics", true],
+    ["a non-boolean collapsed todo", { todoCollapsed: 5 }, "todoCollapsed", false],
+  ])("loads the save and falls back to the default for %s", (_name, patch, field, expected) => {
+    const { r, state } = loadState(stored(patch));
+    expect(r.recovered).toBe(false); // not treated as unreadable data
+    expect(r.adapter.dump().backups).toEqual([]);
+    expect((state as unknown as Record<string, unknown>)[field]).toEqual(expected);
+    expect(state.name).toBe("Ren"); // progress survives
+    expect(state.events).toHaveLength(1);
+  });
+
+  it("drops widgets that may not be hidden (the TV, the button bar, unknown ids) and duplicates, keeping the valid ones", () => {
+    const { state } = loadState(stored({ hidden: ["timer", "music", "buttonBar", "nope", "timer", "todo", 7] }));
+    expect(state.hiddenWidgets).toEqual(["timer", "todo"]);
+    expect(loadState(stored({ hidden: "everything" })).state.hiddenWidgets).toEqual([]);
+  });
+
+  it("clamps out-of-range volumes and mix levels, and drops unreadable ones", () => {
+    const { state } = loadState(stored({ volumes: { music: 1.5, ambience: -1, ui: "loud" }, ambienceMix: { rain: 2, murmur: "x", wind: 0.4 } }));
+    expect(state.volumes).toEqual({ music: 1, ambience: 0, ui: 0.7 }); // clamped, clamped, default
+    expect(state.ambienceMix).toEqual({ rain: 1, wind: 0.4 });
+  });
+
+  it("keeps the mission but drops a deadline that is not a date", () => {
+    const { state } = loadState(stored({}, { text: "Keep me", setAt: ISO, done: false, deadline: "not a date" }));
+    expect(state.mission).toBe("Keep me");
+    expect(state.missionDeadline).toBeNull();
+    expect(loadState(stored({}, { text: "x", setAt: ISO, done: false, deadline: ISO })).state.missionDeadline).toBe(ISO);
+  });
+
+  it("still refuses a save whose settings are not an object at all", () => {
+    expect(load(JSON.stringify({ ...stored({}), settings: "oops" })).recovered).toBe(true);
+  });
+
+  it("repairs missing or wrongly typed muted, volumes and ambience instead of discarding the save", () => {
+    const { r, state } = loadState({ ...stored({}), settings: { ...stored({}).settings, volumes: 5, muted: "x", ambienceMix: undefined } });
+    expect(r.recovered).toBe(false);
+    expect(state.muted).toBe(false);
+    expect(state.volumes).toEqual({ music: 0.5, ambience: 0.35, ui: 0.7 });
+    expect(state.name).toBe("Ren");
   });
 });
 

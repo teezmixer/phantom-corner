@@ -22,7 +22,7 @@ export function DateTimeWidget() {
         </span>
       </div>
       <div className="flex items-baseline justify-between text-base">
-        <span className="font-body-primary uppercase tracking-wide text-redbright">{WEEKDAYS[date.getDay()]}</span>
+        <span className="border-b-2 border-redbright font-body-primary uppercase tracking-wide text-white">{WEEKDAYS[date.getDay()]}</span>
         <span className="flex items-center gap-1"><Icon size={16} aria-hidden="true" />{part}</span>
         <time className="tabular-nums" dateTime={`${pad(date.getHours())}:${pad(date.getMinutes())}`}>
           <RollingNumber value={date.getHours()} format={pad2} />:<RollingNumber value={date.getMinutes()} format={pad2} />

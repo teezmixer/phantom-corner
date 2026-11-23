@@ -14,8 +14,10 @@ export interface Bootstrap {
 }
 
 /** Everything decided at startup, as one pure-ish function: URL mode + storage → starting state. */
-export function bootstrap(mode: UrlMode, now: number, adapter: StorageAdapter, makeClientId: () => string): Bootstrap {
-  if (mode.demo) return { initial: buildInitialState(mode, now), persistence: null };
+export function bootstrap(mode: UrlMode, now: number, adapter: StorageAdapter, makeClientId: () => string, optedOutOfAnalytics = false): Bootstrap {
+  // An opt-out is remembered separately from the save, so it holds even after "Delete my data" and on a first visit.
+  const withChoice = (s: AppState): AppState => (optedOutOfAnalytics ? { ...s, analytics: false } : s);
+  if (mode.demo) return { initial: withChoice(buildInitialState(mode, now)), persistence: null };
   const loaded = loadPersisted(adapter, new Date(now).toISOString(), makeClientId, {
     timer: initialTimer,
     locationId: HOME_LOCATION_ID,
@@ -34,7 +36,7 @@ export function bootstrap(mode: UrlMode, now: number, adapter: StorageAdapter, m
     initial = stateFromPersisted(freshPersisted(makeClientId(), new Date(now).toISOString(), { timer: initialTimer, locationId: HOME_LOCATION_ID, visited: [HOME_LOCATION_ID] }), now, { recovered: true, storageBlocked: !safeToWrite });
   }
   return {
-    initial,
+    initial: withChoice(initial),
     // Dev mode reads saved progress but never writes it (its grants and resets are throwaway); unsafe data is left alone.
     persistence: safeToWrite && !mode.dev ? { adapter, base: loaded.persisted } : null,
   };

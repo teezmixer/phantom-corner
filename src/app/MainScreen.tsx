@@ -28,7 +28,8 @@ const CORNERS: { corner: Corner; label: string }[] = [
  * assistive tech stay in the dialog; the TV is left out on purpose — it stays visible and hit-testable (spec §4.8).
  */
 export const MainScreen = ({ locked = false }: { locked?: boolean }): React.JSX.Element => {
-  const scale = useHudScale();
+  // HUD size is a step (0.85–1.3) on top of the corner scaling (spec §4.4); the TV is positioned with the same scale.
+  const scale = useHudScale() * useStore().state.hudSize;
   const { state, dispatch } = useStore();
 
   // The music slot is the TV, which lives outside the scaled groups (see TvPlaceholder).
@@ -51,7 +52,7 @@ export const MainScreen = ({ locked = false }: { locked?: boolean }): React.JSX.
         CORNERS.map(({ corner, label }) => (
           <CornerGroup key={corner} corner={corner} scale={scale} label={label}>
             {(Object.entries(DEFAULT_SLOTS) as [WidgetId, (typeof DEFAULT_SLOTS)[WidgetId]][])
-              .filter(([id, slot]) => slot.corner === corner && id !== "music")
+              .filter(([id, slot]) => slot.corner === corner && id !== "music" && !state.hiddenWidgets.includes(id))
               .map(([id, slot]) => (
                 <div key={id} style={id === "phone" ? { ...slotStyle(slot), width: "auto", height: "auto", minHeight: slot.h } : slotStyle(slot)} data-widget={id}>{widgets[id as keyof typeof widgets]}</div>
               ))}

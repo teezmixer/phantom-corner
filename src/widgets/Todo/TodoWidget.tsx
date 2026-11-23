@@ -8,7 +8,7 @@ import { Slab } from "../Slab";
 /** Add, tick, delete, reorder and collapse todos (spec §3.6). Persistence arrives with the storage adapter in M3. */
 export function TodoWidget() {
   const { state, dispatch } = useStore();
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = state.todoCollapsed; // saved with the other preferences
   const [draft, setDraft] = useState("");
 
   const add = (e: FormEvent) => {
@@ -19,9 +19,9 @@ export function TodoWidget() {
 
   return (
     <Slab className="flex h-full w-full flex-col gap-0.5 overflow-hidden px-2 py-1" label="Todo list">
-      <div className="flex items-center justify-between font-body-primary uppercase tracking-wide text-redbright">
-        <span className="flex items-center gap-1"><ListChecks size={18} aria-hidden="true" />Todo</span>
-        <button type="button" aria-expanded={!collapsed} aria-label={collapsed ? "Expand todo list" : "Collapse todo list"} onClick={() => setCollapsed((c) => !c)} className="hover:text-white focus-visible:outline-2 focus-visible:outline-accentteal">
+      <div className="flex items-center justify-between font-body-primary uppercase tracking-wide text-white">
+        <span className="flex items-center gap-1"><ListChecks size={18} className="text-redbright" aria-hidden="true" />Todo</span>
+        <button type="button" aria-expanded={!collapsed} aria-label={collapsed ? "Expand todo list" : "Collapse todo list"} onClick={() => dispatch({ type: "SET_TODO_COLLAPSED", collapsed: !collapsed })} className="hover:text-white focus-visible:outline-2 focus-visible:outline-accentteal">
           {collapsed ? <CaretDown size={16} /> : <CaretUp size={16} />}
         </button>
       </div>

@@ -15,6 +15,17 @@ html, body, #root {
   overflow: hidden;
 }
 
+/* "Reduced" in Settings overrides the operating system: no animation or transition anywhere, whatever the OS says. */
+[data-motion="reduced"] *,
+[data-motion="reduced"] *::before,
+[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  animation-delay: 0s !important;
+  transition-duration: 0.001ms !important;
+  transition-delay: 0s !important;
+}
+
 /* Thin, token-coloured scrollbars everywhere, so scrollable lists (todo, phone) show that they scroll. */
 * {
   scrollbar-width: thin;

@@ -13,6 +13,19 @@ export type WidgetId =
   | "music"
   | "location";
 
+/** Every widget id, for validation and the settings screen. */
+export const WIDGET_IDS: readonly WidgetId[] = ["date", "timer", "phone", "mission", "todo", "level", "buttonBar", "music", "location"];
+
+/**
+ * Widgets the user may hide in Settings. The TV (`music`) is never hidden (spec §4.8) and the button bar is the way into
+ * the menu, so it stays too (provisional, decision D-28).
+ */
+export const TOGGLEABLE_WIDGETS: readonly WidgetId[] = ["date", "timer", "phone", "mission", "todo", "level", "location"];
+
+/** HUD size steps on top of the corner scaling (spec §4.4; provisional). */
+export const HUD_SIZES = [0.85, 1, 1.15, 1.3] as const;
+export type HudSize = (typeof HUD_SIZES)[number];
+
 /**
  * A widget's box in the 1440x900 reference frame, measured from ITS corner:
  * `x` is the distance from the corner's vertical edge (left for tl/bl, right for tr/br),
