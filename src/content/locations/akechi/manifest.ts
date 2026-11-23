@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "akechi-room", label: "Brushed drums", synth: "room" },
   ],
   lines: {
-    arrive: ["You came late. So did I. Shall we?"],
-    back: ["Back again. Persistence suits you."],
-    idle: ["Waiting is a skill. Don't overdo it."],
-    start: ["Let's see what you're capable of."],
-    complete: ["Impressive. I'll admit that much."],
+    arrive: ["You came late. So did I. Shall we?", "Coffee, black. The seat is yours.", "Don't mistake the quiet for leniency."],
+    back: ["Back again. Persistence suits you.", "Predictable. I find it reassuring, oddly.", "Late again. Both of us."],
+    idle: ["Waiting is a skill. Don't overdo it.", "You're thinking. Good. Don't stop.", "Time doesn't wait. Neither do I."],
+    start: ["Let's see what you're capable of.", "Begin. I'll be taking notes.", "Show me this isn't luck."],
+    complete: ["Impressive. I'll admit that much.", "Adequate. Better than adequate, perhaps.", "I'll withhold further comment. For now."],
   },
   threads: { unlock: "akechi-unlock", arrival: "akechi-arrival" },
 };

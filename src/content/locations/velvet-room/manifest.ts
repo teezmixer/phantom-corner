@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "velvet-room-room", label: "A distant voice", synth: "room" },
   ],
   lines: {
-    arrive: ["This place again... it feels like a dream."],
-    back: ["Back in the blue room."],
-    idle: ["Time moves strangely here."],
-    start: ["Begin. Time is on your side here."],
-    complete: ["Your bonds grow stronger."],
+    arrive: ["This place again... it feels like a dream.", "Welcome, again. Time stands still here.", "The room is quiet. Make it count."],
+    back: ["Back in the blue room.", "You return to the blue room. Good.", "The key still fits."],
+    idle: ["Time moves strangely here.", "There is no clock here. Imagine one.", "A moment of reflection never hurts."],
+    start: ["Begin. Time is on your side here.", "Then let us begin your work.", "The room waits for your focus."],
+    complete: ["Your bonds grow stronger.", "A job well done. Your progress shows.", "You leave stronger than you arrived."],
   },
   threads: {  },
 };

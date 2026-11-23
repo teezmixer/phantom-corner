@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "futaba-city", label: "Muffled city", synth: "city" },
   ],
   lines: {
-    arrive: ["oh. you're actually here. don't touch the cables."],
-    back: ["you again. ok. that's fine. good, even."],
-    idle: ["compiling... your motivation."],
-    start: ["entering flow state. do not disturb."],
-    complete: ["nice run. saving your stats."],
+    arrive: ["oh. you're actually here. don't touch the cables.", "welcome to my room. it's not messy. it's organised chaos.", "you can sit. the chair's fine. probably."],
+    back: ["you again. ok. that's fine. good, even.", "oh good. someone to share the snacks with.", "logging your arrival. don't ask."],
+    idle: ["compiling... your motivation.", "scanning for distractions... found: you.", "boot sequence takes a second. like me."],
+    start: ["entering flow state. do not disturb.", "ok. focus. i'll pretend i'm not watching.", "starting timer. no peeking at my screen."],
+    complete: ["nice run. saving your stats.", "gg. that was actually kind of cool.", "achievement unlocked: not giving up. don't let it go to your head."],
   },
   threads: { unlock: "futaba-unlock", arrival: "futaba-arrival" },
 };

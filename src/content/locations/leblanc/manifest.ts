@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "leblanc-murmur", label: "Caf\u00e9 murmur", synth: "murmur" },
   ],
   lines: {
-    arrive: ["Door's open. Sit wherever."],
-    back: ["Ah, you're back."],
-    idle: ["Coffee's not going to drink itself."],
-    start: ["Quiet hours. Good."],
-    complete: ["Not bad. Coffee's on me. Once."],
+    arrive: ["Door's open. Sit wherever.", "Wipe your feet. Then sit.", "The curry takes a while. So does studying."],
+    back: ["Ah, you're back.", "Same seat, I suppose.", "The coffee's fresh. The complaints are too."],
+    idle: ["Coffee's not going to drink itself.", "The clock's not going to stop for you.", "You staring at the cup won't fill it."],
+    start: ["Quiet hours. Good.", "Go on, then. I'll be here.", "Books open. Phone down."],
+    complete: ["Not bad. Coffee's on me. Once.", "Hm. Acceptable work.", "Don't let it go to your head."],
   },
   threads: { arrival: "leblanc-first-visit" },
 };

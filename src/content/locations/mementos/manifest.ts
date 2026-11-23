@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "mementos-hum", label: "Rumble", synth: "hum" },
   ],
   lines: {
-    arrive: ["Stay close. The tunnels go on forever."],
-    back: ["Down here again? Brave."],
-    idle: ["Keep moving. Standing still is dangerous."],
-    start: ["Let's dive."],
-    complete: ["Out in one piece. Good."],
+    arrive: ["Stay close. The tunnels go on forever.", "Careful on the stairs. And in the books.", "It's dark down here. Keep your focus lit."],
+    back: ["Down here again? Brave.", "Back in the depths. I knew you would be.", "The tunnels remember you."],
+    idle: ["Keep moving. Standing still is dangerous.", "Don't dawdle. Down here, time bites.", "Stay sharp."],
+    start: ["Let's dive.", "Descend. One level at a time.", "Eyes up. We go deep."],
+    complete: ["Out in one piece. Good.", "Surface reached. Good work.", "That's the way to clear a floor."],
   },
   threads: {  },
 };
