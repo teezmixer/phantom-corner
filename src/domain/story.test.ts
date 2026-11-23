@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MAX_MESSAGES, answer, pendingAsk, post, run, skip, stepAll, triggered, waitSatisfied, type Facts, type Progress, type Thread, type ThreadProgress } from "./story";
 
-const facts = (patch: Partial<Facts> = {}): Facts => ({ entered: true, firstVisit: false, name: "", missionSet: false, sessionsCompleted: 0, visited: ["leblanc"], unlocked: ["leblanc"], release: "0.1", defaultName: "Student Ren", ...patch });
+const facts = (patch: Partial<Facts> = {}): Facts => ({ entered: true, firstVisit: false, name: "", missionSet: false, sessionsCompleted: 0, visited: ["leblanc"], unlocked: ["leblanc"], saveOffer: false, release: "0.1", defaultName: "Student Ren", ...patch });
 const empty: ThreadProgress = { cursor: 0, messages: [], done: false };
 const onboarding: Thread = {
   id: "morgana", title: "Morgana", from: "morgana", trigger: { on: "first_visit" },

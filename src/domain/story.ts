@@ -18,7 +18,9 @@ export type Trigger =
   | { on: "unlock"; location: string }
   | { on: "release"; version: string }
   /** From the moment onboarding is over (finished or skipped), or at once for a player who is not new. For threads that must not greet a new player. */
-  | { on: "onboarded" };
+  | { on: "onboarded" }
+  /** The player has reached the first place with a person in it (Ryuji's) and accounts are on and they have none: the save prompt (spec §3.1). */
+  | { on: "save_offer" };
 
 export interface Thread {
   id: string;
@@ -58,6 +60,8 @@ export interface Facts {
   visited: readonly string[];
   /** Locations the player can enter now (shipped and unlocked); a held one is not here. */
   unlocked: readonly string[];
+  /** Accounts are on, the player is signed out, and they have arrived at Ryuji's place. */
+  saveOffer: boolean;
   /** The release this build is, for `release` triggers. */
   release: string;
   /** Name to say when the player has not given one. */
@@ -100,6 +104,7 @@ export function triggered(thread: Thread, facts: Facts, progress: Progress): boo
     // A release note waits until the player has finished or skipped onboarding, so a new player is not greeted by two threads.
     case "release": return facts.release === t.version && onboarded(facts, progress);
     case "onboarded": return onboarded(facts, progress);
+    case "save_offer": return facts.saveOffer && onboarded(facts, progress);
   }
 }
 
