@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "subway-murmur", label: "Announcements", synth: "murmur" },
   ],
   lines: {
-    arrive: ["Last train. Find a seat before it fills up."],
-    back: ["Same carriage as always."],
-    idle: ["Three stops to go. Use them."],
-    start: ["Doors closing. Go."],
-    complete: ["Our stop. Nicely done."],
+    arrive: ["Last train. Find a seat before it fills up.", "Mind the gap. Mind the schedule.", "Late night, empty carriage. Use it."],
+    back: ["Same carriage as always.", "The five-minute delay is yours now.", "Hold the strap. Hold the thought."],
+    idle: ["Three stops to go. Use them.", "Next stop is your deadline.", "The tunnel's long. So's your list."],
+    start: ["Doors closing. Go.", "Departing. No distractions on this line.", "All aboard the focus express."],
+    complete: ["Our stop. Nicely done.", "Arrived. Early, even.", "That's the end of the line. For today."],
   },
   threads: {  },
 };

@@ -1,19 +1,20 @@
 import type { ProgressEvent } from "@/domain/progress";
 import type { HudSize, WidgetId } from "@/hud/slots";
+import type { StampedDay } from "@/domain/calendar";
 import type { TimerState } from "@/domain/timer";
 
 /** The one storage key (spec §4.7). `v1` is the key's generation, not the schema version inside it. */
 export const STORAGE_KEY = "pc:v1";
-export const CURRENT_SCHEMA = 3;
+export const CURRENT_SCHEMA = 4;
 
 /** Volumes per sound bus, 0–1. Music is the YouTube player's own volume; ambience and interface go through Web Audio. */
 export interface Volumes { music: number; ambience: number; ui: number }
 
 export type MotionSetting = "system" | "reduced";
 
-/** What is written to storage (schema 3; see migrate.ts for how older saves are upgraded). UI state — layer, open phone, hidden HUD — is never persisted. */
+/** What is written to storage (schema 4; see migrate.ts for how older saves are upgraded). UI state — layer, open phone, hidden HUD — is never persisted. */
 export interface Persisted {
-  schema: 3;
+  schema: 4;
   /** Random id generated on first run; used by sync later (M11). */
   clientId: string;
   name: string | null;
@@ -38,6 +39,8 @@ export interface Persisted {
   locationId: string;
   visited: string[];
   events: ProgressEvent[];
+  /** The days studied, each with the calendar stamp design earned at the time (spec §3.4). Events carry no dates, so this is the record of when. */
+  studiedDays: StampedDay[];
   unreadThreads: string[];
   /** Last-changed times per slice, used by sync to pick the newer side (M11). */
   stamps: { settings: string; mission: string; todos: string };
@@ -57,7 +60,7 @@ export const DEFAULT_PREFERENCES = {
 
 export function freshPersisted(clientId: string, nowIso: string, defaults: Pick<Persisted, "timer" | "locationId" | "visited">): Persisted {
   return {
-    schema: 3,
+    schema: 4,
     clientId,
     name: null,
     settings: { muted: false, volumes: { ...DEFAULT_VOLUMES }, ambienceMix: {}, ...DEFAULT_PREFERENCES },
@@ -68,6 +71,7 @@ export function freshPersisted(clientId: string, nowIso: string, defaults: Pick<
     locationId: defaults.locationId,
     visited: defaults.visited,
     events: [],
+    studiedDays: [],
     unreadThreads: [],
     stamps: { settings: nowIso, mission: nowIso, todos: nowIso },
   };

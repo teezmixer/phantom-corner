@@ -2,6 +2,7 @@
  * App state: one reducer, one `layer` value (spec §4.2 — no router). Pure and testable;
  * the React provider lives in state/StoreProvider.tsx. In-memory only until M3 adds persistence.
  */
+import { recordSession, type StampedDay } from "@/domain/calendar";
 import { HOME_LOCATION_ID } from "@/content/registry";
 import { THREADS } from "@/content/threads";
 import { clampText, MAX_TODOS } from "@/domain/limits";
@@ -36,6 +37,8 @@ export interface AppState {
   timer: TimerState;
   breakEndsAt: number | null;
   events: ProgressEvent[];
+  /** Days studied, each with the stamp design earned at the time (calendar, spec §3.4). */
+  studiedDays: readonly StampedDay[];
   unreadThreads: string[];
   phoneOpen: boolean;
   hudHidden: boolean;
@@ -80,6 +83,7 @@ export const initialState: AppState = {
   timer: initialTimer,
   breakEndsAt: null,
   events: [],
+  studiedDays: [],
   unreadThreads: [],
   phoneOpen: false,
   hudHidden: false,
@@ -143,15 +147,22 @@ function unit(value: number): number {
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
 }
 
-/** Cap on waiting banners: a burst (Knowledge + level + unlock) fits, a flood does not. */
-const MAX_BANNERS = 4;
+/**
+ * Cap on waiting banners. A burst fits: Knowledge, the level, one gift per level crossed and the unlock notice (a first
+ * session of two hours crosses three levels). Past the cap the OLDEST are dropped, so a flood never costs the newest news.
+ */
+export const MAX_BANNERS = 12;
 
 /** The reducer proper plus the banners each change deserves (pure rules in banners.ts). */
 export function reducer(state: AppState, action: Action): AppState {
   const next = coreReducer(state, action);
   if (action.type === "DISMISS_BANNER" || action.type === "RESET" || action.type === "LOAD") return next;
   const fresh = bannersFor(state, next);
-  return fresh.length === 0 ? next : { ...next, banners: [...next.banners, ...fresh].slice(-MAX_BANNERS) };
+  if (fresh.length === 0) return next;
+  // The greeting comes first: Sojiro says hello, then the news waiting from a session that ended while the tab was closed.
+  const greeting = fresh.filter((b) => b.id === "back");
+  const rest = fresh.filter((b) => b.id !== "back");
+  return { ...next, banners: [...greeting, ...next.banners, ...rest].slice(-MAX_BANNERS) };
 }
 
 function coreReducer(state: AppState, action: Action): AppState {
@@ -208,12 +219,13 @@ function coreReducer(state: AppState, action: Action): AppState {
       // A running timer that completes is a finished session; stopping it early is a cut-short one.
       if (before.status === "running" && after.status === "complete") {
         const done: ProgressEvent = { kind: "session", plannedMs: before.durationMs, focusedMs: before.durationMs, outcome: "completed" };
-        return { ...state, timer: after, events: [...state.events, done], layer: "choice" };
+        // Stamped on the day the session really ended (its end time), even if the tab only noticed a little later.
+        return { ...state, timer: after, ...recordSession(state.events, state.studiedDays, done, before.endsAt), layer: "choice" };
       }
       // Stopping — from running or from paused — records the focused time so far as a cut-short session.
       if ((before.status === "running" || before.status === "paused") && action.event.type === "STOP") {
         const focusedMs = before.durationMs - remainingMs(before, action.now);
-        return { ...state, timer: after, events: [...state.events, { kind: "session", plannedMs: before.durationMs, focusedMs, outcome: "stopped" }], layer: "summary" };
+        return { ...state, timer: after, ...recordSession(state.events, state.studiedDays, { kind: "session", plannedMs: before.durationMs, focusedMs, outcome: "stopped" }, action.now), layer: "summary" };
       }
       return { ...state, timer: after };
     }

@@ -14,7 +14,7 @@ describe("buildExport", () => {
     const { json, filename } = buildExport(state, null, NOW);
     const data: unknown = JSON.parse(json);
     expect(isPersisted(data)).toBe(true);
-    expect(data).toMatchObject({ schema: 3, name: "Ren", mission: { text: "Finish chapter 3" } });
+    expect(data).toMatchObject({ schema: 4, name: "Ren", mission: { text: "Finish chapter 3" } });
     expect(filename).toBe("phantom-corner-2026-11-22.json");
   });
 

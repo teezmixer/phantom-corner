@@ -1,7 +1,9 @@
+import { recordSession, repairStampedDays } from "@/domain/calendar";
 import { clampText, MAX_TODOS } from "@/domain/limits";
 import { isEvent } from "./guard";
 import { repairDeadline, repairSettings } from "./repair";
-import { initialState, type AppState, type Todo } from "../store";
+import { bannersFor } from "../banners";
+import { MAX_BANNERS, initialState, type AppState, type Todo } from "../store";
 import type { Persisted } from "./schema";
 
 /**
@@ -36,9 +38,16 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
   let events = p.events.filter(isEvent);
   // An end time further away than the whole session (a corrupt value, or the clock moved) is pulled back to a full session.
   if (timer.status === "running") timer = { ...timer, endsAt: Math.min(timer.endsAt, now + timer.durationMs) };
+  let studiedDays = repairStampedDays(p.studiedDays);
+  // What the player should hear about a session that finished while the tab was closed (Knowledge, level, gifts, unlocks):
+  // the same notices a session finished in front of them would have brought, worked out against the log without it.
+  let offlineBanners: AppState["banners"] = [];
   if (timer.status === "running" && now >= timer.endsAt) {
-    events = [...events, { kind: "session", plannedMs: timer.durationMs, focusedMs: timer.durationMs, outcome: "completed" }];
+    const before = events;
+    // The day is the one the session really ended on, not the day the tab was reopened.
+    ({ events, studiedDays } = recordSession(events, studiedDays, { kind: "session", plannedMs: timer.durationMs, focusedMs: timer.durationMs, outcome: "completed" }, timer.endsAt) as { events: typeof events; studiedDays: typeof studiedDays });
     timer = { status: "complete", durationMs: timer.durationMs };
+    offlineBanners = bannersFor({ ...initialState, events: before }, { ...initialState, events });
   }
   const settings = repairSettings(p.settings);
   return {
@@ -60,6 +69,8 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     locationId: p.locationId,
     visited: p.visited,
     events,
+    studiedDays,
+    banners: offlineBanners.slice(-MAX_BANNERS),
     unreadThreads: p.unreadThreads,
     firstVisit: flags.firstVisit ?? false,
     recovered: flags.recovered,
@@ -86,7 +97,7 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
   };
   const settingsChanged = JSON.stringify(prev.settings) !== JSON.stringify(settings);
   return {
-    schema: 3,
+    schema: 4,
     clientId: prev.clientId,
     name: state.name === "" ? null : state.name,
     settings,
@@ -97,6 +108,7 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
     locationId: state.locationId,
     visited: state.visited,
     events: state.events,
+    studiedDays: [...state.studiedDays],
     unreadThreads: state.unreadThreads,
     stamps: {
       settings: settingsChanged ? nowIso : prev.stamps.settings,

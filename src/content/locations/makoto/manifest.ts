@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "makoto-hum", label: "Wall clock", synth: "hum" },
   ],
   lines: {
-    arrive: ["Good. You found it. Phones on silent, please."],
-    back: ["Same table as last time. I kept it free."],
-    idle: ["Set a goal first. Then begin."],
-    start: ["Starting now. No distractions."],
-    complete: ["Efficient. I'm impressed."],
+    arrive: ["Good. You found it. Phones on silent, please.", "Quiet voices only. Thank you.", "I reserved a table by the window."],
+    back: ["Same table as last time. I kept it free.", "Good to see you on time.", "I kept the schedule clear for us."],
+    idle: ["Set a goal first. Then begin.", "A plan first. Then the work.", "Which subject is first? Decide."],
+    start: ["Starting now. No distractions.", "Timer's running. Eyes forward.", "Let's be thorough."],
+    complete: ["Efficient. I'm impressed.", "Well done. Consistency matters.", "That was a proper session."],
   },
   threads: { unlock: "makoto-unlock", arrival: "makoto-arrival" },
 };

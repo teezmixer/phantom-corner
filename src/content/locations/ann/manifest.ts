@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "ann-city", label: "Crossing signal", synth: "city" },
   ],
   lines: {
-    arrive: ["Over here! I saved you the sunny seat."],
-    back: ["Hey, you came back! Crepes after?"],
-    idle: ["Ready when you are."],
-    start: ["Okay, focus mode. You too."],
-    complete: ["See? Way less scary than it looked."],
+    arrive: ["Over here! I saved you the sunny seat.", "The crepe place is right there. Reward later, okay?", "Isn't this spot nice? I picked it."],
+    back: ["Hey, you came back! Crepes after?", "Missed you! Ready to work?", "Same bench. Same sunshine."],
+    idle: ["Ready when you are.", "No rush. But maybe a little rush.", "Want me to quiz you? I'm kidding. Mostly."],
+    start: ["Okay, focus mode. You too.", "Let's do this together!", "Ready, set, study!"],
+    complete: ["See? Way less scary than it looked.", "You were so focused! I'm proud of you.", "Crepes. You've earned crepes."],
   },
   threads: { unlock: "ann-unlock", arrival: "ann-arrival" },
 };

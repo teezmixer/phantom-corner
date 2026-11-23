@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "yusuke-wind", label: "Birds outside", synth: "wind" },
   ],
   lines: {
-    arrive: ["Ah. The light here is ideal for concentration. Sit."],
-    back: ["You return. The composition is complete."],
-    idle: ["Inspiration rewards the patient."],
-    start: ["Let us both create."],
-    complete: ["Exquisite discipline."],
+    arrive: ["Ah. The light here is ideal for concentration. Sit.", "Observe the way the light falls. Then begin.", "A fine place to work. I have looked at it for hours."],
+    back: ["You return. The composition is complete.", "Ah, the model returns. I mean: the student.", "The same light, and yet a different day."],
+    idle: ["Inspiration rewards the patient.", "A blank page is also a beginning.", "Do not rush the first stroke."],
+    start: ["Let us both create.", "Then we begin. Silence, please.", "Eyes on the work."],
+    complete: ["Exquisite discipline.", "A session worth framing.", "You have my admiration. And my appetite."],
   },
   threads: { unlock: "yusuke-unlock", arrival: "yusuke-arrival" },
 };

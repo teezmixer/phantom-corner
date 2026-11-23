@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "rainy-walk-city", label: "Footsteps", synth: "city" },
   ],
   lines: {
-    arrive: ["Rain again. Good weather for thinking."],
-    back: ["Umbrella's still wet from last time."],
-    idle: ["Keep walking. Keep thinking."],
-    start: ["One step at a time."],
-    complete: ["We made it home dry. Mostly."],
+    arrive: ["Rain again. Good weather for thinking.", "Mind the puddles. And the homework.", "The streets are empty. Perfect."],
+    back: ["Umbrella's still wet from last time.", "The same lamp posts. The same rain.", "Right on time, as always."],
+    idle: ["Keep walking. Keep thinking.", "Don't stand in the rain wondering. Start.", "Think of it as a stroll with a purpose."],
+    start: ["One step at a time.", "Footsteps and focus. That's all.", "Umbrella up. Mind down."],
+    complete: ["We made it home dry. Mostly.", "Home, and the work is done.", "Not a single puddle in the way."],
   },
   threads: {  },
 };

@@ -25,12 +25,14 @@ describe("Banner", () => {
 
   it("shows a message, then the next one, each for BANNER_MS", () => {
     const send = setup();
-    send({ type: "SET_MISSION", text: "Study" }); // +10 Knowledge, then Level 2
+    send({ type: "SET_MISSION", text: "Study" }); // +10 Knowledge, then Level 2, then the level's gift (the map)
     expect(region().textContent).toBe("+10 Knowledge");
     act(() => { vi.advanceTimersByTime(BANNER_MS - 1); });
     expect(region().textContent).toBe("+10 Knowledge");
     act(() => { vi.advanceTimersByTime(2); });
     expect(region().textContent).toBe("Level 2");
+    act(() => { vi.advanceTimersByTime(BANNER_MS + 1); });
+    expect(region().textContent).toBe("Morgana: There's a map now. Don't wander off.");
     act(() => { vi.advanceTimersByTime(BANNER_MS + 1); });
     expect(region().textContent).toBe("");
   });

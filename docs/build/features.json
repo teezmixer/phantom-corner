@@ -659,8 +659,8 @@
       "spec": "§3.4",
       "description": "The summary shows calendar stamps for studied days.",
       "steps": "Component: today stamped after a session.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/screens/Summary/SummaryScreen.test.tsx (after a finished session today is stamped and the calendar shows it; a three-minute stop claims nothing); e2e/progression.spec.ts \"a finished session stamps today in the summary, and the day is saved\"; screenshots docs/build/screens/M7/summary-*. The heading shows the year in the body face (the display face has no digits)"
     },
     {
       "id": "summary-continue-finish",
@@ -714,8 +714,8 @@
       "spec": "§3.4",
       "description": "Knowledge: 1/focused minute, +5 completion, cut-short counts if ≥5 min, +10 first mission (provisional data file).",
       "steps": "Unit: fold table tests.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/progress.test.ts \"knowledgeFor\" (starts at zero; first mission +10 once; 1 per focused minute plus 5 for a completed session; a stopped session counts only from 5 minutes, no bonus; dev grants); the numbers live only in src/content/progression.ts (provisional)"
     },
     {
       "id": "prog-levels",
@@ -725,8 +725,8 @@
       "spec": "§3.4",
       "description": "Levels follow the provisional curve (L2 at 10, L3 at 35, …) in one data file.",
       "steps": "Unit: level for XP thresholds.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/progress.test.ts \"levelForKnowledge\" and \"levelProgress\" (L2 at 10, L3 at 35, maximum level); src/content/progression.test.ts (the curve starts at 0, rises every level, and runs to level 29 so the bonus locations can be reached); one data file"
     },
     {
       "id": "prog-levelup-gift",
@@ -736,8 +736,8 @@
       "spec": "§3.4",
       "description": "Every level-up gives something (a line, a stamp style or tip) even without an unlock.",
       "steps": "Unit: each level 2–25 maps to a reward; Playwright: level-up banner.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/content/progression.test.ts (every level 2–29 has a reward; unlock rewards sit exactly on the unlock levels; every other reward has its wording in content/copy; each stamp reward unlocks the next calendar design); src/state/banners.test.ts (gift announced after the level, several levels at once in order); e2e/progression.spec.ts \"the first level-up gives the map, announced after the level, one banner at a time\". Rewards are announcements and calendar stamp designs; \"a new idle line\" is a remark in a banner, not yet added to a location's idle lines (M8); src/state/persistence/persistence.test.ts and e2e/progression.spec.ts \"a session that finished while the tab was closed brings its Knowledge, level and gift when the player comes back\"; src/state/banners.test.ts \"the banner queue the player actually sees\" (a burst keeps every notice; a flood drops the oldest)"
     },
     {
       "id": "prog-unlock-order",
@@ -747,8 +747,8 @@
       "spec": "§3.4",
       "description": "Locations unlock in canon order at provisional levels; first completed session brings Ryuji.",
       "steps": "Unit: fold unlocks per data.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/progress.test.ts \"unlocks follow the data\": canon locations are always a prefix of canon order for every Knowledge value from 0 to 6000; each canon location arrives exactly at its level (1, 3, 5, 8, 12, 16, 20, 25); the first mission plus one completed 25-minute session reaches Ryuji and not Ann"
     },
     {
       "id": "prog-unlock-im",
@@ -769,8 +769,8 @@
       "spec": "§3.4",
       "description": "A calendar marks studied days with no streak counter.",
       "steps": "Component + unit on stamps.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/calendar.test.ts (local day keys, what counts as studied, stamps keep their first design, month grid, month shifting); src/components/StampCalendar.test.tsx (stamps on studied days only, designs, today marked, month navigation, no counter or streak text); e2e/progression.spec.ts (second day adds a stamp; two sessions on one day stamp once; under five minutes stamps nothing; stamps saved, and drawn again from storage after a reload next to a new one; a list longer than the cap is trimmed by date and the save is kept)"
     },
     {
       "id": "prog-hold-unshipped",
@@ -780,8 +780,8 @@
       "spec": "§3.4",
       "description": "Reaching a level whose location is not shipped holds the unlock until it is.",
       "steps": "Unit: fold with shippedLocations subset.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/progress.test.ts (\"a user who outruns the content\": with a shipped list missing Ann, level 8 holds her and leaves the rest alone; when she ships she unlocks); src/state/banners.held.test.ts (held reported by derive; the level-up hints that someone has been asking, once, and does not use the unlock line). Not built yet: her IM arriving \"the day it goes live\" (the thread interpreter, M8)"
     },
     {
       "id": "loc-leblanc-manifest",
@@ -1088,8 +1088,8 @@
       "spec": "§3.3",
       "description": "Bonus locations unlock by one provisional rule kept in the progression data file (DECISION).",
       "steps": "Unit: rule evaluated in fold.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/progress.test.ts \"the bonus locations follow one rule, in the data file\" (levels 26–29, reached through Knowledge: not at 4320, rainy-walk at 4610, all four by 5480); the rule is BONUS_UNLOCK_LEVELS in src/content/progression.ts (D-08, D-31)"
     },
     {
       "id": "loc-day-night",
@@ -1617,7 +1617,7 @@
       "description": "Content tests in CI (id collisions, canon gaps, unlock order, alt text, ≥3 lines, track id length, thread targets).",
       "steps": "CI run.",
       "status": "todo",
-      "evidence": ""
+      "evidence": "src/content/validate.ts + src/content/content.test.ts, run by `npm test` in CI: ids, canon indices, unlock order, image alt text and existence, all five line groups present with at least three lines each, eleven-character track ids, thread triggers naming existing locations (the phone threads carry triggers), manifest thread ids unique; each rule has a test that breaks it. Not covered and why: scene poster and sign are not required (the art is paused, D-21), so the image rule only runs on manifests that have images; manifest thread ids (e.g. ryuji-unlock) are checked for uniqueness only until M8 defines them. Stays todo until CI has run it on a PR"
     },
     {
       "id": "found-vite",

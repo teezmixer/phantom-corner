@@ -43,7 +43,7 @@ export function isEvent(v: unknown): boolean {
 
 /** Hand-written shape check (spec §4.2): data from storage is untrusted, so every field is verified. */
 export function isPersisted(v: unknown): v is Persisted {
-  if (!isRec(v) || v.schema !== 3) return false;
+  if (!isRec(v) || v.schema !== 4) return false;
   const { settings, mission, stamps } = v;
   return (
     isStr(v.clientId) &&
@@ -59,6 +59,7 @@ export function isPersisted(v: unknown): v is Persisted {
     // Events are only checked to be a bounded array here: a single impossible event is dropped on load (mapping),
     // so one bad record never costs the user their whole history.
     Array.isArray(v.events) && v.events.length <= MAX_EVENTS &&
+    // studiedDays is not checked here on purpose: repairStampedDays drops bad entries, trims a too-long list and turns a missing or broken one into an empty calendar, so it never costs the whole save.
     isStrArray(v.unreadThreads) && v.unreadThreads.length <= MAX_STORED_ITEMS &&
     isRec(stamps) && isStr(stamps.settings) && isStr(stamps.mission) && isStr(stamps.todos)
   );

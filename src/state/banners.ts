@@ -1,4 +1,5 @@
-import { morgana, sojiro, ui } from "@/content/copy";
+import { levelRewards, morgana, sojiro, ui } from "@/content/copy";
+import { LEVEL_REWARDS } from "@/content/progression";
 import { derive } from "./derive";
 import type { AppState } from "./store";
 
@@ -23,9 +24,19 @@ export function bannersFor(prev: AppState, next: AppState): BannerMessage[] {
   const after = derive(next);
   const gained = after.knowledge - before.knowledge;
   if (gained > 0) out.push({ id: `knowledge-${after.knowledge}`, text: ui.banner.knowledge(gained) });
-  if (after.level > before.level) out.push({ id: `level-${after.level}`, text: ui.banner.level(after.level) });
+  if (after.level > before.level) {
+    out.push({ id: `level-${after.level}`, text: ui.banner.level(after.level) });
+    // Every level gives something (spec §3.4). Locations have their own notice below; the dev panel's grants still count here.
+    for (let level = before.level + 1; level <= after.level; level++) {
+      const text = LEVEL_REWARDS[level]?.kind === "unlock" ? undefined : levelRewards[level];
+      if (text) out.push({ id: `reward-${level}`, text });
+    }
+  }
 
   const newlyUnlocked = after.unlocked.filter((id) => !before.unlocked.includes(id));
   if (newlyUnlocked.length > 0 && prev.devUnlockAll === next.devUnlockAll) out.push({ id: `unlock-${newlyUnlocked.join(",")}`, text: morgana.newLocation });
+  // A level whose location is not ready yet: nothing unlocks, but someone has been asking (spec §3.4).
+  const newlyHeld = after.held.filter((id) => !before.held.includes(id));
+  if (newlyHeld.length > 0 && prev.devUnlockAll === next.devUnlockAll) out.push({ id: `held-${newlyHeld.join(",")}`, text: morgana.someoneAsking });
   return out;
 }

@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "haru-room", label: "Watering can", synth: "room" },
   ],
   lines: {
-    arrive: ["Good morning! The vegetables are doing well today."],
-    back: ["Welcome — I made tea, if you'd like some."],
-    idle: ["Take your time. Nothing here grows in a hurry."],
-    start: ["Let's grow something today."],
-    complete: ["Lovely work. That deserves a rest."],
+    arrive: ["Good morning! The vegetables are doing well today.", "The herbs smell wonderful today. Do sit.", "I hope the garden isn't too distracting."],
+    back: ["Welcome — I made tea, if you'd like some.", "How lovely, you came back.", "I picked a few things for you to take home."],
+    idle: ["Take your time. Nothing here grows in a hurry.", "There's no hurry. Truly.", "Shall we begin when you're ready?"],
+    start: ["Let's grow something today.", "Let's tend to this carefully.", "Quietly now. Things grow in quiet."],
+    complete: ["Lovely work. That deserves a rest.", "That was beautiful to watch.", "Rest a little. Then perhaps tea."],
   },
   threads: { unlock: "haru-unlock", arrival: "haru-arrival" },
 };

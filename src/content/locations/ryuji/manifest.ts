@@ -15,11 +15,11 @@ const manifest: LocationManifest = {
     { id: "ryuji-city", label: "Sports field, far off", synth: "city" },
   ],
   lines: {
-    arrive: ["Yo! Took you long enough. Pull up a chair — well, a crate."],
-    back: ["Back on the roof, huh? Nice."],
-    idle: ["C'mon, let's knock this out."],
-    start: ["Alright, sprint time!"],
-    complete: ["Dude, that was solid!"],
+    arrive: ["Yo! Took you long enough. Pull up a chair — well, a crate.", "Man, this roof's the best spot. Don't tell anyone.", "Sit! Anywhere's fine. It's a roof!"],
+    back: ["Back on the roof, huh? Nice.", "There you are! Thought you bailed.", "Roof's all yours again. Mostly."],
+    idle: ["C'mon, let's knock this out.", "Ready? I'm ready. Super ready.", "Let's gooo, the timer's just sitting there."],
+    start: ["Alright, sprint time!", "Heads down, no excuses!", "Okay okay okay, focusing!"],
+    complete: ["Dude, that was solid!", "Whoa, you actually did the whole thing!", "Ha! Told you we could do it."],
   },
   threads: { unlock: "ryuji-unlock", arrival: "ryuji-arrival" },
 };

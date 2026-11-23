@@ -23,7 +23,7 @@ describe("LevelWidget", () => {
 
   it("shows a full bar at the highest level", () => {
     show({ events: [{ kind: "dev_grant", knowledge: 999_999 }] });
-    expect(group()).toHaveTextContent(/Lv\s*25/);
+    expect(group()).toHaveTextContent(/Lv\s*29/);
     expect(screen.getByRole("progressbar", { name: "Progress to the next level" })).toHaveAttribute("aria-valuenow", "100");
   });
 });
