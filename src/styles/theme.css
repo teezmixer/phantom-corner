@@ -39,6 +39,10 @@
   /* Menu (spec §3.7, §3.10): a diagonal clip-path wipe, labels flying in at angles, and the 100 ms cut for reduced motion. */
   --animate-menu-wipe: menu-wipe var(--motion-wipe) ease-out both;
   --animate-menu-label: menu-label var(--motion-enter) var(--motion-enter-easing) both;
+  /* Travel (spec §3.10): the red wipe that covers the screen, the wipe that reveals the room, and the moving line on a long wait. */
+  --animate-travel-cover: menu-wipe var(--motion-travel-cover) ease-in both;
+  --animate-travel-reveal: travel-reveal var(--motion-travel-reveal) ease-out both;
+  --animate-travel-motif: travel-motif 1200ms linear infinite;
   --animate-menu-cut: menu-cut var(--motion-reduced-cut) steps(1, end) both;
 
   @keyframes marquee {
@@ -52,6 +56,14 @@
   @keyframes menu-label {
     0% { opacity: 0; transform: translateX(-72px) rotate(calc(var(--tilt) - 10deg)); }
     100% { opacity: 1; transform: rotate(var(--tilt)); }
+  }
+  @keyframes travel-reveal {
+    0% { clip-path: polygon(0 0, 140% 0, 100% 100%, -40% 100%); }
+    100% { clip-path: polygon(140% 0, 140% 0, 100% 100%, 100% 100%); }
+  }
+  @keyframes travel-motif {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
   }
   @keyframes menu-cut {
     0% { opacity: 0; }
