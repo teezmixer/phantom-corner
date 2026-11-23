@@ -29,6 +29,7 @@ test.describe("journeys (spec §3.1)", () => {
     await shot(page, "2-first-visit-onboarding");
     await phone.getByLabel("Your name").fill("Ren");
     await phone.getByRole("button", { name: "Send" }).click();
+    await expect(page.getByLabel("Today's mission")).toBeFocused(); // Morgana asks for the mission: the cursor is already in the box
     await page.getByLabel("Today's mission").fill("Finish chapter 3");
     await page.getByRole("button", { name: "Set" }).click();
     await expect(page.getByRole("button", { name: "Map (N)" })).toBeVisible();

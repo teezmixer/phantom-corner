@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { CheckCircle, Circle, PencilSimple, Target } from "@phosphor-icons/react";
 import { widgets } from "@/content/copy";
 import { countdown, deadlineFromInput, inputFromDeadline } from "@/domain/deadline";
 import { useNow } from "@/hooks/useNow";
 import { useStore } from "@/state/StoreProvider";
+import { onboardingRunning } from "@/state/store";
 import { Slab } from "../Slab";
 
 /**
@@ -17,6 +18,10 @@ export function MissionWidget() {
   const [draft, setDraft] = useState("");
   const [due, setDue] = useState("");
   const showInput = editing || state.mission === "";
+  // Morgana has the player's name and is now asking for the mission: put the cursor where the answer goes (it was in the phone).
+  const input = useRef<HTMLInputElement>(null);
+  const waitingForMission = onboardingRunning(state) && state.name !== "" && state.mission === "" && !state.events.some((e) => e.kind === "mission_first_set");
+  useEffect(() => { if (waitingForMission) input.current?.focus(); }, [waitingForMission]);
   const left = state.missionDeadline && !state.missionDone ? countdown(state.missionDeadline, now) : null;
 
   const submit = (e: FormEvent) => {
@@ -34,6 +39,7 @@ export function MissionWidget() {
         <form onSubmit={submit} className="flex flex-col gap-1">
           <div className="flex gap-1">
             <input
+              ref={input}
               aria-label="Today's mission"
               value={draft}
               maxLength={80}
