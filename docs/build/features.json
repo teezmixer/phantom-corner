@@ -1328,7 +1328,7 @@
       "area": "Menu and screens",
       "inventory": "Settings",
       "spec": "§4.12",
-      "description": "A motion setting (system/reduced/full) overrides prefers-reduced-motion.",
+      "description": "A motion setting (follow my system / reduce motion) overrides prefers-reduced-motion. There is deliberately no \"full motion even if the OS says reduce\" option (D-28).",
       "steps": "Unit: useReducedMotion resolves setting.",
       "status": "pass",
       "evidence": "e2e/hud.spec.ts \"Reduce motion overrides the system\" (page mode, saved, CSS durations collapse even when the OS allows motion); src/hooks/useReducedMotion.ts used by the adopted components. Not covered by a unit test: the hook's resolution of setting vs system (only exercised through the browser)"

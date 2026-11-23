@@ -64,8 +64,8 @@ function Preferences({ children }: { children: React.ReactNode }) {
   // The send-time gate and the remembered opt-out follow the switch.
   useEffect(() => {
     setAnalyticsAllowed(state.analytics);
-    rememberOptOut(!state.analytics);
-  }, [state.analytics]);
+    if (!state.demo) rememberOptOut(!state.analytics); // a demo visit never changes the real visitor's remembered choice
+  }, [state.analytics, state.demo]);
   return (
     <MotionConfig reducedMotion={reduced ? "always" : "user"}>
       {children}

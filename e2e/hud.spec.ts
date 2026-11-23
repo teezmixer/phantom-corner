@@ -144,6 +144,18 @@ test.describe("analytics switch", () => {
     expect(await page.evaluate(() => document.querySelector('script[src*="_vercel"]'))).toBeNull(); // the scripts are not even in the page
   });
 
+  test("switching analytics on inside a demo never changes the real visitor's remembered opt-out", async ({ page }) => {
+    await page.addInitScript(() => window.localStorage.setItem("pc-optout", "1"));
+    await page.goto("/?demo=true");
+    await page.keyboard.press("m");
+    await page.getByRole("button", { name: /SETTINGS/ }).click();
+    const box = settingsDialog(page).getByRole("checkbox", { name: "Anonymous visit statistics" });
+    await expect(box).not.toBeChecked(); // the remembered opt-out is honoured in the demo too
+    await box.check();
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => window.localStorage.getItem("pc-optout"))).toBe("1");
+  });
+
   test("the opt-out holds from the very first load and survives Delete my data", async ({ page }) => {
     await page.goto("/");
     await enter(page);
@@ -340,7 +352,9 @@ test.describe("mission deadline", () => {
   });
 
   test("changing only the deadline keeps a finished mission finished", async ({ page }) => {
+    await page.clock.install({ time: new Date("2026-11-22T12:00:00") });
     await page.goto("/");
+    await page.clock.resume();
     await enter(page);
     await page.getByLabel("Today's mission").fill("Keep going");
     await page.getByRole("button", { name: "Set" }).click();
@@ -353,7 +367,9 @@ test.describe("mission deadline", () => {
   });
 
   test("an absurd deadline is ignored rather than stored", async ({ page }) => {
+    await page.clock.install({ time: new Date("2026-11-22T12:00:00") });
     await page.goto("/");
+    await page.clock.resume();
     await enter(page);
     await page.getByLabel("Today's mission").fill("Typo");
     await page.getByLabel(/mission deadline/i).fill("2999-01-01T10:00");
