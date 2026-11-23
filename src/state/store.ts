@@ -147,8 +147,11 @@ function unit(value: number): number {
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
 }
 
-/** Cap on waiting banners: a burst (Knowledge + level + unlock) fits, a flood does not. */
-const MAX_BANNERS = 4;
+/**
+ * Cap on waiting banners. A burst fits: Knowledge, the level, one gift per level crossed and the unlock notice (a first
+ * session of two hours crosses three levels). Past the cap the OLDEST are dropped, so a flood never costs the newest news.
+ */
+export const MAX_BANNERS = 12;
 
 /** The reducer proper plus the banners each change deserves (pure rules in banners.ts). */
 export function reducer(state: AppState, action: Action): AppState {

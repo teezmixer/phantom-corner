@@ -489,3 +489,30 @@ describe("the calendar survives storage", () => {
     expect(load(JSON.stringify({ ...fresh(), studiedDays: Array.from({ length: 4000 }, () => ({ day: "2026-11-20", style: 0 })) })).recovered).toBe(true);
   });
 });
+
+describe("a session that ended while the tab was closed is announced when the player comes back", () => {
+  const MAP = "Morgana: There's a map now. Don't wander off.";
+  const reopen = (patch: object) => {
+    const r = load(JSON.stringify({ ...fresh(), ...patch }));
+    return stateFromPersisted(r.persisted, NOW, { recovered: r.recovered, storageBlocked: false });
+  };
+
+  it("brings the Knowledge, the level, each gift and the unlock the session earned, in order", () => {
+    const state = reopen({ timer: { status: "running", durationMs: 120 * 60_000, endsAt: NOW - 60_000 } }); // 125 Knowledge: level 4
+    expect(state.banners.map((b) => b.text)).toEqual(["+125 Knowledge", "Level 4", MAP, "A new stamp for your calendar: star.", "You unlocked a new location. Someone's waiting for you."]);
+    expect(state.timer.status).toBe("complete");
+  });
+
+  it("says nothing when no session ended while the tab was closed, or when it did not change the level", () => {
+    expect(reopen({}).banners).toEqual([]);
+    expect(reopen({ timer: { status: "idle", durationMs: 25 * 60_000 } }).banners).toEqual([]);
+    const small = reopen({ events: [{ kind: "mission_first_set" }], timer: { status: "running", durationMs: 25 * 60_000, endsAt: NOW - 60_000 } }); // 10 → 40: level 2 → 3
+    expect(small.banners.map((b) => b.text)).toEqual(["+30 Knowledge", "Level 3", "You unlocked a new location. Someone's waiting for you."]);
+  });
+
+  it("does not repeat what the player already heard: a second visit with the session already recorded is quiet", () => {
+    const first = reopen({ timer: { status: "running", durationMs: 25 * 60_000, endsAt: NOW - 60_000 } });
+    const stored = toPersisted(first, fresh(), ISO);
+    expect(reopen(stored).banners).toEqual([]);
+  });
+});

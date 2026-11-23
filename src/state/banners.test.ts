@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { MINUTE } from "@/domain/timer";
-import { initialState, reducer, type Action, type AppState } from "./store";
+import { MAX_BANNERS, initialState, reducer, type Action, type AppState } from "./store";
 import { bannersFor } from "./banners";
+import { derive } from "./derive";
 
 const room: AppState = { ...initialState, entered: true, layer: "main" };
 const run = (actions: Action[], from: AppState = room) => actions.reduce(reducer, from);
@@ -68,7 +69,7 @@ describe("banner queue in the store", () => {
   it("caps the queue so a flood cannot pile up", () => {
     let s = room;
     for (let i = 0; i < 20; i++) s = reducer(s, { type: "DEV_GRANT", knowledge: 1 });
-    expect(s.banners.length).toBeLessThanOrEqual(4);
+    expect(s.banners.length).toBeLessThanOrEqual(MAX_BANNERS);
   });
 
   it("starts a return visit with the greeting waiting, and clears everything on reset", () => {
@@ -101,5 +102,26 @@ describe("level gifts (spec §3.4: no empty level-ups)", () => {
       "Morgana: There's a map now. Don't wander off.", "A new stamp for your calendar: star.", "Tip: write the first line of an answer before you check your notes.",
       "You unlocked a new location. Someone's waiting for you.",
     ]);
+  });
+});
+
+describe("the banner queue the player actually sees", () => {
+  const queue = (actions: Action[]) => run(actions).banners.map((b) => b.text);
+  const MAP = "Morgana: There's a map now. Don't wander off.";
+  const UNLOCK = "You unlocked a new location. Someone's waiting for you.";
+
+  it("a first session of two hours crosses three levels and keeps every notice, Knowledge and level included", () => {
+    expect(queue([{ type: "DEV_GRANT", knowledge: 125 }])).toEqual(["+125 Knowledge", "Level 4", MAP, "A new stamp for your calendar: star.", UNLOCK]);
+  });
+
+  it("a bigger jump keeps all of it too", () => {
+    expect(queue([{ type: "DEV_GRANT", knowledge: 335 }])).toEqual(["+335 Knowledge", "Level 6", MAP, "A new stamp for your calendar: star.", "Tip: write the first line of an answer before you check your notes.", UNLOCK]);
+  });
+
+  it("a flood is capped, and what is dropped is the oldest, never the newest news", () => {
+    let s = room;
+    for (let i = 0; i < 40; i++) s = reducer(s, { type: "DEV_GRANT", knowledge: 1 });
+    expect(s.banners.length).toBeLessThanOrEqual(MAX_BANNERS);
+    expect(s.banners.at(-1)!.id).toContain(`knowledge-${derive(s).knowledge}`);
   });
 });
