@@ -54,6 +54,9 @@ const minutes = (ms: number) => Math.round(ms / 60_000);
  */
 export function eventsFor(prev: AppState, next: AppState): AnalyticsEvent[] {
   if (prev === next || next.demo) return [];
+  // A sync brings in other devices' history: events with another device's id in them. That is not something this player just did,
+  // so it sends nothing (not a session per remote session, not an unlock per place the merged history opens).
+  if (next.clientId !== "" && next.events.slice(prev.events.length).some((e) => e.id !== undefined && !e.id.startsWith(`${next.clientId}:`))) return [];
   const level = derive(next).level;
   const location = next.locationId;
   const out: AnalyticsEvent[] = [];
