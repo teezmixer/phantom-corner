@@ -31,8 +31,8 @@ function fakeContext(initial: "suspended" | "running" = "suspended") {
 describe("synthesised interface sounds (no audio files)", () => {
   const ids = Object.keys(SFX) as SfxId[];
 
-  it("defines every interface sound the spec lists (§3.9) plus the doorbell", () => {
-    expect(ids.sort()).toEqual(["doorbell", "menuClose", "menuOpen", "select", "sessionComplete", "sessionStart", "travel"]);
+  it("defines every interface sound the spec lists (§3.9) plus the doorbell, the mission-done pair and the end-of-break bell", () => {
+    expect(ids.sort()).toEqual(["breakEnd", "doorbell", "menuClose", "menuOpen", "missionDone", "select", "sessionComplete", "sessionStart", "travel"]);
   });
 
   it.each(ids)("%s has audible, bounded notes", (id) => {

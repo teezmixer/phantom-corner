@@ -7,12 +7,14 @@ const NOW = 1_700_000_000_000;
 
 describe("parseMode", () => {
   it("reads demo, dev and at", () => {
-    expect(parseMode("?demo=true&at=summary")).toEqual({ demo: true, dev: false, accounts: false, at: "summary" });
-    expect(parseMode("?dev=true")).toEqual({ demo: false, dev: true, accounts: false, at: null });
-    expect(parseMode("")).toEqual({ demo: false, dev: false, accounts: false, at: null });
+    expect(parseMode("?demo=true&at=summary")).toEqual({ demo: true, dev: false, accounts: false, community: false, at: "summary" });
+    expect(parseMode("?dev=true")).toEqual({ demo: false, dev: true, accounts: false, community: false, at: null });
+    expect(parseMode("")).toEqual({ demo: false, dev: false, accounts: false, community: false, at: null });
     expect(parseMode("?demo=1").demo).toBe(false); // only the literal "true" counts
     expect(parseMode("?accounts=true").accounts).toBe(true);
     expect(parseMode("?accounts=yes").accounts).toBe(false);
+    expect(parseMode("?community=true").community).toBe(true);
+    expect(parseMode("?community=1").community).toBe(false);
   });
 });
 

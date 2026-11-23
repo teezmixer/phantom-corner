@@ -36,7 +36,7 @@ export function patchFromSnapshot(s: Snapshot): SyncPatch {
   const mission = s.docs.mission.data;
   return {
     events: s.events.filter(isEvent).slice(0, MAX_EVENTS), // a bad event from the server is dropped, as one from storage is
-    settings: { muted: settings.muted, volumes: settings.volumes, ambienceMix: settings.ambienceMix, hiddenWidgets: settings.hidden, hudSize: settings.hudSize, motion: settings.motion, todoCollapsed: settings.todoCollapsed },
+    settings: { muted: settings.muted, volumes: settings.volumes, ambienceMix: settings.ambienceMix, hiddenWidgets: settings.hidden, hudSize: settings.hudSize, motion: settings.motion, todoCollapsed: settings.todoCollapsed, menuStyle: settings.menuStyle },
     mission: { mission: clampText(mission?.text ?? ""), missionDone: mission?.done ?? false, missionDeadline: repairDeadline(mission?.deadline) },
     todos: repairTodos(s.docs.todos.data.todos, s.docs.todos.data.nextTodoId),
     stamps: { settings: s.docs.settings.updatedAt, mission: s.docs.mission.updatedAt, todos: s.docs.todos.updatedAt },

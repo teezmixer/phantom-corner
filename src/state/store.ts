@@ -9,7 +9,7 @@ import { RELEASE_VERSION, THREADS } from "@/content/threads";
 import { clampText, MAX_TODOS } from "@/domain/limits";
 import { answer, pendingAsk, post, skip, stepAll, type Facts, type Progress } from "@/domain/story";
 import { HUD_SIZES, type HudSize, type WidgetId, TOGGLEABLE_WIDGETS } from "@/hud/slots";
-import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MotionSetting, type Volumes } from "./persistence/schema";
+import { DEFAULT_PREFERENCES, DEFAULT_VOLUMES, type MenuStyle, type MotionSetting, type Volumes } from "./persistence/schema";
 import { initialTimer, remainingMs, transition, type TimerEvent, type TimerState } from "@/domain/timer";
 import { stampEventIds, type ProgressEvent } from "@/domain/progress";
 import { mergeEvents } from "@/sync/merge";
@@ -40,15 +40,25 @@ export interface AppState {
   nextTodoId: number;
   timer: TimerState;
   breakEndsAt: number | null;
+  /** How the last break ended: it ran out, or the player skipped the rest. Null before one starts. Not saved. */
+  lastBreak: "ended" | "skipped" | null;
+  /** The length chosen for the current break, in minutes. Not saved. */
+  breakMinutes: number;
+  /** How many times a mission has been ticked done this visit; names each banner. Not saved. */
+  missionsDone: number;
   events: ProgressEvent[];
   /** Accounts are on for this visit (?accounts=true until the live backend exists, B-10). Not saved. */
   accountsEnabled: boolean;
+  /** The presence count and the vote are on for this visit (?community=true, made-up numbers). Not saved. */
+  communityEnabled: boolean;
   /** Signed in to an account right now. Not saved: the backend keeps its own session. */
   signedIn: boolean;
   /** Documents just taken from a sync, with the time they carry and the state they produced; the saver uses the time while the document is unchanged. Not saved. */
   adopted?: Partial<Record<"settings" | "mission" | "todos", { stamp: string; key: string }>>;
   /** This device's id, the prefix of its event ids (D-24). Empty in the demo and dev mode, which never sync. Not part of any visible state. */
   clientId: string;
+  /** When this player's save was first made (ISO), or null when unknown (saves from before it, the demo). Never changed by play. Not part of the synced state. */
+  memberSince: string | null;
   /** Days studied, each with the stamp design earned at the time (calendar, spec §3.4). */
   studiedDays: readonly StampedDay[];
   unreadThreads: string[];
@@ -73,6 +83,7 @@ export interface AppState {
   /** Anonymous analytics switch (provisional default on, D-14). */
   analytics: boolean;
   todoCollapsed: boolean;
+  menuStyle: MenuStyle;
   /** Dev panel: treat every location as unlocked. */
   devUnlockAll: boolean;
   /** Demo mode never touches saved progress. */
@@ -86,6 +97,8 @@ export interface AppState {
 }
 
 export const BREAK_MS = 5 * 60_000;
+/** The break lengths offered, in minutes (spec §3.6 "in depth"; PROVISIONAL, D-36). */
+export const BREAK_OPTIONS_MIN = [5, 10, 15] as const;
 
 export const initialState: AppState = {
   layer: "splash",
@@ -102,9 +115,14 @@ export const initialState: AppState = {
   nextTodoId: 1,
   timer: initialTimer,
   breakEndsAt: null,
+  lastBreak: null,
+  breakMinutes: 5,
+  missionsDone: 0,
   events: [],
   clientId: "",
+  memberSince: null,
   accountsEnabled: false,
+  communityEnabled: false,
   signedIn: false,
   studiedDays: [],
   unreadThreads: [],
@@ -122,6 +140,7 @@ export const initialState: AppState = {
   motion: DEFAULT_PREFERENCES.motion,
   analytics: DEFAULT_PREFERENCES.analytics,
   todoCollapsed: DEFAULT_PREFERENCES.todoCollapsed,
+  menuStyle: DEFAULT_PREFERENCES.menuStyle,
   devUnlockAll: false,
   demo: false,
   banners: [],
@@ -139,6 +158,7 @@ export type Action =
   | { type: "TOGGLE_WIDGET"; id: WidgetId }
   | { type: "SET_HUD_SIZE"; size: number }
   | { type: "SET_MOTION"; motion: MotionSetting }
+  | { type: "SET_MENU_STYLE"; style: MenuStyle }
   | { type: "SET_ANALYTICS"; on: boolean }
   | { type: "SET_TODO_COLLAPSED"; collapsed: boolean }
   | { type: "ADD_TODO"; text: string }
@@ -151,6 +171,10 @@ export type Action =
   | { type: "FINISH" }
   | { type: "START_BREAK"; now: number }
   | { type: "END_BREAK" }
+  /** Leave the break early, without starting a session. */
+  | { type: "SKIP_BREAK" }
+  /** Restart the break at a different length (one of BREAK_OPTIONS_MIN). */
+  | { type: "SET_BREAK"; now: number; minutes: number }
   | { type: "START_TRAVEL"; to: string }
   /** The reveal begins: the destination is now the current place (so the wipe shows its room), though travel is not over yet. */
   | { type: "TRAVEL_REVEAL" }
@@ -237,7 +261,7 @@ export function settle(state: AppState): AppState {
 }
 
 /** The state fields behind each synced document. The analytics choice is deliberately not among them: consent stays on the device. */
-type SettingsFields = Pick<AppState, "muted" | "volumes" | "ambienceMix" | "hiddenWidgets" | "hudSize" | "motion" | "todoCollapsed">;
+type SettingsFields = Pick<AppState, "muted" | "volumes" | "ambienceMix" | "hiddenWidgets" | "hudSize" | "motion" | "todoCollapsed" | "menuStyle">;
 type MissionFields = Pick<AppState, "mission" | "missionDone" | "missionDeadline">;
 type TodosFields = Pick<AppState, "todos" | "nextTodoId">;
 
@@ -254,7 +278,7 @@ export interface SyncPatch {
 /** The synced documents of a state, each as a comparable string. Equal strings mean the document has not changed. */
 export function syncGroups(s: AppState): { settings: string; mission: string; todos: string } {
   return {
-    settings: JSON.stringify([s.muted, s.volumes, s.ambienceMix, s.hiddenWidgets, s.hudSize, s.motion, s.todoCollapsed]),
+    settings: JSON.stringify([s.muted, s.volumes, s.ambienceMix, s.hiddenWidgets, s.hudSize, s.motion, s.todoCollapsed, s.menuStyle]),
     mission: JSON.stringify([s.mission, s.missionDone, s.missionDeadline]),
     todos: JSON.stringify([s.todos, s.nextTodoId]),
   };
@@ -344,10 +368,12 @@ function coreReducer(state: AppState, action: Action): AppState {
       return { ...state, motion: action.motion };
     case "SET_ANALYTICS":
       return { ...state, analytics: action.on };
+    case "SET_MENU_STYLE":
+      return action.style === "text" || action.style === "illustrated" ? { ...state, menuStyle: action.style } : state;
     case "SET_TODO_COLLAPSED":
       return { ...state, todoCollapsed: action.collapsed };
     case "TOGGLE_MISSION_DONE":
-      return state.mission ? { ...state, missionDone: !state.missionDone } : state;
+      return state.mission ? { ...state, missionDone: !state.missionDone, missionsDone: state.missionDone ? state.missionsDone : state.missionsDone + 1 } : state;
     case "ADD_TODO": {
       const text = clampText(action.text);
       if (!text || state.todos.length >= MAX_TODOS) return state;
@@ -385,9 +411,14 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "FINISH":
       return { ...state, timer: transition(state.timer, { type: "ACKNOWLEDGE" }), layer: "main", breakEndsAt: null };
     case "START_BREAK":
-      return { ...state, layer: "break", breakEndsAt: action.now + BREAK_MS, timer: transition(state.timer, { type: "ACKNOWLEDGE" }) };
+      return { ...state, layer: "break", breakEndsAt: action.now + BREAK_MS, breakMinutes: BREAK_MS / 60_000, lastBreak: null, timer: transition(state.timer, { type: "ACKNOWLEDGE" }) };
     case "END_BREAK":
-      return { ...state, layer: "choice", breakEndsAt: null };
+      // Only while a break is on: a late tick after the player skipped it must not play the cue.
+      return state.layer === "break" && state.breakEndsAt !== null ? { ...state, layer: "choice", breakEndsAt: null, lastBreak: "ended" } : state;
+    case "SKIP_BREAK":
+      return state.layer === "break" ? { ...state, layer: "choice", breakEndsAt: null, lastBreak: "skipped" } : state;
+    case "SET_BREAK":
+      return state.layer === "break" && (BREAK_OPTIONS_MIN as readonly number[]).includes(action.minutes) ? { ...state, breakEndsAt: action.now + action.minutes * 60_000, breakMinutes: action.minutes } : state;
     case "START_TRAVEL":
       // Only to a place that is open, that is not where we already are, and not while a trip is already going. The map offers
       // only these, but the rule belongs here, where nothing can bypass it.
@@ -474,7 +505,7 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "RESET":
       // Demo mode stays demo, so a reset can never turn into writing real progress later (M3 persistence).
       // Demo stays demo, and the analytics choice is never silently undone by a reset.
-      return { ...initialState, layer: "splash", clientId: state.clientId, accountsEnabled: state.accountsEnabled, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
+      return { ...initialState, layer: "splash", clientId: state.clientId, memberSince: state.memberSince, accountsEnabled: state.accountsEnabled, communityEnabled: state.communityEnabled, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
   }
 }
 

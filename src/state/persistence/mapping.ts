@@ -66,12 +66,14 @@ export function stateFromPersisted(p: Persisted, now: number, flags: { recovered
     motion: settings.motion,
     analytics: settings.analytics,
     todoCollapsed: settings.todoCollapsed,
+    menuStyle: settings.menuStyle,
     ...repairTodos(p.todos, p.nextTodoId),
     timer,
     locationId: p.locationId,
     visited: p.visited,
     events,
     clientId: p.clientId,
+    memberSince: typeof p.createdAt === "string" && !Number.isNaN(Date.parse(p.createdAt)) ? p.createdAt : null,
     studiedDays,
     banners: offlineBanners.slice(-MAX_BANNERS),
     unreadThreads: p.unreadThreads,
@@ -104,11 +106,13 @@ export function toPersisted(state: AppState, prev: Persisted, nowIso: string): P
     motion: state.motion,
     analytics: state.analytics,
     todoCollapsed: state.todoCollapsed,
+    menuStyle: state.menuStyle,
   };
   const settingsChanged = JSON.stringify(prev.settings) !== JSON.stringify(settings);
   return {
     schema: 5,
     clientId: prev.clientId,
+    createdAt: prev.createdAt ?? nowIso,
     name: state.name === "" ? null : state.name,
     settings,
     mission: state.mission === "" ? null : { text: state.mission, setAt: missionChanged && (prev.mission?.text ?? "") !== state.mission ? nowIso : (prev.mission?.setAt ?? nowIso), done: state.missionDone, ...(state.missionDeadline ? { deadline: state.missionDeadline } : {}) },

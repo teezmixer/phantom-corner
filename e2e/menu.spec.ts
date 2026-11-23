@@ -214,6 +214,21 @@ test.describe("hideout menu", () => {
     for (let i = 1; i < boxes.length; i++) expect(boxes[i]!.top, `${boxes[i]!.name} overlaps ${boxes[i - 1]!.name}`).toBeGreaterThanOrEqual(boxes[i - 1]!.bottom);
   });
 
+  test("the illustrated style also fits at the smallest supported window, with the art slot clear of the TV", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 600 });
+    await page.goto("/?dev=true");
+    await page.getByRole("button", { name: "Press to enter" }).click();
+    await page.getByLabel("Jump to screen").selectOption("settings");
+    await page.getByLabel("Illustrated Student Ren (art slots)").check();
+    await page.getByLabel("Jump to screen").selectOption("menu");
+    const dialog = page.getByRole("dialog", { name: "Hideout" });
+    await expect(page.getByTestId("menu-art")).toBeVisible();
+    await page.waitForTimeout(900);
+    const fit = await dialog.evaluate((d) => { const panel = d.firstElementChild as HTMLElement; const art = document.querySelector('[data-testid="menu-art"]')!.getBoundingClientRect(); const tv = document.querySelector('section[aria-label="TV"]')!.getBoundingClientRect(); return { scroll: panel.scrollHeight, client: panel.clientHeight, artRight: art.right, tvLeft: tv.left }; });
+    expect(fit.scroll).toBeLessThanOrEqual(fit.client);
+    expect(fit.artRight).toBeLessThanOrEqual(fit.tvLeft);
+  });
+
   test("moving the mouse onto a not-yet label highlights it, so the pointer is never left without feedback", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Press to enter" }).click();
@@ -255,5 +270,36 @@ test.describe("hideout menu", () => {
     expect(await red()).toEqual(["STUDY"]); // the keyboard highlight, and nothing else
     await page.keyboard.press("ArrowDown");
     expect(await red()).toEqual(["MAP"]); // the red moved with it
+  });
+});
+
+test.describe("menu style (spec §3.7, D-36)", () => {
+  test("the illustrated style is a setting: Settings switches it, the menu shows the art slot and Morgana, and it is remembered", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Press to enter" }).click();
+    await page.keyboard.press("m");
+    await expect(page.getByTestId("menu-art")).toHaveCount(0);
+    await page.getByRole("button", { name: "SETTINGS" }).click();
+    await page.getByLabel("Illustrated Student Ren (art slots)").check();
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("m");
+    await expect(page.getByRole("img", { name: "Student Ren art slot" })).toBeVisible();
+    await expect(page.getByRole("img", { name: /Morgana, peeking/ })).toBeVisible();
+    await page.waitForFunction(() => (localStorage.getItem("pc:v1") ?? "").includes('"menuStyle":"illustrated"'));
+    await page.reload();
+    await page.getByRole("button", { name: "Press to enter" }).click();
+    await page.keyboard.press("m");
+    await expect(page.getByTestId("menu-art")).toBeVisible();
+  });
+
+  test("with reduced motion Morgana is a cut, not a rise", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/?dev=true");
+    await page.getByRole("button", { name: "Press to enter" }).click();
+    await page.getByLabel("Jump to screen").selectOption("settings");
+    await page.getByLabel("Illustrated Student Ren (art slots)").check();
+    await page.getByLabel("Jump to screen").selectOption("menu");
+    const name = await page.getByTestId("morgana-peek").evaluate((el) => getComputedStyle(el).animationName);
+    expect(name).toBe("menu-cut");
   });
 });

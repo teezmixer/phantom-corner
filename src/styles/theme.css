@@ -43,6 +43,10 @@
   --animate-travel-cover: menu-wipe var(--motion-travel-cover) ease-in both;
   --animate-travel-reveal: travel-reveal var(--motion-travel-reveal) ease-out both;
   --animate-travel-motif: travel-motif var(--motion-travel-motif) linear infinite;
+  /* The illustrated menu's Morgana placeholder rises from the bag (D-36); only transform moves. */
+  --animate-morgana-peek: morgana-peek var(--motion-morgana-peek) var(--motion-enter-easing) both;
+  /* The location sign crumples like a paper ball as it settles into the corner (D-36); only transform moves. */
+  --animate-sign-fold: sign-fold var(--motion-sign-fold) var(--motion-enter-easing) both;
   --animate-menu-cut: menu-cut var(--motion-reduced-cut) steps(1, end) both;
 
   @keyframes marquee {
@@ -64,6 +68,16 @@
   @keyframes travel-motif {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
+  }
+  @keyframes morgana-peek {
+    0% { transform: translateY(100%); }
+    100% { transform: none; }
+  }
+  @keyframes sign-fold {
+    0% { transform: none; }
+    35% { transform: scale(0.82, 0.7) rotate(-5deg); }
+    70% { transform: scale(1.06, 1.1) rotate(2deg); }
+    100% { transform: none; }
   }
   @keyframes menu-cut {
     0% { opacity: 0; }

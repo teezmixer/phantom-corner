@@ -9,13 +9,15 @@ export interface UrlMode {
   dev: boolean;
   /** ?accounts=true switches on sign-in against the in-memory fake, until the live backend exists (B-10). */
   accounts: boolean;
+  /** ?community=true switches on the presence count and the vote, on made-up numbers (B-11). */
+  community: boolean;
   at: string | null;
 }
 
 /** Read the mode switches from a query string: ?demo=true, ?demo=true&at=summary|menu, ?dev=true (spec §3.12). */
 export function parseMode(search: string): UrlMode {
   const p = new URLSearchParams(search);
-  return { demo: p.get("demo") === "true", dev: p.get("dev") === "true", accounts: p.get("accounts") === "true", at: p.get("at") };
+  return { demo: p.get("demo") === "true", dev: p.get("dev") === "true", accounts: p.get("accounts") === "true", community: p.get("community") === "true", at: p.get("at") };
 }
 
 const DEMO_AT: Record<string, Layer> = { summary: "summary", menu: "menu" };

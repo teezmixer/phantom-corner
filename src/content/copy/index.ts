@@ -114,6 +114,17 @@ export const widgets = {
   notYet: "Not yet.", // draft — menu items that aren't built (spec §3.7)
 } as const;
 
+/** Community features behind ?community=true, running on made-up numbers until there is a backend (B-11). DRAFTS (D-10, D-36). */
+export const community = {
+  presence: (n: number) => (n === 1 ? "1 Phantom Thief is studying here" : `${n} Phantom Thieves are studying here`),
+  practice: "practice numbers",
+  voteTitle: "Which place should open next?",
+  votes: (n: number) => (n === 1 ? "1 vote" : `${n} votes`),
+  voted: "Your vote is in; pressing another place moves it.",
+  voteNote: "A practice vote: it does not decide the order places open in, and it is gone when you reload.",
+  voteFailed: "The vote didn't go through. Try again in a moment.",
+} as const;
+
 /** Splash and footer. */
 export const splash = {
   enter: "Press to enter", // draft
@@ -150,9 +161,14 @@ export const sessionEnd = {
   finish: "Call it",
   breakHeading: "Breathe.", // draft
   breakBack: "Back to it",
+  breakSkip: "Skip the rest", // draft
+  breakLength: "Break length", // draft
+  breakMinutes: (n: number) => `${n} min`,
   summaryContinue: "One more",
   summaryFinish: "Done for today",
   shareCard: "Save a card", // draft (spec §5: a PNG with minutes, Knowledge and the place; never your name or mission)
+  shareCardCopy: "Copy the card", // draft
+  shareCardCopied: "Copied. Paste it into a message.", // draft
   shareCardFailed: "The card wouldn't draw.", // draft
 } as const;
 
@@ -170,6 +186,7 @@ export const ui = {
   /** The phone's thread view. */
   thread: { saveYes: "Yes, save it", saveNo: "Not now", skip: "Skip (S)", you: "You", yourName: "Your name", writeFeedback: "Write feedback", send: "Send" },
   /** The hideout menu (spec §3.7). Joker's voice: two or three words, imperative. */
+  profile: { title: "Profile", portrait: "Portrait art slot", knowledge: "Knowledge", level: "Level", sessions: "Sessions", minutes: "Minutes focused", memberSince: "Member since", roster: "Roster", rosterEmpty: "No one yet." },
   menu: { title: "Hideout", study: "STUDY", map: "MAP", messages: "MESSAGES", profile: "PROFILE", settings: "SETTINGS", close: "CLOSE" },
   hideUi: "Hide UI",
   /** The bottom bar's buttons (their key hints are drawn as keycaps beside them). */
@@ -184,7 +201,12 @@ export const ui = {
   locked: "Locked",
   youAreHere: "You are here",
   deadline: { dueIn: (span: string) => `due in ${span}`, overdueBy: (span: string) => `overdue by ${span}`, dueNow: "due now", day: "day", days: "days", hour: "h", minute: "min" },
-  banner: { knowledge: (n: number) => `+${n} Knowledge`, level: (n: number) => `Level ${n}` },
+  banner: {
+    knowledge: (n: number) => `+${n} Knowledge`,
+    level: (n: number) => `Level ${n}`,
+    missionDone: "Mission complete.", // draft (spec §3.6 "mission-complete moment")
+    breakOver: "Break's over. Back to it when you're ready.", // draft
+  },
   mixer: "Mixer",
   tv: { region: "TV", previous: "Previous track", next: "Next track", play: "Play", pause: "Pause" },
   mixerBuses: { music: "Music", ambience: "Ambience", ui: "Interface" },
@@ -206,7 +228,9 @@ export const settings = {
   motionOptions: { system: "Follow my system", reduced: "Reduce motion" },
   menuStyle: "Menu style",
   menuStyleNow: "Hideout (text)",
-  menuStyleLater: "Illustrated Student Ren — not yet.",
+  menuStyleIllustrated: "Illustrated Student Ren (art slots)",
+  menuArtSlot: "Student Ren art slot",
+  menuMorgana: "Morgana, peeking out of the bag (placeholder)",
   analytics: "Anonymous visit statistics",
   analyticsNote: "Page views, speed, and which place, how long and how far you went. Never anything you write. A change applies at once.",
   account: "Account",

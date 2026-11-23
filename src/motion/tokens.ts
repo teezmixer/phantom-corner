@@ -23,6 +23,10 @@ export const motion = {
   travelReveal: 300,
   /** One lap of the line that moves on the title card while the next place's images are slow. PROPOSED. */
   travelMotif: 1200,
+  /** Morgana's placeholder rising from the bag when the illustrated menu opens. PROPOSED, D-36. */
+  morganaPeek: 600,
+  /** The sign crumpling like a paper ball as it settles into its corner (spec §3.6 "later"). PROPOSED, D-36. */
+  signFold: 500,
   /** What a wipe becomes when motion is reduced. */
   reducedCut: 100,
 } as const;

@@ -34,6 +34,11 @@ export function bannersFor(prev: AppState, next: AppState): BannerMessage[] {
     }
   }
 
+  // The mission is ticked done: a small moment of its own (the sound is in audio/triggers.ts).
+  if (next.missionsDone > prev.missionsDone) out.push({ id: `mission-done-${next.missionsDone}`, text: ui.banner.missionDone });
+  // A break that ran out (a skipped one says nothing).
+  if (prev.lastBreak !== "ended" && next.lastBreak === "ended") out.push({ id: `break-over-${prev.breakEndsAt}`, text: ui.banner.breakOver });
+
   const newlyUnlocked = after.unlocked.filter((id) => !before.unlocked.includes(id));
   if (newlyUnlocked.length > 0 && prev.devUnlockAll === next.devUnlockAll) out.push({ id: `unlock-${newlyUnlocked.join(",")}`, text: morgana.newLocation });
   // A session starts: the place says one line (spec §3.3 "start" lines), a different one each time.

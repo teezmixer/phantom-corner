@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MapPin } from "@phosphor-icons/react";
 import { getLocation } from "@/content/registry";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -23,11 +23,21 @@ export const LocationWidget = ({ locationId, className = "" }: LocationWidgetPro
   const arriving = state.signArriving && !reduced;
   // The hold starts when the room is in view (not while the travel card still covers it) and ends in the corner.
   const inRoom = state.layer === "main";
+  // As the big sign settles it folds up like a paper ball into its corner, once (spec §3.6 "later", D-36). Not with reduced motion.
+  const [folding, setFolding] = useState(false);
   useEffect(() => {
     if (!state.signArriving || !inRoom) return;
-    const id = setTimeout(() => dispatch({ type: "SIGN_SETTLED" }), reduced ? 0 : motion.hold);
+    const id = setTimeout(() => {
+      dispatch({ type: "SIGN_SETTLED" });
+      if (!reduced) setFolding(true);
+    }, reduced ? 0 : motion.hold);
     return () => clearTimeout(id);
   }, [state.signArriving, inRoom, reduced, dispatch]);
+  useEffect(() => {
+    if (!folding) return;
+    const id = setTimeout(() => setFolding(false), motion.signFold);
+    return () => clearTimeout(id);
+  }, [folding]);
 
   return (
     <div className={`pointer-events-auto flex items-center justify-end ${className}`}>
@@ -40,7 +50,7 @@ export const LocationWidget = ({ locationId, className = "" }: LocationWidgetPro
         aria-label={`Current location: ${location.name}`}
       >
         <MapPin size={48} weight="fill" className="shrink-0 text-redbright" aria-hidden="true" />
-        <span className="border-2 border-white bg-black px-4 py-2 font-display-hero text-5xl leading-none [text-shadow:none]">{location.name}</span>
+        <span data-fold={folding ? "folding" : undefined} className={`origin-bottom-right border-2 border-white bg-black px-4 py-2 font-display-hero text-5xl leading-none [text-shadow:none] ${folding ? "motion-safe:animate-sign-fold" : ""}`}>{location.name}</span>
       </div>
     </div>
   );

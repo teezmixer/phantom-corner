@@ -15,6 +15,7 @@ import type { UrlMode } from "./initialState";
 
 // Sync and sign-in are only loaded when accounts are switched on, so everyone else never downloads them.
 const VercelScripts = lazy(() => import("./VercelScripts"));
+const CommunityProvider = lazy(() => import("@/community/CommunityProvider"));
 const AccountsRoot = lazy(() => import("@/sync/AccountsRoot"));
 
 /**
@@ -46,15 +47,22 @@ function Session({ mode }: { mode: UrlMode }) {
     <StoreProvider initial={boot.initial} persistence={persistence}>
       <Preferences events={!mode.dev}>
         <AudioProvider>
-          {boot.initial.accountsEnabled && boot.persistence ? (
-            <Suspense fallback={null}><AccountsRoot adapter={boot.persistence.adapter} base={boot.persistence.base}><App dev={mode.dev} /></AccountsRoot></Suspense>
-          ) : (
-            <App dev={mode.dev} />
-          )}
+          <WithCommunity on={boot.initial.communityEnabled}>
+            {boot.initial.accountsEnabled && boot.persistence ? (
+              <Suspense fallback={null}><AccountsRoot adapter={boot.persistence.adapter} base={boot.persistence.base}><App dev={mode.dev} /></AccountsRoot></Suspense>
+            ) : (
+              <App dev={mode.dev} />
+            )}
+          </WithCommunity>
         </AudioProvider>
       </Preferences>
     </StoreProvider>
   );
+}
+
+/** The presence count and the vote, loaded only when ?community=true. */
+function WithCommunity({ on, children }: { on: boolean; children: React.ReactNode }) {
+  return on ? <Suspense fallback={null}><CommunityProvider>{children}</CommunityProvider></Suspense> : <>{children}</>;
 }
 
 /**

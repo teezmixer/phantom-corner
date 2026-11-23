@@ -79,4 +79,30 @@ describe("LocationWidget", () => {
       expect(sign().style.transition).toBe("none");
     });
   });
+
+  describe("the fold (spec §3.6 later, D-36)", () => {
+    const name = () => screen.getByText("Café Leblanc");
+
+    it("as the big sign settles, its name folds up once, by a transform animation, and then stops", () => {
+      show("leblanc", { signArriving: true });
+      expect(name()).not.toHaveAttribute("data-fold");
+      act(() => { vi.advanceTimersByTime(motion.hold + 1); });
+      expect(sign()).toHaveAttribute("data-sign", "settled");
+      expect(name()).toHaveAttribute("data-fold", "folding");
+      expect(name().className).toContain("motion-safe:animate-sign-fold");
+      act(() => { vi.advanceTimersByTime(motion.signFold + 1); });
+      expect(name()).not.toHaveAttribute("data-fold");
+    });
+
+    it("does not fold when nothing arrives, and not with reduced motion", () => {
+      show("leblanc");
+      act(() => { vi.advanceTimersByTime(motion.hold * 3); });
+      expect(name()).not.toHaveAttribute("data-fold");
+    });
+    it("is not played for a visitor with reduced motion", () => {
+      show("leblanc", { signArriving: true, motion: "reduced" });
+      act(() => { vi.advanceTimersByTime(motion.hold * 3); });
+      expect(name()).not.toHaveAttribute("data-fold");
+    });
+  });
 });

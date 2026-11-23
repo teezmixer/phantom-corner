@@ -406,8 +406,8 @@
       "spec": "§3.6",
       "description": "Marking a mission done plays a mission-complete moment (banner + sound, reduced-motion safe).",
       "steps": "Playwright: tick mission, moment visible; reduced motion variant.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/state/moments.test.ts: ticking the mission done adds a banner and the missionDone sound (a rising pair, quieter than the session fanfare); un-ticking and editing the text do neither; each tick is its own banner. e2e/moments.spec.ts shows the banner. Reduced motion is handled by the banner's existing motion-safe class. After review: the sound and the banner both fire only on a tick on this device (a counter), so a mission that arrives done through a sync or a load makes neither (tested; mutation-checked)."
     },
     {
       "id": "todo-add-tick-delete",
@@ -626,8 +626,8 @@
       "spec": "FigJam",
       "description": "The break screen in depth: duration options, skip, end-of-break cue.",
       "steps": "Playwright.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/state/moments.test.ts: a break starts at five minutes and can be set to 5, 10 or 15 (restarting from now), refuses other lengths, running out plays the breakEnd bell and shows a banner, skipping the rest does neither, a late tick after skipping cannot play the cue. e2e/moments.spec.ts runs it with the clock: pick a length, skip the rest, and a break that runs out."
     },
     {
       "id": "summary-minutes-knowledge",
@@ -1099,8 +1099,8 @@
       "spec": "§3.3",
       "description": "Each location has a day/night variant chosen from the user's clock.",
       "steps": "Unit: variant for injected hours; screenshot both.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/domain/daynight.test.ts (day 06:00-19:00 local, night otherwise); src/app/Scene.test.tsx: a place shows its day or night variant from the clock, switches by itself at the evening, LeBlanc carries the variant. Night ART does not exist yet: the variant is data-variant plus a darker placeholder, and a place's scene.night is used once it has one (D-36)."
     },
     {
       "id": "map-all-markers",
@@ -1242,8 +1242,8 @@
       "spec": "§3.2",
       "description": "An illustrated Student Ren menu style with placeholder art slots, switchable in settings.",
       "steps": "Playwright: switch style, menu renders alt layout.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/screens/Menu/MenuStyle.test.tsx and e2e/menu.spec.ts: Settings switches the style (saved, synced, repaired on load); the illustrated menu has a named art slot for Student Ren with the same six labels, remembered across a reload, and fits at 1024x600 clear of the TV. The picture is a placeholder (D-36)."
     },
     {
       "id": "menu-morgana-transition",
@@ -1253,8 +1253,8 @@
       "spec": "§3.10",
       "description": "A placeholder Morgana-from-the-bag transition animation (reduced-motion safe).",
       "steps": "Playwright screenshot sequence.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "Morgana's placeholder rises from the bag when the illustrated menu opens: transform only (keyframe morgana-peek, new motion token morganaPeek with the CSS/JS parity test), motion-reduce and the in-app Reduce motion make it the 100 ms cut (e2e/menu.spec.ts reads the computed animation name). The look is a placeholder (D-36)."
     },
     {
       "id": "messages-threads",
@@ -1275,8 +1275,8 @@
       "spec": "§3.2",
       "description": "Profile shows portrait slot, name, total Knowledge, level, sessions, minutes focused, member since.",
       "steps": "Playwright with seeded events.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/screens/Profile/ProfileScreen.test.tsx: portrait slot, name, Knowledge, level, sessions, minutes focused, and member since (shown only when known); src/state/persistence/persistence.test.ts: a save records createdAt, it is carried unchanged, older saves load without it and are stamped at their next save, a bad value is not shown."
     },
     {
       "id": "profile-calendar-roster",
@@ -1286,8 +1286,8 @@
       "spec": "§3.2",
       "description": "Profile shows the calendar and a roster of unlocked locations and characters.",
       "steps": "Playwright.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/screens/Profile/ProfileScreen.test.tsx: the profile carries the stamp calendar (today's stamp) and the roster of places and people unlocked."
     },
     {
       "id": "profile-basic",
@@ -1451,8 +1451,8 @@
       "spec": "§5",
       "description": "\"X Phantom Thieves are studying here\" behind a flag, using a local fake.",
       "steps": "Unit + Playwright with flag on.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/community/community.test.tsx (with a stand-in backend): the line says how many are here, singular for one, and says the numbers are practice; nothing shows at zero, when the server is down, over a screen, or before entering (mutation-checked: removing the zero rule fails a test); e2e/community.spec.ts shows it in the room and that nothing shows without the switch. Numbers are made up until a backend exists (B-11)."
     },
     {
       "id": "comm-vote",
@@ -1462,8 +1462,8 @@
       "spec": "§5",
       "description": "A bonus-location vote behind a flag, local fake.",
       "steps": "Playwright: vote recorded locally.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "src/community/community.test.tsx and e2e/community.spec.ts: the map lists the bonus places still closed, takes one vote and a second moves it, says it is a practice vote that does not decide the order and is gone on reload, shows a message if the vote fails, and is absent without the switch; e2e/a11y.spec.ts: no serious axe violation with it showing. The vote lives in memory (B-11)."
     },
     {
       "id": "comm-feedback",
@@ -1495,8 +1495,8 @@
       "spec": "§5",
       "description": "The shareable session card in depth (download/copy).",
       "steps": "Playwright.",
-      "status": "todo",
-      "evidence": ""
+      "status": "pass",
+      "evidence": "Save a card (earlier) and Copy the card: e2e/share.spec.ts reads the real clipboard back as a 1200-wide PNG, and checks that neither contains the mission text; Copy is shown only where the browser can copy images."
     },
     {
       "id": "q-states",
@@ -1805,6 +1805,17 @@
       "steps": "Entry present in blocked.md.",
       "status": "blocked",
       "evidence": "docs/build/blocked.md — Out of scope"
+    },
+    {
+      "id": "loc-sign-fold",
+      "milestone": "M12",
+      "area": "Map and travel",
+      "inventory": "Sign fold animation",
+      "spec": "§3.6 later, BUILD-PROMPT M12",
+      "description": "The big location sign folds up like a paper ball into its corner as it settles (placeholder motion, reduced-motion safe).",
+      "steps": "Component: fold after settle, once; not with reduced motion.",
+      "status": "pass",
+      "evidence": "src/widgets/Location/LocationWidget.test.tsx: as the big sign settles its name folds once by a transform animation (motion token signFold, motion-safe only) and stops; nothing folds when nothing arrives or with reduced motion; mutation-checked. Added during the M12 inventory diff: BUILD-PROMPT lists the sign fold but no entry existed. The look is a placeholder (D-36)."
     }
   ]
 }

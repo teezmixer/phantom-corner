@@ -12,12 +12,15 @@ export const CURRENT_SCHEMA = 5;
 export interface Volumes { music: number; ambience: number; ui: number }
 
 export type MotionSetting = "system" | "reduced";
+export type MenuStyle = "text" | "illustrated";
 
 /** What is written to storage (schema 5; see migrate.ts for how older saves are upgraded). UI state — layer, open phone, hidden HUD — is never persisted. */
 export interface Persisted {
   schema: 5;
   /** Random id generated on first run; used by sync later (M11). */
   clientId: string;
+  /** When this save was first made (ISO), for "member since". Absent in saves from before it; filled in at the next save. */
+  createdAt?: string;
   name: string | null;
   settings: {
     muted: boolean;
@@ -32,6 +35,8 @@ export interface Persisted {
     /** Anonymous page and speed analytics (provisional default on, decision D-14). */
     analytics: boolean;
     todoCollapsed: boolean;
+    /** How the hideout menu looks: plain text, or with a slot for the illustrated Student Ren (D-36). */
+    menuStyle: MenuStyle;
   };
   mission: { text: string; setAt: string; done: boolean; /** ISO time the mission is due. */ deadline?: string } | null;
   todos: { id: number; text: string; done: boolean }[];
@@ -59,12 +64,14 @@ export const DEFAULT_PREFERENCES = {
   motion: "system" as MotionSetting,
   analytics: true,
   todoCollapsed: false,
+  menuStyle: "text" as MenuStyle,
 };
 
 export function freshPersisted(clientId: string, nowIso: string, defaults: Pick<Persisted, "timer" | "locationId" | "visited">): Persisted {
   return {
     schema: 5,
     clientId,
+    createdAt: nowIso,
     name: null,
     settings: { muted: false, volumes: { ...DEFAULT_VOLUMES }, ambienceMix: {}, ...DEFAULT_PREFERENCES },
     mission: null,
