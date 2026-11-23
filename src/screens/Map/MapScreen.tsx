@@ -1,6 +1,7 @@
 import { Lock, MapPin, MapPinSimpleArea } from "@phosphor-icons/react";
 import { ui } from "@/content/copy";
 import { LOCATIONS } from "@/content/registry";
+import { VotePanel } from "@/community/VotePanel";
 import { useStore } from "@/state/StoreProvider";
 import { Overlay, buttonClass } from "../Overlay";
 
@@ -40,6 +41,7 @@ export function MapScreen() {
           );
         })}
       </ul>
+      <VotePanel />
     </Overlay>
   );
 }

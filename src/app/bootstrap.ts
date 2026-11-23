@@ -17,7 +17,8 @@ export interface Bootstrap {
 export function bootstrap(mode: UrlMode, now: number, adapter: StorageAdapter, makeClientId: () => string, optedOutOfAnalytics = false): Bootstrap {
   // An opt-out is remembered separately from the save, so it holds even after "Delete my data" and on a first visit.
   const accountsEnabled = mode.accounts && !mode.demo && !mode.dev; // never in the demo or dev mode, which save nothing
-  const withChoice = (s: AppState): AppState => ({ ...s, accountsEnabled, ...(optedOutOfAnalytics ? { analytics: false } : {}) });
+  const communityEnabled = mode.community && !mode.demo && !mode.dev;
+  const withChoice = (s: AppState): AppState => ({ ...s, accountsEnabled, communityEnabled, ...(optedOutOfAnalytics ? { analytics: false } : {}) });
   if (mode.demo) return { initial: withChoice(buildInitialState(mode, now)), persistence: null };
   const loaded = loadPersisted(adapter, new Date(now).toISOString(), makeClientId, {
     timer: initialTimer,

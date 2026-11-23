@@ -49,6 +49,8 @@ export interface AppState {
   events: ProgressEvent[];
   /** Accounts are on for this visit (?accounts=true until the live backend exists, B-10). Not saved. */
   accountsEnabled: boolean;
+  /** The presence count and the vote are on for this visit (?community=true, made-up numbers). Not saved. */
+  communityEnabled: boolean;
   /** Signed in to an account right now. Not saved: the backend keeps its own session. */
   signedIn: boolean;
   /** Documents just taken from a sync, with the time they carry and the state they produced; the saver uses the time while the document is unchanged. Not saved. */
@@ -120,6 +122,7 @@ export const initialState: AppState = {
   clientId: "",
   memberSince: null,
   accountsEnabled: false,
+  communityEnabled: false,
   signedIn: false,
   studiedDays: [],
   unreadThreads: [],
@@ -502,7 +505,7 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "RESET":
       // Demo mode stays demo, so a reset can never turn into writing real progress later (M3 persistence).
       // Demo stays demo, and the analytics choice is never silently undone by a reset.
-      return { ...initialState, layer: "splash", clientId: state.clientId, memberSince: state.memberSince, accountsEnabled: state.accountsEnabled, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
+      return { ...initialState, layer: "splash", clientId: state.clientId, memberSince: state.memberSince, accountsEnabled: state.accountsEnabled, communityEnabled: state.communityEnabled, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
   }
 }
 
