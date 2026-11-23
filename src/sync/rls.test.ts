@@ -30,6 +30,8 @@ beforeAll(async () => {
     create role anon; create role authenticated;
     grant usage on schema auth to anon, authenticated; grant execute on function auth.uid() to anon, authenticated;
     grant usage on schema public to anon, authenticated;
+    -- Supabase's own defaults: every new table in public is granted to both roles. The migration must take this back.
+    alter default privileges in schema public grant all on tables to anon, authenticated;
     insert into auth.users values ('${A}'), ('${B}');
   `);
   await db.exec(readFileSync(path.resolve(import.meta.dirname, "../../supabase/migrations/20261123000000_accounts_and_sync.sql"), "utf8"));
@@ -56,11 +58,25 @@ describe("row-level security: the four tests the spec asks for", () => {
     expect(check.rows).toEqual([{ n: 0 }]);
   });
 
+  it("3b. two accounts may use the same event id (one device, two sign-ins), and neither sees the other's", async () => {
+    await as(A, () => event("shared:1", A));
+    await as(B, () => event("shared:1", B));
+    expect((await as(A, () => db.query("select user_id from public.progress_events where id = 'shared:1'"))).rows).toEqual([{ user_id: A }]);
+    expect((await as(B, () => db.query("select user_id from public.progress_events where id = 'shared:1'"))).rows).toEqual([{ user_id: B }]);
+  });
+
   it("4. an update to an event is rejected, and so is a delete (append-only from the client)", async () => {
     await expect(as(A, () => db.query("update public.progress_events set kind = 'session' where id = 'a:1'"))).rejects.toThrow(/permission denied/);
     await expect(as(A, () => db.query("delete from public.progress_events where id = 'a:1'"))).rejects.toThrow(/permission denied/);
     const still = await db.query("select kind from public.progress_events where id = 'a:1'");
     expect(still.rows).toEqual([{ kind: "mission_first_set" }]);
+  });
+});
+
+describe("the client can only append: no truncate either", () => {
+  it("refuses truncate, which row-level security does not cover", async () => {
+    await expect(as(A, () => db.query("truncate public.progress_events"))).rejects.toThrow(/permission denied/);
+    await expect(as(null, () => db.query("truncate public.progress_events"))).rejects.toThrow(/permission denied/);
   });
 });
 
@@ -74,6 +90,13 @@ describe("the other tables follow the same rule", () => {
     await expect(as(B, () => db.query(`insert into public.user_docs (user_id, doc, data, updated_at) values ('${A}', 'todos', '{}', now())`))).rejects.toThrow(/row-level security/);
     await as(A, () => db.query(`insert into public.profiles (id, display_name) values ('${A}', 'Ren')`));
     expect((await as(B, () => db.query("select * from public.profiles"))).rows).toEqual([]);
+  });
+
+  it("an older copy of a document does not replace a newer one, and a clock far ahead is refused", async () => {
+    await as(A, () => db.query(`insert into public.user_docs (doc, data, updated_at) values ('todos', '{"v":"new"}', now())`));
+    await as(A, () => db.query(`update public.user_docs set data = '{"v":"old"}', updated_at = now() - interval '1 day' where doc = 'todos'`));
+    expect((await db.query("select data from public.user_docs where doc = 'todos'")).rows).toEqual([{ data: { v: "new" } }]);
+    await expect(as(A, () => db.query(`update public.user_docs set updated_at = now() + interval '1 year' where doc = 'todos'`))).rejects.toThrow(/updated_at/);
   });
 
   it("only the three documents are allowed", async () => {
@@ -92,6 +115,16 @@ describe("a broken client cannot write nonsense", () => {
     await expect(session("b:odd", { plannedMs: 60_000, focusedMs: 60_000, outcome: "won" })).rejects.toThrow(/session_payload/);
     await expect(session("b:neg", { plannedMs: 60_000, focusedMs: -5, outcome: "stopped" })).rejects.toThrow(/session_payload/);
   });
+  it("refuses a session or grant with no payload (a missing key must not slip past a check), free text in the first mission, and a big payload", async () => {
+    await expect(session("b:empty", {})).rejects.toThrow(/session_payload/);
+    await expect(as(B, () => db.query(`insert into public.progress_events (id, kind, payload, occurred_at) values ('b:g', 'story_grant', '{}', now())`))).rejects.toThrow(/grant_payload/);
+    await expect(as(B, () => db.query(`insert into public.progress_events (id, kind, payload, occurred_at) values ('b:m', 'mission_first_set', '{"text":"anything"}', now())`))).rejects.toThrow(/mission_payload/);
+    const big = JSON.stringify({ plannedMs: 60_000, focusedMs: 60_000, outcome: "stopped", pad: "x".repeat(2000) });
+    await expect(as(B, () => db.query(`insert into public.progress_events (id, kind, payload, occurred_at) values ('b:big', 'session', '${big}', now())`))).rejects.toThrow(/payload_size/);
+  });
+  it("refuses an event from thirty years ago", async () => {
+    await expect(session("b:old", { plannedMs: 60_000, focusedMs: 60_000, outcome: "stopped" }, "now() - interval '30 years'")).rejects.toThrow(/not_ancient/);
+  });
   it("refuses an event from the future, and a developer grant", async () => {
     await expect(session("b:future", { plannedMs: 60_000, focusedMs: 60_000, outcome: "completed" }, "now() + interval '1 day'")).rejects.toThrow(/not_in_future/);
     await expect(as(B, () => db.query(`insert into public.progress_events (id, kind, payload, occurred_at) values ('b:dev', 'dev_grant', '{}', now())`))).rejects.toThrow(/check constraint/);
@@ -103,7 +136,7 @@ describe("account delete", () => {
     await as(B, () => db.query("select public.delete_my_account()"));
     expect((await db.query(`select count(*)::int as n from auth.users where id = '${B}'`)).rows).toEqual([{ n: 0 }]);
     expect((await db.query(`select count(*)::int as n from public.progress_events where user_id = '${B}'`)).rows).toEqual([{ n: 0 }]);
-    expect((await db.query(`select count(*)::int as n from public.progress_events where user_id = '${A}'`)).rows).toEqual([{ n: 1 }]);
+    expect((await db.query(`select count(*)::int as n from public.progress_events where user_id = '${A}'`)).rows).toEqual([{ n: 2 }]); // a:1 and shared:1
     await expect(as(null, () => db.query("select public.delete_my_account()"))).rejects.toThrow(/permission denied/);
   });
 });
