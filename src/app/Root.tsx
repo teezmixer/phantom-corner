@@ -11,6 +11,8 @@ import { localStorageAdapter } from "@/state/persistence/adapter";
 import { STORAGE_KEY } from "@/state/persistence/schema";
 import { StoreProvider } from "@/state/StoreProvider";
 import { AudioProvider } from "@/audio/AudioProvider";
+import { AccountProvider } from "@/sync/AccountProvider";
+import { backend } from "@/sync/backend";
 import { App } from "./App";
 import { bootstrap, type Bootstrap } from "./bootstrap";
 import type { UrlMode } from "./initialState";
@@ -44,7 +46,11 @@ function Session({ mode }: { mode: UrlMode }) {
     <StoreProvider initial={boot.initial} persistence={persistence}>
       <Preferences events={!mode.dev}>
         <AudioProvider>
-          <App dev={mode.dev} />
+          {boot.initial.accountsEnabled && boot.persistence ? (
+            <AccountProvider backend={backend()} adapter={boot.persistence.adapter} base={boot.persistence.base}><App dev={mode.dev} /></AccountProvider>
+          ) : (
+            <App dev={mode.dev} />
+          )}
         </AudioProvider>
       </Preferences>
     </StoreProvider>

@@ -40,6 +40,10 @@ export interface AppState {
   timer: TimerState;
   breakEndsAt: number | null;
   events: ProgressEvent[];
+  /** Accounts are on for this visit (?accounts=true until the live backend exists, B-10). Not saved. */
+  accountsEnabled: boolean;
+  /** Signed in to an account right now. Not saved: the backend keeps its own session. */
+  signedIn: boolean;
   /** This device's id, the prefix of its event ids (D-24). Empty in the demo and dev mode, which never sync. Not part of any visible state. */
   clientId: string;
   /** Days studied, each with the stamp design earned at the time (calendar, spec §3.4). */
@@ -97,6 +101,8 @@ export const initialState: AppState = {
   breakEndsAt: null,
   events: [],
   clientId: "",
+  accountsEnabled: false,
+  signedIn: false,
   studiedDays: [],
   unreadThreads: [],
   story: {},
@@ -173,6 +179,7 @@ export type Action =
   | { type: "DEV_GRANT"; knowledge: number }
   /** The result of a sync: the merged event log and documents (built in sync/apply.ts). */
   | { type: "SYNC_APPLY"; patch: SyncPatch }
+  | { type: "SET_SIGNED_IN"; signedIn: boolean }
   | { type: "DEV_UNLOCK_ALL" }
   | { type: "DEV_JUMP_LOCATION"; id: string }
   | { type: "LOAD"; state: AppState }
@@ -202,6 +209,7 @@ export function factsFor(state: AppState): Facts {
     sessionsCompleted: state.events.filter((e) => e.kind === "session" && e.outcome === "completed").length,
     visited: state.visited,
     unlocked: derive(state).unlocked,
+    saveOffer: state.accountsEnabled && !state.signedIn && state.visited.includes("ryuji"),
     release: RELEASE_VERSION,
     defaultName: ui.defaultName,
   };
@@ -363,6 +371,8 @@ function coreReducer(state: AppState, action: Action): AppState {
       return state.banners.length === 0 ? state : { ...state, banners: state.banners.slice(1) };
     case "STORAGE_FAILED":
       return state.storageBlocked ? state : { ...state, storageBlocked: true };
+    case "SET_SIGNED_IN":
+      return state.signedIn === action.signedIn ? state : { ...state, signedIn: action.signedIn };
     case "SYNC_APPLY":
       return { ...state, ...action.patch };
     case "MARK_ALL_UNREAD":
@@ -382,7 +392,9 @@ function coreReducer(state: AppState, action: Action): AppState {
       const said = clampText(action.text);
       const nextProgress = answer(thread, progress, said, asked === "name" ? said : state.name || ui.defaultName);
       if (nextProgress === progress) return state;
-      return { ...state, story: { ...state.story, [action.id]: nextProgress }, name: asked === "name" ? said : state.name };
+      // "Yes" to the save prompt takes the player to where accounts live (Settings); "Not now" leaves them in the room.
+      const toSettings = asked === "save_progress" && action.text === ui.thread.saveYes;
+      return { ...state, story: { ...state.story, [action.id]: nextProgress }, name: asked === "name" ? said : state.name, ...(toSettings ? { layer: "settings" as const, phoneOpen: false } : {}) };
     }
     case "POST_MESSAGE": {
       const thread = THREADS.find((t) => t.id === action.id);
@@ -422,7 +434,7 @@ function coreReducer(state: AppState, action: Action): AppState {
     case "RESET":
       // Demo mode stays demo, so a reset can never turn into writing real progress later (M3 persistence).
       // Demo stays demo, and the analytics choice is never silently undone by a reset.
-      return { ...initialState, layer: "splash", clientId: state.clientId, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
+      return { ...initialState, layer: "splash", clientId: state.clientId, accountsEnabled: state.accountsEnabled, demo: state.demo, storageBlocked: state.storageBlocked, analytics: state.analytics };
   }
 }
 

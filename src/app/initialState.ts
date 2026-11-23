@@ -7,13 +7,15 @@ import { DEMO_UNREAD, initialState, settle, type AppState, type Layer } from "@/
 export interface UrlMode {
   demo: boolean;
   dev: boolean;
+  /** ?accounts=true switches on sign-in against the in-memory fake, until the live backend exists (B-10). */
+  accounts: boolean;
   at: string | null;
 }
 
 /** Read the mode switches from a query string: ?demo=true, ?demo=true&at=summary|menu, ?dev=true (spec §3.12). */
 export function parseMode(search: string): UrlMode {
   const p = new URLSearchParams(search);
-  return { demo: p.get("demo") === "true", dev: p.get("dev") === "true", at: p.get("at") };
+  return { demo: p.get("demo") === "true", dev: p.get("dev") === "true", accounts: p.get("accounts") === "true", at: p.get("at") };
 }
 
 const DEMO_AT: Record<string, Layer> = { summary: "summary", menu: "menu" };
@@ -28,7 +30,7 @@ const DEMO_AT: Record<string, Layer> = { summary: "summary", menu: "menu" };
  */
 function demoStory(name: string): Progress {
   const morgana = THREADS.filter((t) => t.id === "morgana");
-  const facts: Facts = { entered: true, firstVisit: true, name: "", missionSet: false, sessionsCompleted: 0, visited: ["leblanc"], unlocked: ["leblanc"], release: "", defaultName: "Student Ren" };
+  const facts: Facts = { entered: true, firstVisit: true, name: "", missionSet: false, sessionsCompleted: 0, visited: ["leblanc"], unlocked: ["leblanc"], saveOffer: false, release: "", defaultName: "Student Ren" };
   const asked = stepAll(morgana, {}, facts).progress;
   const answered = { ...asked, morgana: answer(morgana[0]!, asked["morgana"]!, name, name) };
   return stepAll(morgana, answered, { ...facts, name, missionSet: true }).progress;

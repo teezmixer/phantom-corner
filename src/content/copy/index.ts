@@ -30,6 +30,7 @@ export const morgana = {
   newLocation: "You unlocked a new location. Someone's waiting for you.", // VERBATIM
   scrambled: "Something got scrambled in my notes. We start fresh — I kept a copy, just in case.", // draft
   cantWrite: "I can't write anything down in here. Today counts, but I won't remember it tomorrow.", // draft
+  saveAfter: "Either way, it's your call. If you change your mind, it's in Settings.", // draft
   keepStudying: "Keep studying and you'll find new places — and new people.", // draft (FigJam sticky)
   /** The level-up line when the next location is not ready yet (spec §3.4: "someone has been asking about them"). */
   someoneAsking: "Someone's been asking about you. Not yet — but soon.", // draft
@@ -167,7 +168,7 @@ export const ui = {
     months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
   },
   /** The phone's thread view. */
-  thread: { skip: "Skip (S)", you: "You", yourName: "Your name", writeFeedback: "Write feedback", send: "Send" },
+  thread: { saveYes: "Yes, save it", saveNo: "Not now", skip: "Skip (S)", you: "You", yourName: "Your name", writeFeedback: "Write feedback", send: "Send" },
   /** The hideout menu (spec §3.7). Joker's voice: two or three words, imperative. */
   menu: { title: "Hideout", study: "STUDY", map: "MAP", messages: "MESSAGES", profile: "PROFILE", settings: "SETTINGS", close: "CLOSE" },
   hideUi: "Hide UI",
@@ -210,6 +211,25 @@ export const settings = {
   analyticsNote: "Page views, speed, and which place, how long and how far you went. Never anything you write. A change applies at once.",
   account: "Account",
   accountNote: "Accounts: not yet. Everything is saved in this browser.",
+  /** The account panel (behind ?accounts=true until the live backend exists, B-10). DRAFTS (D-10, D-35). */
+  accountPanel: {
+    fakeNote: "Practice mode: nothing leaves this browser. The code is 123456.",
+    email: "Email",
+    sendCode: "Send code",
+    code: "Six-digit code",
+    signIn: "Sign in",
+    signedInAs: "Saved to",
+    syncNow: "Sync now",
+    synced: "Everything is saved to your account.",
+    signOut: "Sign out",
+    signOutNote: "Signing out keeps your progress on this device.",
+    export: "Export my account data",
+    delete: "Delete my account",
+    deleteConfirm: "Press again to delete the account",
+    deleteNote: "Deleting the account removes what is stored online. Progress on this device stays; Delete my data removes that.",
+    syncDown: "Can't reach the server. Your progress is safe on this device and will go up when it can.",
+    deleted: "Account deleted.",
+  },
   data: "Your data",
   export: "Export my data",
   exported: "Saved as a file.",
