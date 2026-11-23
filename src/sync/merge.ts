@@ -18,7 +18,18 @@ export function mergeEvents(local: readonly ProgressEvent[], remote: readonly Pr
 
 /** The newer copy of a document. On a tie, or when the other side has none, this device's copy stays. */
 export function newer<T>(local: Doc<T>, remote: Doc<T> | undefined): Doc<T> {
-  return remote && remote.updatedAt > local.updatedAt ? remote : local;
+  return remote && isLater(remote.updatedAt, local.updatedAt) ? remote : local;
+}
+
+/**
+ * Is time `a` after time `b`? Compared as instants, not as text: a server writes "2026-11-21T10:00:00+00:00" or with another
+ * precision where this device writes "2026-11-21T10:00:00.000Z", and as text those would order wrongly. Unreadable times lose.
+ */
+export function isLater(a: string, b: string): boolean {
+  const x = Date.parse(a);
+  const y = Date.parse(b);
+  if (Number.isNaN(x)) return false;
+  return Number.isNaN(y) ? true : x > y;
 }
 
 export interface Plan {
