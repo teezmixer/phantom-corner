@@ -143,6 +143,8 @@ export const sessionEnd = {
   breakBack: "Back to it",
   summaryContinue: "One more",
   summaryFinish: "Done for today",
+  shareCard: "Save a card", // draft (spec §5: a PNG with minutes, Knowledge and the place; never your name or mission)
+  shareCardFailed: "The card wouldn't draw.", // draft
 } as const;
 
 /** Labels used by screens and widgets. DRAFTS (decision D-10). */
