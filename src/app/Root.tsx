@@ -3,6 +3,7 @@ import { MotionConfig } from "motion/react";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useStore } from "@/state/StoreProvider";
+import { useAnalyticsEvents } from "./useAnalyticsEvents";
 import { analyticsGate, readOptOut, rememberOptOut, setAnalyticsAllowed } from "./telemetry";
 import { useSessionLock } from "@/hooks/useSessionLock";
 import { TabLockScreen } from "@/screens/TabLock/TabLockScreen";
@@ -41,7 +42,7 @@ function Session({ mode }: { mode: UrlMode }) {
   const persistence = useMemo(() => (boot.persistence ? { ...boot.persistence, enabled: true } : undefined), [boot]);
   return (
     <StoreProvider initial={boot.initial} persistence={persistence}>
-      <Preferences>
+      <Preferences events={!mode.dev}>
         <AudioProvider>
           <App dev={mode.dev} />
         </AudioProvider>
@@ -55,8 +56,9 @@ function Session({ mode }: { mode: UrlMode }) {
  * CSS) and the analytics switch. Analytics scripts load only while the switch is on; turning it off stops them the next
  * time the page loads (a loaded script cannot be unloaded).
  */
-function Preferences({ children }: { children: React.ReactNode }) {
+function Preferences({ children, events }: { children: React.ReactNode; events: boolean }) {
   const { state } = useStore();
+  useAnalyticsEvents(events); // the named analytics events (spec §4.16), sent only while the switch is on
   const reduced = state.motion === "reduced";
   useEffect(() => {
     document.documentElement.dataset.motion = reduced ? "reduced" : "system";

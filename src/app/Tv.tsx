@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CaretLeft, CaretRight, Pause, Play, SlidersHorizontal } from "@phosphor-icons/react";
 import { useAudio } from "@/audio/AudioProvider";
+import { track } from "./analytics";
 import { currentTrack, isActive, type MusicStatus } from "@/audio/music/controller";
 import { useMusic } from "@/audio/music/useMusic";
 import type { BackendFactory } from "@/audio/music/youtube";
@@ -53,6 +54,21 @@ export function Tv({ scale, locked = false, factory }: { scale: number; locked?:
   // Everything is unavailable only when no retry can help: no tracks, or every track failed (not a failed script).
   const dead = status === "unavailable" && !musicState.apiFailed;
   const mixerOpen = mixer && !locked;
+
+  // Analytics (spec §4.16): music played when it starts playing, a track unavailable each time one fails. Not in the demo.
+  const demo = state.demo;
+  const locationId = state.locationId;
+  const failedCount = musicState.failed.length;
+  const wasPlaying = useRef(false);
+  const failedBefore = useRef(0);
+  useEffect(() => {
+    if (status === "playing" && !wasPlaying.current && !demo) track("music_played", { location: locationId });
+    wasPlaying.current = status === "playing";
+  }, [status, demo, locationId]);
+  useEffect(() => {
+    if (failedCount > failedBefore.current && !demo) track("track_unavailable", { location: locationId });
+    failedBefore.current = failedCount;
+  }, [failedCount, demo, locationId]);
 
   useEffect(() => {
     if (!mixerOpen) return;
