@@ -1,0 +1,12 @@
+# 0009 — Story as data: a pure thread interpreter
+
+- **Date:** 2026-11-23
+- **Status:** accepted (spec §3.5, §4.6)
+- **Context:** Onboarding, every unlock invitation, every arrival exchange and the release note are all the same thing: a conversation that says lines, asks a question, waits for something to happen, and sometimes gives Knowledge. Writing each as code would make adding a character a code change.
+- **Decision:**
+  - **`src/domain/story.ts`** is a pure interpreter over steps `say`, `ask`, `waitFor`, `grant` and `reveal`, with triggers `first_visit`, `unlock` and `release`. It takes a set of **facts** about the player (entered, first visit, name, mission written, sessions completed, places visited, places unlocked, the release) and a thread's saved **progress** (a cursor and the messages so far) and returns new progress. It does no I/O and has no clock. `stepAll` is idempotent: with nothing new it returns the very same object.
+  - **Threads are content** (`src/content/threads.ts`), with their wording in `content/copy`. A character's thread is composed from the invitation lines and that place's own `arrive` lines, so a location's lines are its arrival exchange.
+  - **The store runs the interpreter after every action** (`settle` in `store.ts`): it starts threads whose moment has come, moves the running ones on, marks threads unread, applies `grant` effects once (`story_grant` events are counted once per key), and opens the phone on Morgana when onboarding begins.
+  - **Progress is persisted** (schema 5, `story`), repaired on load against the real thread definitions (a position that is not a step, malformed messages, unknown threads are dropped; nothing costs the whole save). Onboarding runs once because its progress is saved; a trigger is evaluated against facts, not transitions, so a location that ships in a later build starts its thread the day it ships.
+- **Rejected:** a state machine per thread written in code (a code change per character); advancing threads from the UI (it would stop working when the phone is closed); timers inside the interpreter for `delayMs` (non-deterministic to test; the delay is pacing metadata for the view); keying "has onboarding run" on a separate flag (the saved progress already says it).
+- **Consequences:** `reveal` is parsed and skipped (D-32). Adding a character thread is adding content. The interpreter's facts are the only way a thread can react to the app, so a new kind of wait is a change to `Facts`, `waitSatisfied` and a test.

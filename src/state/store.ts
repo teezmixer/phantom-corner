@@ -192,7 +192,7 @@ export function factsFor(state: AppState): Facts {
  * Knowledge a `grant` step asked for (once), mark threads that said something unread, and open the phone on Morgana when
  * onboarding begins so the first conversation is in front of the player (spec §3.5).
  */
-function storyPass(state: AppState): AppState {
+export function settle(state: AppState): AppState {
   const result = stepAll(THREADS, state.story, factsFor(state));
   if (result.progress === state.story) return state;
   const events = [...state.events];
@@ -208,7 +208,7 @@ function storyPass(state: AppState): AppState {
 /** The reducer proper plus the story and the banners each change deserves (pure rules in domain/story.ts and banners.ts). */
 export function reducer(state: AppState, action: Action): AppState {
   const core = coreReducer(state, action);
-  const next = action.type === "DISMISS_BANNER" || action.type === "RESET" ? core : storyPass(core);
+  const next = action.type === "DISMISS_BANNER" || action.type === "RESET" ? core : settle(core);
   if (action.type === "DISMISS_BANNER" || action.type === "RESET" || action.type === "LOAD") return next;
   const fresh = bannersFor(state, next);
   if (fresh.length === 0) return next;

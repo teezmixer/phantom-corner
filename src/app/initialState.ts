@@ -1,6 +1,8 @@
 import { dayKey } from "@/domain/calendar";
 import { MINUTE, transition, initialTimer } from "@/domain/timer";
-import { initialState, type AppState, type Layer } from "@/state/store";
+import { THREADS } from "@/content/threads";
+import { answer, stepAll, type Facts, type Progress } from "@/domain/story";
+import { DEMO_UNREAD, initialState, settle, type AppState, type Layer } from "@/state/store";
 
 export interface UrlMode {
   demo: boolean;
@@ -20,6 +22,18 @@ const DEMO_AT: Record<string, Layer> = { summary: "summary", menu: "menu" };
  * Starting state. Normal visits start at the splash. Demo mode lands in the middle of a session — timer about 17
  * minutes left, a mission, two todos, one unread message — in memory only (spec §3.12). `now` is injected.
  */
+/**
+ * The demo's phone (spec §3.12): Morgana's onboarding partway through (the name given, the mission set, waiting for a
+ * session), built with the real interpreter so it reads exactly as a player's would.
+ */
+function demoStory(name: string): Progress {
+  const morgana = THREADS.filter((t) => t.id === "morgana");
+  const facts: Facts = { entered: true, firstVisit: true, name: "", missionSet: false, sessionsCompleted: 0, visited: ["leblanc"], unlocked: ["leblanc"], release: "", defaultName: "Student Ren" };
+  const asked = stepAll(morgana, {}, facts).progress;
+  const answered = { ...asked, morgana: answer(morgana[0]!, asked["morgana"]!, name, name) };
+  return stepAll(morgana, answered, { ...facts, name, missionSet: true }).progress;
+}
+
 export function buildInitialState(mode: UrlMode, now: number): AppState {
   if (!mode.demo) return initialState;
   const running = transition(initialTimer, { type: "START", now: now - 8 * MINUTE });
@@ -37,16 +51,18 @@ export function buildInitialState(mode: UrlMode, now: number): AppState {
     nextTodoId: 3,
     timer: running,
     events: [{ kind: "mission_first_set" }],
-    unreadThreads: ["morgana"],
+    story: demoStory("Demo"),
   };
+  // Let the threads catch up with the demo state (what's new and feedback are there), then keep the spec's one unread message (§3.12).
+  const finish = (state: AppState): AppState => ({ ...settle(state), unreadThreads: DEMO_UNREAD });
   const layer = mode.at ? DEMO_AT[mode.at] : undefined;
-  if (!layer) return base;
+  if (!layer) return finish(base);
   const done = { kind: "session", plannedMs: 25 * MINUTE, focusedMs: 25 * MINUTE, outcome: "completed" } as const;
-  if (layer !== "summary") return { ...base, layer };
+  if (layer !== "summary") return finish({ ...base, layer });
   // The demo summary shows a lived-in calendar: today and a scatter of earlier days, in the designs earned by then. The demo
   // player has 125 Knowledge (level 4), so the newest design (the star, from level 4) is only on the most recent days.
   // Days are stepped with the calendar (not by 24 hours) so a daylight-saving change cannot skip or repeat one.
   const dayAgo = (back: number) => { const d = new Date(now); d.setDate(d.getDate() - back); return dayKey(d.getTime()); };
   const studiedDays = [13, 11, 8, 7, 4, 2, 0].map((back, i) => ({ day: dayAgo(back), style: i < 4 ? 0 : 1 })).sort((a, b) => (a.day < b.day ? -1 : 1));
-  return { ...base, layer, timer: { status: "idle", durationMs: 25 * MINUTE }, events: [...base.events, { kind: "dev_grant", knowledge: 85 }, done], studiedDays };
+  return finish({ ...base, layer, timer: { status: "idle", durationMs: 25 * MINUTE }, events: [...base.events, { kind: "dev_grant", knowledge: 85 }, done], studiedDays });
 }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getLocation } from "@/content/registry";
 import { derive, factsFor, initialState, reducer, type Action, type AppState } from "./store";
 
 const MIN = 60_000;
@@ -104,6 +105,16 @@ describe("character threads", () => {
     const count = said(s, "ryuji").length;
     s = run([{ type: "START_TRAVEL", to: "leblanc" }, { type: "ARRIVE" }, { type: "START_TRAVEL", to: "ryuji" }, { type: "ARRIVE" }], s);
     expect(said(s, "ryuji")).toHaveLength(count); // not again
+  });
+
+  it.each(["ryuji", "ann", "yusuke", "makoto", "futaba", "haru", "akechi"])("%s: arriving plays that place's arrival lines, in order, once", (id) => {
+    const arrive = getLocation(id).lines.arrive;
+    let s = run([{ type: "DEV_UNLOCK_ALL" }, { type: "START_TRAVEL", to: id }, { type: "ARRIVE" }], room);
+    expect(said(s, id).slice(-arrive.length)).toEqual(arrive);
+    expect(s.story[id]!.done).toBe(true);
+    const count = said(s, id).length;
+    s = run([{ type: "START_TRAVEL", to: "leblanc" }, { type: "ARRIVE" }, { type: "START_TRAVEL", to: id }, { type: "ARRIVE" }], s);
+    expect(said(s, id)).toHaveLength(count);
   });
 
   it("dev unlock-all starts all seven character threads, unread", () => {

@@ -83,16 +83,22 @@ test("every screen is reachable from the menu or settings and closes with Escape
   }
 });
 
-test("the phone lists every thread and clears the unread badge when one is read", async ({ page }) => {
-  await page.goto("/?demo=true");
+test("the phone lists the threads that have started, reveals a character's only when they unlock, adds the release note when onboarding ends, and clears the unread badge when one is read", async ({ page }) => {
+  await page.goto("/?demo=true&dev=true");
   await page.getByRole("button", { name: "Phone, 1 unread" }).click();
   const phone = page.getByRole("region", { name: "Phone" });
+  for (const title of ["Morgana", "Feedback"]) await expect(phone.getByRole("button", { name: title })).toBeVisible();
+  for (const title of ["Ryuji", "Ann", "Yusuke", "Makoto", "Futaba", "Haru", "Akechi", "What's new"]) await expect(phone.getByRole("button", { name: title })).toHaveCount(0); // nothing telegraphs what unlocks; the note waits for onboarding
+  await page.getByRole("button", { name: "Unlock all" }).click();
+  for (const title of ["Ryuji", "Ann", "Yusuke", "Makoto", "Futaba", "Haru", "Akechi"]) await expect(phone.getByRole("button", { name: title })).toBeVisible();
+  await expect(phone.getByRole("button", { name: "What's new" })).toHaveCount(0);
+  await page.keyboard.press("s"); // skip onboarding (the one key)
   for (const title of ["Morgana", "Ryuji", "Ann", "Yusuke", "Makoto", "Futaba", "Haru", "Akechi", "What's new", "Feedback"]) {
     await expect(phone.getByRole("button", { name: title })).toBeVisible();
   }
   await phone.getByRole("button", { name: /Morgana/ }).click();
-  await expect(phone.getByText(/I'll do the talking/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Phone" })).toBeVisible(); // no unread suffix any more
+  await expect(phone.getByText(/doing the talking/)).toBeVisible();
+  await expect(phone.getByRole("log", { name: "Morgana" })).toBeVisible();
 });
 
 test("Hide UI hides the widgets but never the TV, and Show UI brings them back", async ({ page }) => {

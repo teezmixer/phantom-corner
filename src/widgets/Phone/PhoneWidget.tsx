@@ -50,7 +50,7 @@ export function PhoneWidget() {
           </button>
         )}
       >
-        <div className="max-h-72 overflow-y-auto px-3 pb-3 text-sm">
+        <div className="px-3 pb-3 text-sm">
           {thread && progress ? (
             <ThreadView
               key={thread.id}
@@ -66,10 +66,10 @@ export function PhoneWidget() {
           ) : started.length === 0 ? (
             <p>{widgets.phoneEmpty}</p>
           ) : (
-            <ul>
+            <ul className="max-h-60 overflow-y-auto">
               {started.map((t) => (
                 <li key={t.id}>
-                  <button type="button" onClick={() => dispatch({ type: "OPEN_THREAD", id: t.id })} className="flex w-full items-center justify-between py-1 text-left hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
+                  <button type="button" onClick={() => dispatch({ type: "OPEN_THREAD", id: t.id })} className="flex w-full items-center justify-between gap-3 whitespace-nowrap py-0.5 text-left hover:text-redbright focus-visible:outline-2 focus-visible:outline-accentteal">
                     <span>{t.title}</span>
                     {state.unreadThreads.includes(t.id) && <span className="size-2 bg-redbright" role="img" aria-label="unread" />}
                   </button>
@@ -101,12 +101,13 @@ function ThreadView({ title, messages, asking, compose, onboarding, onBack, onSe
   };
 
   return (
-    <div>
+    <div className="w-80">
       <div className="mb-2 flex items-center justify-between">
         <button type="button" onClick={onBack} className="flex items-center gap-1 text-white focus-visible:outline-2 focus-visible:outline-accentteal"><ArrowLeft size={14} aria-hidden="true" />{title}</button>
         {onboarding && <button type="button" onClick={onSkip} className="border border-white px-1 text-xs hover:bg-redbright focus-visible:outline-2 focus-visible:outline-accentteal">{ui.thread.skip}</button>}
       </div>
-      <div ref={log} role="log" aria-label={title} className="flex flex-col gap-1">
+      {/* The log is the part that scrolls, so the header and the box to write in are always in view. It has no focusable child, so current browsers make it keyboard-focusable themselves. */}
+      <div ref={log} role="log" aria-label={title} className="flex max-h-44 flex-col gap-1 overflow-y-auto">
         {messages.map((m, i) => (
           <p key={i} style={i >= first && m.delayMs ? { animationDelay: `${m.delayMs}ms` } : undefined}
             className={cn("max-w-[90%] border px-2 py-1", m.side === "me" ? "self-end border-redbright bg-redbright text-white" : "self-start border-white", i >= first && "motion-safe:animate-gate-in")}>
